@@ -571,9 +571,21 @@ class JaviAlertApp {
       const url = `${API.NOMINATIM}?format=json&lat=${lat}&lon=${lon}`;
       const res = await fetch(url);
       const data = await res.json();
-      const city = data.address.city || data.address.town || data.address.village || data.address.county || '';
-      const country = data.address.country || '';
-      return city && country ? `${city}, ${country}` : country || 'Your location';
+      // Build a more specific location string from available address components
+      const addr = data.address || {};
+      const road = addr.road || '';
+      const suburb = addr.suburb || addr.neighbourhood || addr.district || '';
+      const city = addr.city || addr.town || addr.village || addr.municipality || addr.county || '';
+      const state = addr.state || '';
+      const country = addr.country || '';
+      // Prefer: Road, Suburb, City format if available
+      const parts = [road, suburb, city].filter(Boolean);
+      const location = parts.length > 0 ? parts.join(', ') : city || country || 'Your location';
+      // Append country if not already included
+      if (country && !location.includes(country)) {
+        return `${location}, ${country}`;
+      }
+      return location;
     } catch {
       return 'Your location';
     }
