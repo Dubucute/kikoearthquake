@@ -123,8 +123,28 @@
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     white-space: nowrap;
   }
-  #kidSvg { transition: all .4s; }
+  #kidSvg { transition: all .4s; animation: breathe 3s ease-in-out infinite; }
   .kid-wrap.shake #kidSvg { animation: shaking .25s infinite; }
+  
+  /* Eye animations */
+  #pupilL, #pupilR { animation: lookAround 4s ease-in-out infinite; }
+  
+  @keyframes breathe {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+  }
+  
+  @keyframes lookAround {
+    0%, 100% { transform: translate(0, 0); }
+    25% { transform: translate(1px, 0); }
+    50% { transform: translate(0, 1px); }
+    75% { transform: translate(-1px, 0); }
+  }
+  
+  @keyframes blink {
+    0%, 45%, 55%, 100% { ry: 0; }
+    50% { ry: 6; }
+  }
   @keyframes shaking {
     0%, 100% { transform: translateX(0) rotate(0deg); }
     25% { transform: translateX(-3px) rotate(-2deg); }
@@ -269,6 +289,9 @@
         <!-- Eyes white -->
         <circle cx="35" cy="36" r="6" fill="white"/>
         <circle cx="55" cy="36" r="6" fill="white"/>
+        <!-- Eyelids for blinking -->
+        <ellipse id="eyelidL" cx="35" cy="36" rx="6" ry="0" fill="#FFCC80" style="animation: blink 4s ease-in-out infinite;"/>
+        <ellipse id="eyelidR" cx="55" cy="36" rx="6" ry="0" fill="#FFCC80" style="animation: blink 4s ease-in-out infinite;"/>
         <!-- Pupils -->
         <circle id="pupilL" cx="36" cy="36" r="3.5" fill="#333"/>
         <circle id="pupilR" cx="56" cy="36" r="3.5" fill="#333"/>
