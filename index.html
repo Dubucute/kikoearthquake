@@ -81,9 +81,9 @@
     border-radius: 30px; padding: 7px 14px;
     display: flex; align-items: center; gap: 6px;
     font-size: 12px; color: #333; margin-bottom: 12px;
+    position: relative; z-index: 50;
   }
   .loc-bar i { width: 14px; height: 14px; color: #e74c3c; flex-shrink: 0; }
-  .loc-bar { position: relative; }
   .loc-input {
     flex: 1; border: none; background: transparent;
     font-size: 12px; color: #333; outline: none;
@@ -898,6 +898,16 @@ class JaviAlertApp {
       }
     });
 
+    // Event delegation: handle clicks on any dropdown item
+    dropdown.addEventListener('click', (e) => {
+      const item = e.target.closest('.loc-dropdown-item');
+      if (!item) return;
+      const idx = parseInt(item.dataset.index);
+      if (!isNaN(idx) && results[idx]) {
+        this.selectLocation(results[idx], idx);
+      }
+    });
+
     input.addEventListener('input', () => {
       clearTimeout(debounceTimer);
       const q = input.value.trim();
@@ -920,18 +930,10 @@ class JaviAlertApp {
               const cls = r.type || '';
               return `<div class="loc-dropdown-item" data-index="${i}">
                 <div>${display}</div>
-                <div class="ld-sub">${cls} · ${r.lat ? parseFloat(r.lat).toFixed(4) : ''}, ${r.lon ? parseFloat(r.lon).toFixed(4) : ''}</div>
+                <div class="ld-sub">${cls} · ${parseFloat(r.lat).toFixed(4)}, ${parseFloat(r.lon).toFixed(4)}</div>
               </div>`;
             }).join('');
             dropdown.classList.remove('hidden');
-
-            // Click handler for items
-            dropdown.querySelectorAll('.loc-dropdown-item').forEach((el) => {
-              el.addEventListener('click', () => {
-                const idx = parseInt(el.dataset.index);
-                this.selectLocation(result, idx);
-              });
-            });
           }
         } catch {
           dropdown.classList.add('hidden');
@@ -945,25 +947,20 @@ class JaviAlertApp {
       if (e.key === 'ArrowDown') {
         e.preventDefault();
         selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
-        highlightItem(items, selectedIndex);
+        items.forEach((el, i) => el.classList.toggle('active', i === selectedIndex));
+        if (items[selectedIndex]) items[selectedIndex].scrollIntoView({ block: 'nearest' });
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
         selectedIndex = Math.max(selectedIndex - 1, -1);
-        highlightItem(items, selectedIndex);
+        items.forEach((el, i) => el.classList.toggle('active', i === selectedIndex));
       } else if (e.key === 'Enter' && selectedIndex >= 0 && results[selectedIndex]) {
         e.preventDefault();
         this.selectLocation(results[selectedIndex], selectedIndex);
       } else if (e.key === 'Escape') {
         dropdown.classList.add('hidden');
+        input.blur();
       }
     });
-
-    const highlightItem = (items, idx) => {
-      items.forEach((el, i) => el.classList.toggle('active', i === idx));
-      if (idx >= 0 && items[idx]) {
-        items[idx].scrollIntoView({ block: 'nearest' });
-      }
-    };
   }
 
   selectLocation(result, index) {
