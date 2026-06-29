@@ -154,6 +154,12 @@
     background-repeat: no-repeat;
     background-position: center center;
     display: block;
+    animation: iosBreathe 3s ease-in-out infinite;
+  }
+  /* Subtle breathing animation for iOS where GIFs don't animate */
+  @keyframes iosBreathe {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
   }
   .kid-wrap.shake .kid-gif {
     animation: shaking .25s infinite;
