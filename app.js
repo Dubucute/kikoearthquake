@@ -115,12 +115,21 @@
   ];
 
   const EMERGENCY_CONTACTS = [
-    { name: "NDRRMC (National Disaster)", num: "911" },
-    { name: "Red Cross",                 num: "143" },
-    { name: "Philippine National Police", num: "117" },
-    { name: "Bureau of Fire Protection",  num: "160" },
-    { name: "Coast Guard",               num: "527-8480" },
-    { name: "MMDA (Metro Manila)",        num: "136" },
+    { name: "NDRRMC (National Disaster)",      num: "911" },
+    { name: "Red Cross 24/7 Hotline",          num: "143" },
+    { name: "Philippine National Police (PNP)", num: "117" },
+    { name: "PNP Text Hotline",                num: "0917-847-5757" },
+    { name: "Bureau of Fire Protection (BFP)",  num: "160" },
+    { name: "BFP Emergency",                   num: "02-8426-3819" },
+    { name: "Philippine Coast Guard",          num: "527-8480" },
+    { name: "Coast Guard Emergency",           num: "0917-724-3682" },
+    { name: "MMDA (Metro Manila)",             num: "136" },
+    { name: "MMDA Text Hotline",               num: "0917-550-8877" },
+    { name: "DOH (Department of Health)",      num: "02-8651-7800" },
+    { name: "DOH Emergency",                   num: "1555" },
+    { name: "National Emergency Hotline",      num: "8888" },
+    { name: "Smart Emergency",                 num: "0918-944-4444" },
+    { name: "Globe Emergency",                 num: "0917-555-1212" },
   ];
 
   // ─── HELPER FUNCTIONS ────────────────────────────────────────
