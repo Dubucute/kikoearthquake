@@ -18,7 +18,8 @@
     AUTO_REFRESH_MS: 300000,
     DANGER_THRESHOLD: 5.0,
     WARNING_THRESHOLD: 3.0,
-    RECENT_WINDOW_MS: 21600000,
+    DANGER_WINDOW_MS: 21600000,
+    WARNING_WINDOW_MS: 86400000,
     TODAY_WINDOW_MS: 86400000
   };
 
@@ -490,11 +491,11 @@
       let mood = 'safe';
       const now = Date.now();
       for (const q of quakes) {
-        if (q.mag >= CONFIG.DANGER_THRESHOLD && (now - q.time.getTime()) < CONFIG.RECENT_WINDOW_MS) {
+        if (q.mag >= CONFIG.DANGER_THRESHOLD && (now - q.time.getTime()) < CONFIG.DANGER_WINDOW_MS) {
           mood = 'danger';
           break;
         }
-        if (q.mag >= CONFIG.WARNING_THRESHOLD && (now - q.time.getTime()) < CONFIG.RECENT_WINDOW_MS) {
+        if (q.mag >= CONFIG.WARNING_THRESHOLD && (now - q.time.getTime()) < CONFIG.WARNING_WINDOW_MS) {
           mood = 'warning';
         }
       }
