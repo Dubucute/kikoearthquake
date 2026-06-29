@@ -247,6 +247,7 @@ body.danger {
   position: relative;
   flex-shrink: 0;
   padding: 18px 0;
+  cursor: pointer;
 }
 .char-name {
   position: absolute;

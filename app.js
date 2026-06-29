@@ -114,6 +114,29 @@
     "Manatiling kalmado at huwag mag-panic — makatutulong ito sa malinaw na pag-iisip."
   ];
 
+  const JAVI_REACTIONS = [
+    "Hoy! 'wag mo 'kong pindot-pindot! 😤",
+    "Aray! Masakit yun! 🥲",
+    "Haha, ano 'yun? 😄",
+    "Ingat lagi, bes! 🫶",
+    "Earthquake? Ako na bahala! 💪",
+    "Bakit? Miss mo 'ko? 😏",
+    "Sige, isa pa! Pindot ulit! 😆",
+    "Busy ako mag-monitor ng lindol! 📡",
+    "Loko-loko ka! 😂",
+    "Alam mo ba kung gaano kahirap maging bantay-lindol? 🥹",
+    "Wag kang mag-alala, nandito lang ako! 🫡",
+    "Salamat sa pagpindot! Sana masarap ulam mo! 🍽️",
+    "Pindot ka nang pindot, wala namang lindol! 🤷",
+    "Javi, laging handa! 🦸",
+    "Mahal kita pero 'wag mong saktan! 💔",
+    "Okay lang 'yan, nandito si Javi! 🌟",
+    "Hoy! Respeto naman sa character ko! 😤",
+    "Ang cute ko diba? 🥰",
+    "Sige lang, kaya pa 'to! 💪",
+    "Bakit ka nandito? May lindol ba? 🌍",
+  ];
+
   const EMERGENCY_CONTACTS = [
     { name: "NDRRMC (National Disaster)",      num: "911" },
     { name: "Red Cross 24/7 Hotline",          num: "143" },
@@ -235,6 +258,9 @@
           Notification.requestPermission();
         } catch (_) { /* ignore */ }
       }
+
+      // Javi tap interaction
+      document.getElementById('kidWrap').addEventListener('click', () => this.onJaviTap());
 
       // Setup UI
       document.getElementById('refreshBtn').addEventListener('click', () => this.loadData());
@@ -880,6 +906,36 @@
         banner.querySelector('.install-title').textContent = 'Install on iOS';
         banner.querySelector('.install-desc').textContent = 'Tap Share > Add to Home Screen';
       }
+    }
+
+    // ─── JAVI TAP INTERACTION ─────────────────────────────────
+    onJaviTap() {
+      const bubble = document.getElementById('bubble');
+      const msg = JAVI_REACTIONS[Math.floor(Math.random() * JAVI_REACTIONS.length)];
+
+      // Cancel any ongoing typing by clearing the bubble
+      bubble.className = 'bubble';
+      bubble.innerHTML = '';
+
+      // Type out the reaction
+      let i = 0;
+      const type = () => {
+        if (i < msg.length) {
+          bubble.innerHTML = msg.slice(0, i + 1);
+          i++;
+          setTimeout(type, 20);
+        }
+      };
+      type();
+      try { lucide.createIcons(); } catch (_) { /* ignore */ }
+
+      // Brief shake animation on tap
+      const wrap = document.getElementById('kidWrap');
+      wrap.classList.remove('shake');
+      // Force reflow to restart animation
+      void wrap.offsetWidth;
+      wrap.classList.add('shake');
+      setTimeout(() => wrap.classList.remove('shake'), 500);
     }
 
     // ─── TIPS MODAL (What to do) ──────────────────────────────
