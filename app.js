@@ -114,6 +114,15 @@
     "Manatiling kalmado at huwag mag-panic — makatutulong ito sa malinaw na pag-iisip."
   ];
 
+  const EMERGENCY_CONTACTS = [
+    { name: "NDRRMC (National Disaster)", num: "911" },
+    { name: "Red Cross",                 num: "143" },
+    { name: "Philippine National Police", num: "117" },
+    { name: "Bureau of Fire Protection",  num: "160" },
+    { name: "Coast Guard",               num: "527-8480" },
+    { name: "MMDA (Metro Manila)",        num: "136" },
+  ];
+
   // ─── HELPER FUNCTIONS ────────────────────────────────────────
   function timeSince(ts) {
     const diff = Date.now() - new Date(ts).getTime();
@@ -226,6 +235,21 @@
       });
       document.getElementById('modalGotIt').addEventListener('click', () => {
         document.getElementById('installModal').classList.add('hidden');
+      });
+
+      // Tips modal
+      document.getElementById('pillTipsBtn').addEventListener('click', () => this.showTipsModal());
+      document.getElementById('tipsModalClose').addEventListener('click', () => {
+        document.getElementById('tipsModal').classList.add('hidden');
+      });
+      document.getElementById('tipsModalGotIt').addEventListener('click', () => {
+        document.getElementById('tipsModal').classList.add('hidden');
+      });
+      // Close tips modal on overlay click
+      document.getElementById('tipsModal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) {
+          e.currentTarget.classList.add('hidden');
+        }
       });
 
       this.setupLocationSearch();
@@ -838,6 +862,30 @@
         banner.querySelector('.install-title').textContent = 'Install on iOS';
         banner.querySelector('.install-desc').textContent = 'Tap Share > Add to Home Screen';
       }
+    }
+
+    // ─── TIPS MODAL ────────────────────────────────────────────
+    showTipsModal() {
+      const modal = document.getElementById('tipsModal');
+      const body = document.getElementById('tipsModalBody');
+      if (!modal || !body) return;
+
+      // Build tips list
+      const tipsHtml = SAFETY_TIPS.map(t => '<li>' + t + '</li>').join('');
+
+      // Build contacts list
+      const contactsHtml = EMERGENCY_CONTACTS.map(c =>
+        '<li><strong>' + c.name + '</strong><span class="contact-num">' + c.num + '</span></li>'
+      ).join('');
+
+      body.innerHTML =
+        '<h3><i data-lucide="alert-triangle" aria-hidden="true"></i> What to do during an earthquake</h3>' +
+        '<ul class="tips-list">' + tipsHtml + '</ul>' +
+        '<h3><i data-lucide="phone" aria-hidden="true"></i> Who to call</h3>' +
+        '<ul class="contacts-list">' + contactsHtml + '</ul>';
+
+      modal.classList.remove('hidden');
+      try { lucide.createIcons(); } catch (_) { /* ignore */ }
     }
 
     showInstallTutorial() {

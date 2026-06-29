@@ -306,6 +306,96 @@ body.danger {
 .pill-danger  { background: #e17055; animation: pulse-red 1s infinite; }
 @keyframes pulse-red { 0%,100% { box-shadow: 4px 4px 0px rgba(0,0,0,.15); } 50% { box-shadow: 4px 4px 0px rgba(0,0,0,.15), 0 0 0 8px rgba(225,112,85,0.3); } }
 
+/* PILL TIPS BUTTON */
+.pill-tips-btn {
+  background: rgba(255,255,255,.3);
+  border: none;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 4px;
+  transition: background .2s;
+  flex-shrink: 0;
+}
+.pill-tips-btn:hover { background: rgba(255,255,255,.5); }
+.pill-tips-btn:active { transform: scale(.92); }
+.pill-tips-btn i { width: 14px; height: 14px; }
+.pill-warning .pill-tips-btn i { color: #2d3436; }
+
+/* TIPS MODAL */
+.tips-modal-card {
+  max-width: 420px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+.tips-modal-body {
+  overflow-y: auto;
+  padding: 0 20px 12px;
+  flex: 1;
+}
+.tips-modal-body h3 {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 14px 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text);
+}
+.tips-modal-body h3:first-child { margin-top: 0; }
+.tips-modal-body h3 i { width: 16px; height: 16px; flex-shrink: 0; }
+.tips-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 6px;
+}
+.tips-list li {
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 5px 0 5px 20px;
+  position: relative;
+  color: #444;
+}
+.tips-list li::before {
+  content: '•';
+  position: absolute;
+  left: 4px;
+  color: var(--accent);
+  font-weight: 700;
+}
+.contacts-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.contacts-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  padding: 8px 10px;
+  margin-bottom: 4px;
+  background: rgba(0,0,0,.04);
+  border-radius: 10px;
+  color: #444;
+}
+.contacts-list li strong {
+  color: var(--text);
+  font-weight: 600;
+}
+.contacts-list li .contact-num {
+  font-weight: 700;
+  color: #e17055;
+  font-size: 14px;
+  letter-spacing: .5px;
+}
+
 /* STATS ROW */
 .stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
 .stat {
