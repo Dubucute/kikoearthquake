@@ -371,8 +371,8 @@
   <!-- Quake list -->
   <div class="list-card">
     <div class="list-header">
-      <i data-lucide="map-pin" aria-hidden="true"></i>
-      Earthquakes near you
+      <i data-lucide="clock" aria-hidden="true"></i>
+      Latest Activity
     </div>
     <div id="quakeList" role="list" aria-label="Recent earthquakes">
       <div class="empty">
@@ -605,17 +605,24 @@ class JaviAlertApp {
 
   // ---------- Data Processing ----------
   processQuakeData(features) {
-    const quakes = features.map((q) => {
+    // Calculate distance for each quake
+    const withDist = features.map((q) => {
       const [lo, la] = q.geometry.coordinates;
       return { ...q, km: distKm(this.userLat, this.userLon, la, lo) };
-    }).sort((a, b) => a.km - b.km);
+    });
+
+    // Sort by time (latest first) for display
+    const quakesByTime = [...withDist].sort((a, b) => b.properties.time - a.properties.time);
+
+    // Sort by distance for alert calculations
+    const quakesByDist = [...withDist].sort((a, b) => a.km - b.km);
 
     const now = Date.now();
-    const today = quakes.filter((q) => now - q.properties.time < CONFIG.TODAY_WINDOW_MS);
-    const recent = quakes.filter((q) => now - q.properties.time < CONFIG.RECENT_WINDOW_MS);
+    const today = quakesByTime.filter((q) => now - q.properties.time < CONFIG.TODAY_WINDOW_MS);
+    const recent = quakesByDist.filter((q) => now - q.properties.time < CONFIG.RECENT_WINDOW_MS);
 
-    const nearestQuake = quakes[0] || null;
-    const latestQuake = [...quakes].sort((a, b) => b.properties.time - a.properties.time)[0] || null;
+    const nearestQuake = quakesByDist[0] || null;
+    const latestQuake = quakesByTime[0] || null;
     const nearestRecentQuake = recent[0] || null;
 
     const nearestMag = nearestQuake?.properties?.mag || 0;
@@ -625,7 +632,7 @@ class JaviAlertApp {
     const level = determineAlertLevel(recentMag);
 
     return {
-      quakes,
+      quakes: quakesByTime,     // sorted by latest first for display
       today,
       recent,
       nearestQuake,
