@@ -556,9 +556,55 @@
       document.getElementById('nextPage').disabled = this.currentPage >= totalPages;
     }
 
+    // ─── ALERT SOUND (Web Audio API) ───────────────────────────
+    _playAlertSound(type) {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const now = ctx.currentTime;
+
+        if (type === 'warning') {
+          // Gentle two-tone alert: 660Hz then 880Hz, 0.15s each
+          [660, 880].forEach((freq, i) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0.3, now + i * 0.15);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.15 + 0.15);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now + i * 0.15);
+            osc.stop(now + i * 0.15 + 0.15);
+          });
+        } else if (type === 'danger') {
+          // Urgent rapid siren: alternating 440Hz-880Hz, 3 cycles
+          for (let c = 0; c < 3; c++) {
+            [440, 880].forEach((freq, i) => {
+              const osc = ctx.createOscillator();
+              const gain = ctx.createGain();
+              osc.type = 'square';
+              osc.frequency.value = freq;
+              const t = now + c * 0.3 + i * 0.15;
+              gain.gain.setValueAtTime(0.4, t);
+              gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+              osc.connect(gain);
+              gain.connect(ctx.destination);
+              osc.start(t);
+              osc.stop(t + 0.15);
+            });
+          }
+        }
+      } catch (_) { /* audio not supported */ }
+    }
+
     // ─── SET MOOD ──────────────────────────────────────────────
     setMood(mood) {
       this.currentMood = mood;
+
+      // Play alert sound
+      if (mood === 'warning' || mood === 'danger') {
+        this._playAlertSound(mood);
+      }
 
       // Body class
       document.body.classList.remove('safe', 'warning', 'danger');
