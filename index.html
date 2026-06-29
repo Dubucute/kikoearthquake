@@ -863,9 +863,13 @@ class JaviAlertApp {
 
   /**
    * Reverse geocode a quake's coordinates to get the full place name hierarchy.
+   * Merges with the USGS stripped name for best results.
    * Caches results by "lat,lon" key to avoid redundant API calls.
+   * @param {number} lat - Latitude
+   * @param {number} lon - Longitude
+   * @param {string} usgsName - USGS place name with distance prefix already stripped
    */
-  async fetchQuakePlaceName(lat, lon) {
+  async fetchQuakePlaceName(lat, lon, usgsName) {
     const key = `${lat.toFixed(2)},${lon.toFixed(2)}`;
     if (this.cache.quakePlaces && this.cache.quakePlaces[key]) {
       return this.cache.quakePlaces[key];
@@ -879,9 +883,23 @@ class JaviAlertApp {
       const village = addr.village || addr.town || addr.city || addr.municipality || '';
       const state = addr.state || '';
       const country = addr.country || '';
-      const parts = [village, state, country].filter(Boolean);
-      const placeName = parts.length > 0 ? parts.join(', ') : (data.display_name || 'Unknown');
-      // Cache it
+      // If Nominatim returned useful detail beyond just country, use it
+      if (village || state) {
+        const parts = [village, state, country].filter(Boolean);
+        const placeName = parts.join(', ');
+        if (!this.cache.quakePlaces) this.cache.quakePlaces = {};
+        this.cache.quakePlaces[key] = placeName;
+        return placeName;
+      }
+      // Nominatim only returned country (epicenter offshore) — use USGS name instead
+      // USGS name like "Cabayugan, Philippines" has more detail
+      if (usgsName) {
+        if (!this.cache.quakePlaces) this.cache.quakePlaces = {};
+        this.cache.quakePlaces[key] = usgsName;
+        return usgsName;
+      }
+      // Last resort: whatever Nominatim gave us
+      const placeName = country || data.display_name || 'Unknown';
       if (!this.cache.quakePlaces) this.cache.quakePlaces = {};
       this.cache.quakePlaces[key] = placeName;
       return placeName;
@@ -1011,7 +1029,7 @@ class JaviAlertApp {
         const stripped = rawPlace.replace(/^[\d.]+\s*km\s+\w+\s+of\s+/i, '');
         // Try to get full hierarchy via reverse geocoding
         const [lo, la] = q.geometry.coordinates;
-        const fullPlace = await this.fetchQuakePlaceName(la, lo);
+        const fullPlace = await this.fetchQuakePlaceName(la, lo, stripped);
         // Use enriched name if available, otherwise use stripped USGS name
         const place = fullPlace || stripped;
         return { ...q, _place: place, _mag: mag };
