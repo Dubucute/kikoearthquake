@@ -12,24 +12,20 @@
   const OPENROUTER_MODELS = [
     'meta-llama/llama-3.2-3b-instruct:free',
     'meta-llama/llama-3.3-70b-instruct:free',
-    'nvidia/nemotron-3-super-120b-a12b:free',
-    'nvidia/nemotron-3-ultra-550b-a55b:free',
-    'nvidia/nemotron-3-nano-30b-a3b:free',
-    'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
-    'nvidia/nemotron-nano-12b-v2-vl:free',
-    'nvidia/nemotron-nano-9b-v2:free',
-    'nvidia/nemotron-3.5-content-safety:free',
     'qwen/qwen3-next-80b-a3b-instruct:free',
     'qwen/qwen3-coder:free',
     'openai/gpt-oss-120b:free',
     'openai/gpt-oss-20b:free',
-    'liquid/lfm-2.5-1.2b-thinking:free',
-    'liquid/lfm-2.5-1.2b-instruct:free',
     'nousresearch/hermes-3-llama-3.1-405b:free',
     'cognitivecomputations/dolphin-mistral-24b-venice-edition:free',
     'poolside/laguna-xs.2:free',
     'poolside/laguna-m.1:free',
     'cohere/north-mini-code:free',
+    'liquid/lfm-2.5-1.2b-instruct:free',
+    'nvidia/nemotron-3-nano-30b-a3b:free',
+    'nvidia/nemotron-nano-12b-v2-vl:free',
+    'nvidia/nemotron-nano-9b-v2:free',
+    'nvidia/nemotron-3.5-content-safety:free',
     'google/gemma-4-26b-a4b-it:free',
     'google/gemma-4-31b-it:free'
   ];
@@ -703,7 +699,7 @@
                 },
                 { role: 'user', content: prompt }
               ],
-              max_tokens: 60,
+              max_tokens: 120,
               temperature: 0.8
             })
           });
@@ -714,14 +710,17 @@
           }
 
           const data = await res.json();
-          const text = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
+          const msg = data.choices && data.choices[0] && data.choices[0].message;
+          const text = (msg && msg.content) || '';
 
-          if (text && text.length < 200) {
-            bubble.className = 'bubble';
-            bubble.innerHTML = text;
-            try { lucide.createIcons(); } catch (_) { /* ignore */ }
-            return;
-          }
+          // Skip if response is empty, too long, or contains meta-instructions (reasoning models)
+          if (!text || text.length >= 200) continue;
+          if (/we need to|must respond|should say|as (an? )?(AI|assistant)/i.test(text)) continue;
+
+          bubble.className = 'bubble';
+          bubble.innerHTML = text;
+          try { lucide.createIcons(); } catch (_) { /* ignore */ }
+          return;
         } catch (_) {
           // Try next model in the fallback chain
           continue;
