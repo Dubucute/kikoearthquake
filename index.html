@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json"/>
 <link rel="apple-touch-icon" href="icons/icon-192.png"/>
 <title>JaviAlert</title>
-<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.468.0/dist/umd/lucide.min.js"></script>
 <style>
   :root {
     --safe-sky1: #4FC3F7;
@@ -480,7 +480,7 @@ class JaviAlertApp {
     this.detectLocation();
     this.startAutoRefresh();
     this.registerServiceWorker();
-    lucide.createIcons();
+    try { lucide.createIcons(); } catch (_) {}
   }
 
   setupInstallPrompt() {
@@ -537,8 +537,15 @@ class JaviAlertApp {
       return;
     }
 
+    // Timeout fallback: if geolocation doesn't respond within 10s, use default
+    const timeoutId = setTimeout(() => {
+      this.setLocationText(DEFAULT_LOCATION.name);
+      this.loadData();
+    }, 10000);
+
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
+        clearTimeout(timeoutId);
         this.userLat = pos.coords.latitude;
         this.userLon = pos.coords.longitude;
         const name = await this.fetchLocationName(this.userLat, this.userLon);
@@ -547,9 +554,11 @@ class JaviAlertApp {
         this.loadData();
       },
       () => {
+        clearTimeout(timeoutId);
         this.setLocationText(DEFAULT_LOCATION.name);
         this.loadData();
-      }
+      },
+      { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }
     );
   }
 
@@ -575,6 +584,9 @@ class JaviAlertApp {
     const degRadius = CONFIG.SEARCH_RADIUS_KM / 111.2;
     const url = `${API.EARTHQUAKE}?format=geojson&latitude=${this.userLat}&longitude=${this.userLon}&maxradius=${degRadius}&minmagnitude=${CONFIG.MIN_MAGNITUDE}&orderby=time&limit=${CONFIG.QUAKE_LIMIT}`;
     const res = await fetch(url);
+    if (!res.ok) {
+      throw new Error(`USGS API returned ${res.status}: ${res.statusText}`);
+    }
     const data = await res.json();
     return data.features || [];
   }
@@ -674,7 +686,7 @@ class JaviAlertApp {
     }
 
     // Re-initialize Lucide icons for any new icons in the rendered HTML
-    lucide.createIcons();
+    try { lucide.createIcons(); } catch (_) {}
   }
 
   // ---------- Mood / Character Animation ----------
@@ -691,13 +703,24 @@ class JaviAlertApp {
     kid.className = 'kid-wrap' + (level === 'danger' ? ' shake' : '');
 
     // Update pill with Lucide icon
-    const pillIcon = pill.querySelector('i');
+    // Re-create the icon element since lucide.createIcons() replaces <i> with <svg>
+    let pillIcon = pill.querySelector('[data-lucide]');
+    if (!pillIcon) {
+      // First run: <i> element exists, set attribute and let createIcons replace it
+      pillIcon = pill.querySelector('i');
+    }
+    if (!pillIcon) {
+      // Fallback: create a fresh <i> element
+      pillIcon = document.createElement('i');
+      pillIcon.setAttribute('aria-hidden', 'true');
+      pill.insertBefore(pillIcon, pill.querySelector('span') || null);
+    }
     const pillText = document.getElementById('pillText');
 
     if (level === 'safe') {
       pill.className = 'status-pill pill-safe';
       pillIcon.setAttribute('data-lucide', 'shield-check');
-      pillText.textContent = 'All clear!';
+      if (pillText) pillText.textContent = 'All clear!';
       mouth.setAttribute('d', 'M37 48 Q45 55 53 48');
       browL.setAttribute('d', 'M30 28 Q35 26 40 28');
       browR.setAttribute('d', 'M50 28 Q55 26 60 28');
@@ -706,7 +729,7 @@ class JaviAlertApp {
     } else if (level === 'warning') {
       pill.className = 'status-pill pill-warning';
       pillIcon.setAttribute('data-lucide', 'alert-triangle');
-      pillText.textContent = 'Minor activity';
+      if (pillText) pillText.textContent = 'Minor activity';
       mouth.setAttribute('d', 'M37 51 Q45 49 53 51');
       browL.setAttribute('d', 'M30 29 Q35 27 40 30');
       browR.setAttribute('d', 'M50 30 Q55 27 60 29');
@@ -714,7 +737,7 @@ class JaviAlertApp {
     } else {
       pill.className = 'status-pill pill-danger';
       pillIcon.setAttribute('data-lucide', 'bell-ring');
-      pillText.textContent = 'Earthquake alert!';
+      if (pillText) pillText.textContent = 'Earthquake alert!';
       mouth.setAttribute('d', 'M37 53 Q45 48 53 53');
       browL.setAttribute('d', 'M30 31 Q35 28 40 32');
       browR.setAttribute('d', 'M50 32 Q55 28 60 31');
@@ -722,7 +745,7 @@ class JaviAlertApp {
       pupilL.setAttribute('r', '4.5'); pupilR.setAttribute('r', '4.5');
     }
 
-    lucide.createIcons();
+    try { lucide.createIcons(); } catch (_) {}
   }
 
   // ---------- Javi Message (LLM + Fallbacks) ----------
@@ -730,7 +753,7 @@ class JaviAlertApp {
     const bubble = document.getElementById('bubble');
     bubble.className = 'bubble loading';
     bubble.innerHTML = '<i data-lucide="message-circle" aria-hidden="true"></i> Javi is thinking...';
-    lucide.createIcons();
+    try { lucide.createIcons(); } catch (_) {}
 
     const msgs = {
       safe: [
@@ -794,26 +817,36 @@ class JaviAlertApp {
   // ---------- Main Data Load ----------
   async loadData() {
     const btn = document.getElementById('refreshBtn');
-    const icon = document.getElementById('refreshIcon');
     btn.disabled = true;
-    icon.setAttribute('data-lucide', 'loader-2');
-    icon.classList.add('spin');
-    lucide.createIcons();
+    // Re-query icon each time since lucide.createIcons() replaces DOM elements
+    let icon = document.getElementById('refreshIcon');
+    if (icon) {
+      icon.setAttribute('data-lucide', 'loader-2');
+      icon.classList.add('spin');
+    }
+    try { lucide.createIcons(); } catch (_) {}
 
     try {
       const features = await this.fetchEarthquakeData();
       const stats = this.processQuakeData(features);
       this.updateUI(stats);
     } catch (e) {
-      document.getElementById('quakeList').innerHTML =
-        '<div class="empty"><i data-lucide="alert-triangle" aria-hidden="true"></i> Could not load data. Check your connection.</div>';
-      lucide.createIcons();
+      console.error('JaviAlert loadData error:', e);
+      const container = document.getElementById('quakeList');
+      if (container) {
+        container.innerHTML =
+          '<div class="empty"><i data-lucide="alert-triangle" aria-hidden="true"></i> Could not load data. Check your connection.</div>';
+        try { lucide.createIcons(); } catch (_) {}
+      }
     }
 
     btn.disabled = false;
-    icon.setAttribute('data-lucide', 'refresh-cw');
-    icon.classList.remove('spin');
-    lucide.createIcons();
+    icon = document.getElementById('refreshIcon');
+    if (icon) {
+      icon.setAttribute('data-lucide', 'refresh-cw');
+      icon.classList.remove('spin');
+    }
+    try { lucide.createIcons(); } catch (_) {}
   }
 }
 
