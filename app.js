@@ -246,7 +246,7 @@
         document.getElementById('installModal').classList.add('hidden');
       });
 
-      // Tips modal
+      // Tips modal (What to do)
       document.getElementById('pillTipsBtn').addEventListener('click', () => this.showTipsModal());
       document.getElementById('tipsModalClose').addEventListener('click', () => {
         document.getElementById('tipsModal').classList.add('hidden');
@@ -254,11 +254,20 @@
       document.getElementById('tipsModalGotIt').addEventListener('click', () => {
         document.getElementById('tipsModal').classList.add('hidden');
       });
-      // Close tips modal on overlay click
       document.getElementById('tipsModal').addEventListener('click', (e) => {
-        if (e.target === e.currentTarget) {
-          e.currentTarget.classList.add('hidden');
-        }
+        if (e.target === e.currentTarget) e.currentTarget.classList.add('hidden');
+      });
+
+      // Contacts modal (Who to call)
+      document.getElementById('pillContactsBtn').addEventListener('click', () => this.showContactsModal());
+      document.getElementById('contactsModalClose').addEventListener('click', () => {
+        document.getElementById('contactsModal').classList.add('hidden');
+      });
+      document.getElementById('contactsModalGotIt').addEventListener('click', () => {
+        document.getElementById('contactsModal').classList.add('hidden');
+      });
+      document.getElementById('contactsModal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) e.currentTarget.classList.add('hidden');
       });
 
       this.setupLocationSearch();
@@ -873,24 +882,32 @@
       }
     }
 
-    // ─── TIPS MODAL ────────────────────────────────────────────
+    // ─── TIPS MODAL (What to do) ──────────────────────────────
     showTipsModal() {
       const modal = document.getElementById('tipsModal');
       const body = document.getElementById('tipsModalBody');
       if (!modal || !body) return;
 
-      // Build tips list
       const tipsHtml = SAFETY_TIPS.map(t => '<li>' + t + '</li>').join('');
 
-      // Build contacts list
+      body.innerHTML =
+        '<ul class="tips-list">' + tipsHtml + '</ul>';
+
+      modal.classList.remove('hidden');
+      try { lucide.createIcons(); } catch (_) { /* ignore */ }
+    }
+
+    // ─── CONTACTS MODAL (Who to call) ─────────────────────────
+    showContactsModal() {
+      const modal = document.getElementById('contactsModal');
+      const body = document.getElementById('contactsModalBody');
+      if (!modal || !body) return;
+
       const contactsHtml = EMERGENCY_CONTACTS.map(c =>
         '<li><strong>' + c.name + '</strong><span class="contact-num">' + c.num + '</span></li>'
       ).join('');
 
       body.innerHTML =
-        '<h3><i data-lucide="alert-triangle" aria-hidden="true"></i> What to do during an earthquake</h3>' +
-        '<ul class="tips-list">' + tipsHtml + '</ul>' +
-        '<h3><i data-lucide="phone" aria-hidden="true"></i> Who to call</h3>' +
         '<ul class="contacts-list">' + contactsHtml + '</ul>';
 
       modal.classList.remove('hidden');

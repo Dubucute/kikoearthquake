@@ -306,26 +306,25 @@ body.danger {
 .pill-danger  { background: #e17055; animation: pulse-red 1s infinite; }
 @keyframes pulse-red { 0%,100% { box-shadow: 4px 4px 0px rgba(0,0,0,.15); } 50% { box-shadow: 4px 4px 0px rgba(0,0,0,.15), 0 0 0 8px rgba(225,112,85,0.3); } }
 
-/* PILL TIPS BUTTON */
-.pill-tips-btn {
+/* PILL ACTION BUTTONS */
+.pill-action-btn {
   background: rgba(255,255,255,.3);
   border: none;
   border-radius: 50%;
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   padding: 0;
-  margin-left: 4px;
   transition: background .2s;
   flex-shrink: 0;
 }
-.pill-tips-btn:hover { background: rgba(255,255,255,.5); }
-.pill-tips-btn:active { transform: scale(.92); }
-.pill-tips-btn i { width: 14px; height: 14px; }
-.pill-warning .pill-tips-btn i { color: #2d3436; }
+.pill-action-btn:hover { background: rgba(255,255,255,.5); }
+.pill-action-btn:active { transform: scale(.92); }
+.pill-action-btn i { width: 14px; height: 14px; }
+.pill-warning .pill-action-btn i { color: #2d3436; }
 
 /* TIPS MODAL */
 .tips-modal-card {

@@ -66,8 +66,11 @@
     <span class="status-pill pill-safe" id="statusPill">
       <i data-lucide="shield-check" aria-hidden="true"></i>
       <span id="pillText">Checking...</span>
-      <button class="pill-tips-btn" id="pillTipsBtn" aria-label="Show safety tips and emergency contacts" title="Safety tips & emergency contacts">
-        <i data-lucide="info" aria-hidden="true"></i>
+      <button class="pill-action-btn" id="pillTipsBtn" aria-label="What to do during an earthquake" title="What to do?">
+        <i data-lucide="shield" aria-hidden="true"></i>
+      </button>
+      <button class="pill-action-btn" id="pillContactsBtn" aria-label="Emergency hotlines to call" title="Who to call?">
+        <i data-lucide="phone" aria-hidden="true"></i>
       </button>
     </span>
   </div>
@@ -124,19 +127,36 @@
     <div class="safety-body" id="safetyBody"></div>
   </div>
 
-  <!-- Safety tips & emergency contacts modal -->
-  <div class="modal-overlay hidden" id="tipsModal" role="dialog" aria-modal="true" aria-label="Safety tips and emergency contacts">
+  <!-- What to do modal -->
+  <div class="modal-overlay hidden" id="tipsModal" role="dialog" aria-modal="true" aria-label="What to do during an earthquake">
     <div class="modal-card tips-modal-card">
       <button class="modal-close" id="tipsModalClose" aria-label="Close">&times;</button>
       <div class="modal-header">
         <i data-lucide="shield" aria-hidden="true"></i>
-        <h2 class="modal-title">Safety Tips & Emergency Contacts</h2>
+        <h2 class="modal-title">What to do during an earthquake</h2>
       </div>
       <div class="tips-modal-body" id="tipsModalBody">
         <!-- Injected by JS -->
       </div>
       <div class="modal-footer">
         <button class="modal-btn" id="tipsModalGotIt">Got it!</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Who to call modal -->
+  <div class="modal-overlay hidden" id="contactsModal" role="dialog" aria-modal="true" aria-label="Emergency hotlines">
+    <div class="modal-card tips-modal-card">
+      <button class="modal-close" id="contactsModalClose" aria-label="Close">&times;</button>
+      <div class="modal-header">
+        <i data-lucide="phone" aria-hidden="true"></i>
+        <h2 class="modal-title">Who to call</h2>
+      </div>
+      <div class="tips-modal-body" id="contactsModalBody">
+        <!-- Injected by JS -->
+      </div>
+      <div class="modal-footer">
+        <button class="modal-btn" id="contactsModalGotIt">Got it!</button>
       </div>
     </div>
   </div>
