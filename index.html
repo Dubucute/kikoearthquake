@@ -863,9 +863,12 @@ class JaviAlertApp {
   }
 
   /**
-   * Reverse geocode a quake's coordinates using BigDataCloud (free, no API key).
-   * Falls back to USGS stripped name if the API fails or only returns country.
-   * Caches results by "lat,lon" key to avoid redundant API calls.
+   * Get the best place name for a quake.
+   * Uses the USGS place name with distance prefix stripped — it's the most
+   * reliable source for the nearest populated place to the epicenter.
+   * Falls back to BigDataCloud reverse geocoding for richer hierarchy
+   * (city/province/country) when available.
+   * Caches results by "lat,lon" key.
    * @param {number} lat - Latitude
    * @param {number} lon - Longitude
    * @param {string} usgsName - USGS place name with distance prefix already stripped
@@ -875,43 +878,41 @@ class JaviAlertApp {
     if (this.cache.quakePlaces && this.cache.quakePlaces[key]) {
       return this.cache.quakePlaces[key];
     }
+    // Start with USGS name as baseline (most reliable for nearest populated place)
+    let bestName = usgsName || 'Unknown';
     try {
       const url = `${API.BIGDATACLOUD}?latitude=${lat}&longitude=${lon}&localityLanguage=en`;
       const res = await fetch(url);
       const data = await res.json();
-      // BigDataCloud returns: city, locality, principalSubdivision, countryName
       const city = data.city || '';
-      const locality = data.locality || '';
-      const region = data.principalSubdivision || '';
-      const country = (data.countryName || '').replace(/ \(the\)$/, ''); // Remove " (the)" suffix
-      // Build hierarchy: locality, city, region, country
-      // Prefer locality (most specific: barangay/district) over city
-      const specific = locality !== city ? locality : '';
-      const parts = [specific, city, region, country].filter(Boolean);
-      if (parts.length >= 2) {
-        // Remove duplicates (e.g. city == locality)
+      const country = (data.countryName || '').replace(/ \(the\)$/, '');
+      // Extract province from administrative array (adminLevel 4)
+      let province = '';
+      if (data.localityInfo && data.localityInfo.administrative) {
+        for (const entry of data.localityInfo.administrative) {
+          if (entry.adminLevel === 4) {
+            province = entry.name;
+            break;
+          }
+        }
+      }
+      // Only use BigDataCloud if we got a real city name (not a sea/ocean)
+      if (city && city !== country) {
+        const parts = [city, province, country].filter(Boolean);
         const unique = [];
         for (const p of parts) {
           if (!unique.includes(p)) unique.push(p);
         }
-        const placeName = unique.join(', ');
-        if (!this.cache.quakePlaces) this.cache.quakePlaces = {};
-        this.cache.quakePlaces[key] = placeName;
-        return placeName;
+        if (unique.length >= 2) {
+          bestName = unique.join(', ');
+        }
       }
-      // Only got country (offshore epicenter) — use USGS name instead
-      if (usgsName) {
-        if (!this.cache.quakePlaces) this.cache.quakePlaces = {};
-        this.cache.quakePlaces[key] = usgsName;
-        return usgsName;
-      }
-      const placeName = country || 'Unknown';
-      if (!this.cache.quakePlaces) this.cache.quakePlaces = {};
-      this.cache.quakePlaces[key] = placeName;
-      return placeName;
     } catch {
-      return null; // null means fall back to USGS place name
+      // Ignore errors, fall back to USGS name
     }
+    if (!this.cache.quakePlaces) this.cache.quakePlaces = {};
+    this.cache.quakePlaces[key] = bestName;
+    return bestName;
   }
 
   // ---------- Earthquake Data Fetching ----------
