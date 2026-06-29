@@ -1,6 +1,6 @@
 {
-  "name": "Quake Buddy",
-  "short_name": "Quake Buddy",
+  "name": "JaviAlert",
+  "short_name": "JaviAlert",
   "description": "Earthquake safety buddy with AI character alerts",
   "start_url": "/",
   "display": "standalone",

@@ -6,11 +6,11 @@
 <meta name="theme-color" content="#87CEEB"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
-<meta name="apple-mobile-web-app-title" content="Quake Buddy"/>
+<meta name="apple-mobile-web-app-title" content="JaviAlert"/>
 <meta name="description" content="Earthquake safety buddy for your area"/>
 <link rel="manifest" href="manifest.json"/>
 <link rel="apple-touch-icon" href="icons/icon-192.png"/>
-<title>Quake Buddy</title>
+<title>JaviAlert</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css"/>
 <style>
   :root {
@@ -108,7 +108,21 @@
   .bubble.loading { color: #999; font-style: italic; }
 
   /* KID SVG */
-  .kid-wrap { flex-shrink: 0; width: 90px; }
+  .kid-wrap { flex-shrink: 0; width: 90px; position: relative; }
+  .char-name {
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 14px;
+    font-weight: 700;
+    color: #4E342E;
+    background: white;
+    padding: 4px 12px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    white-space: nowrap;
+  }
   #kidSvg { transition: all .4s; }
   .kid-wrap.shake #kidSvg { animation: shaking .25s infinite; }
   @keyframes shaking {
@@ -205,7 +219,7 @@
 <div class="app">
 
   <div class="topbar">
-    <div class="app-name">🌏 Quake Buddy</div>
+    <div class="app-name">🌏 JaviAlert</div>
     <button class="refresh-ico" id="refreshBtn" onclick="loadData()" title="Refresh">
       <i class="ti ti-refresh" id="refreshIcon"></i>
     </button>
@@ -226,6 +240,7 @@
   <div class="char-card">
     <div class="bubble loading" id="bubble">Checking for earthquakes near you… 🔍</div>
     <div class="kid-wrap" id="kidWrap">
+      <div class="char-name">Javi</div>
       <svg id="kidSvg" width="90" height="120" viewBox="0 0 90 120" xmlns="http://www.w3.org/2000/svg">
         <!-- Legs -->
         <rect x="26" y="94" width="14" height="20" rx="7" fill="#1565C0"/>
@@ -307,7 +322,7 @@
   </div>
 
   <div class="last-update" id="lastUpdate"></div>
-  <div class="footer">Data from USGS · Updates every 5 min · Kiko watches over you 🧡</div>
+  <div class="footer">Data from USGS · Updates every 5 min · Javi watches over you 🧡</div>
 </div>
 
 <script>
@@ -391,26 +406,26 @@ function setMood(level) {
   }
 }
 
-async function getKikoMessage(level, mag, dist, place) {
+async function getJaviMessage(level, mag, dist, place) {
   const bubble = document.getElementById('bubble');
   bubble.className = 'bubble loading';
-  bubble.textContent = 'Kiko is thinking… 💭';
+  bubble.textContent = 'Javi is thinking… 💭';
 
   const msgs = {
     safe: [
-      `You are a cheerful 8-year-old cartoon boy named Kiko who watches over earthquake safety. The nearest earthquake was M${mag} and it's ${dist}km away. Say something short, happy and reassuring in 1-2 sentences. Be super cute and childlike. Use 1-2 emojis. Max 30 words.`,
-      `You are a happy 8-year-old cartoon boy named Kiko. The ground is not shaking near you! The closest shake is M${mag} and ${dist}km away. Tell the child it's safe to play and have fun. Use 1-2 emojis. Max 25 words.`,
-      `You are Kiko, a friendly 8-year-old cartoon boy. No earthquakes nearby! The closest one is M${mag} and ${dist}km far away. Say something cheerful about being safe. Use 1-2 emojis. Max 25 words.`
+      `You are a cheerful 8-year-old cartoon boy named Javi who watches over earthquake safety. The nearest earthquake was M${mag} and it's ${dist}km away. Say something short, happy and reassuring in 1-2 sentences. Be super cute and childlike. Use 1-2 emojis. Max 30 words.`,
+      `You are a happy 8-year-old cartoon boy named Javi. The ground is not shaking near you! The closest shake is M${mag} and ${dist}km away. Tell the child it's safe to play and have fun. Use 1-2 emojis. Max 25 words.`,
+      `You are Javi, a friendly 8-year-old cartoon boy. No earthquakes nearby! The closest one is M${mag} and ${dist}km far away. Say something cheerful about being safe. Use 1-2 emojis. Max 25 words.`
     ],
     warning: [
-      `You are a cautious but calm 8-year-old cartoon boy named Kiko. There was a M${mag} earthquake ${dist}km away near ${place}. Give a short simple safety tip for kids in 1-2 sentences. Calm, not scary. Use 1 emoji. Max 30 words.`,
-      `You are Kiko, a careful 8-year-old boy. A small earthquake M${mag} happened ${dist}km away. Give a simple safety tip for kids. Stay calm. Use 1 emoji. Max 25 words.`,
-      `You are a calm 8-year-old cartoon boy Kiko. The ground shook a little M${mag} at ${dist}km away. Tell the child what to do simply. Use 1 emoji. Max 25 words.`
+      `You are a cautious but calm 8-year-old cartoon boy named Javi. There was a M${mag} earthquake ${dist}km away near ${place}. Give a short simple safety tip for kids in 1-2 sentences. Calm, not scary. Use 1 emoji. Max 30 words.`,
+      `You are Javi, a careful 8-year-old boy. A small earthquake M${mag} happened ${dist}km away. Give a simple safety tip for kids. Stay calm. Use 1 emoji. Max 25 words.`,
+      `You are a calm 8-year-old cartoon boy Javi. The ground shook a little M${mag} at ${dist}km away. Tell the child what to do simply. Use 1 emoji. Max 25 words.`
     ],
     danger: [
-      `You are a scared but brave 8-year-old cartoon boy named Kiko. A big M${mag} earthquake just hit ${dist}km away near ${place}! Give a short urgent safety instruction — DROP COVER HOLD ON — in simple words a child understands. 1 emoji. Max 30 words.`,
-      `You are Kiko, a brave 8-year-old boy. BIG earthquake M${mag} is ${dist}km away! Tell the child to DROP, COVER, HOLD ON right now! Use simple words. 1 emoji. Max 25 words.`,
-      `You are a worried but brave 8-year-old Kiko. Strong shake M${mag} at ${dist}km! Tell child to get under table and hold tight! Use 1 emoji. Max 25 words.`
+      `You are a scared but brave 8-year-old cartoon boy named Javi. A big M${mag} earthquake just hit ${dist}km away near ${place}! Give a short urgent safety instruction — DROP COVER HOLD ON — in simple words a child understands. 1 emoji. Max 30 words.`,
+      `You are Javi, a brave 8-year-old boy. BIG earthquake M${mag} is ${dist}km away! Tell the child to DROP, COVER, HOLD ON right now! Use simple words. 1 emoji. Max 25 words.`,
+      `You are a worried but brave 8-year-old Javi. Strong shake M${mag} at ${dist}km! Tell child to get under table and hold tight! Use 1 emoji. Max 25 words.`
     ]
   };
 
@@ -486,10 +501,10 @@ async function loadData() {
     else if (nearestMag >= 3.0) level = 'warning';
 
     setMood(level);
-    getKikoMessage(level, nearestMag.toFixed(1), nearestDist.toFixed(0), nearestPlace);
+    getJaviMessage(level, nearestMag.toFixed(1), nearestDist.toFixed(0), nearestPlace);
 
     if (quakes.length === 0) {
-      document.getElementById('quakeList').innerHTML = '<div class="empty">🎉 No earthquakes nearby! Kiko says relax!</div>';
+      document.getElementById('quakeList').innerHTML = '<div class="empty">🎉 No earthquakes nearby! Javi says relax!</div>';
     } else {
       document.getElementById('quakeList').innerHTML = quakes.slice(0,10).map(q => {
         const mag = (q.properties.mag || 0).toFixed(1);
