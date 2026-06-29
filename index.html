@@ -16,43 +16,69 @@
 <link rel="icon" sizes="192x192" href="icons/icon-192.png"/>
 <link rel="icon" sizes="512x512" href="icons/icon-512.png"/>
 <title>JaviAlert</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/lucide@0.468.0/dist/umd/lucide.min.js"></script>
 <style>
   :root {
-    --safe-sky1: #0f8ac9;
-    --safe-sky2: #7dd3fc;
-    --warn-sky1: #d97706;
-    --warn-sky2: #fcd34d;
-    --danger-sky1: #b91c1c;
-    --danger-sky2: #fca5a5;
-    --card-bg: rgba(255,255,255,0.88);
-    --text: #0f172a;
-    --muted: #64748b;
-    --radius: 16px;
+    --safe-sky1: #4facfe;
+    --safe-sky2: #a8edea;
+    --warn-sky1: #f093fb;
+    --warn-sky2: #f5576c;
+    --danger-sky1: #ff0844;
+    --danger-sky2: #ffb199;
+    --card-bg: rgba(255,255,255,0.92);
+    --text: #2d3436;
+    --muted: #636e72;
+    --radius: 20px;
     --shadow-sm: 0 1px 3px rgba(0,0,0,.08);
     --shadow-md: 0 4px 16px rgba(0,0,0,.1);
     --shadow-lg: 0 8px 32px rgba(0,0,0,.12);
+    --cartoon-border: 3px solid #2d3436;
+    --cartoon-shadow: 5px 5px 0px #2d3436;
+    --bubble-bg: #fff5f5;
+    --accent: #fd79a8;
+    --accent2: #00cec9;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; overflow-x: hidden; }
+  html, body {
+    height: 100%;
+    font-family: 'Fredoka', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    overflow-x: hidden;
+  }
 
   body {
-    background: linear-gradient(160deg, var(--safe-sky1) 0%, var(--safe-sky2) 100%);
+    background: linear-gradient(135deg, var(--safe-sky1) 0%, var(--safe-sky2) 100%);
+    background-size: 200% 200%;
+    animation: gradientShift 10s ease infinite;
     transition: background 1s ease;
     min-height: 100vh;
     position: relative;
+  }
+  @keyframes gradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
   }
   body::before {
     content: '';
     position: fixed;
     inset: 0;
-    background-image: radial-gradient(circle at 20% 30%, rgba(255,255,255,.15) 0%, transparent 50%),
-                      radial-gradient(circle at 80% 70%, rgba(255,255,255,.1) 0%, transparent 50%);
+    background-image: radial-gradient(circle at 20% 30%, rgba(255,255,255,.2) 0%, transparent 50%),
+                      radial-gradient(circle at 80% 70%, rgba(255,255,255,.15) 0%, transparent 50%);
     pointer-events: none;
     z-index: 0;
   }
-  body.warning { background: linear-gradient(160deg, var(--warn-sky1) 0%, var(--warn-sky2) 100%); }
-  body.danger { background: linear-gradient(160deg, var(--danger-sky1) 0%, var(--danger-sky2) 100%); }
+  body.warning {
+    background: linear-gradient(135deg, var(--warn-sky1) 0%, var(--warn-sky2) 100%);
+    background-size: 200% 200%;
+    animation: gradientShift 10s ease infinite;
+  }
+  body.danger {
+    background: linear-gradient(135deg, var(--danger-sky1) 0%, var(--danger-sky2) 100%);
+    background-size: 200% 200%;
+    animation: gradientShift 3s ease infinite;
+  }
 
   .app { max-width: 430px; margin: 0 auto; padding: 16px 16px 32px; position: relative; z-index: 1; }
 
@@ -63,47 +89,51 @@
   }
   .app-name {
     display: flex; align-items: center; gap: 6px;
-    font-size: 18px; font-weight: 700; color: white; text-shadow: 0 1px 4px rgba(0,0,0,.2);
+    font-size: 22px; font-weight: 700; color: white;
+    text-shadow: 3px 3px 0px rgba(0,0,0,.15);
+    letter-spacing: .5px;
   }
-  .app-name i { width: 20px; height: 20px; }
+  .app-name i { width: 22px; height: 22px; }
   .refresh-ico {
-    width: 38px; height: 38px; border-radius: 50%;
-    background: rgba(255,255,255,.3); border: none; cursor: pointer;
+    width: 40px; height: 40px; border-radius: 50%;
+    background: rgba(255,255,255,.35);
+    border: 2.5px solid rgba(255,255,255,.6); cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    font-size: 18px; color: white; transition: background .2s;
+    font-size: 18px; color: white; transition: background .2s, transform .15s;
   }
-  .refresh-ico:active { background: rgba(255,255,255,.5); }
+  .refresh-ico:active { background: rgba(255,255,255,.6); transform: scale(.92); }
   .refresh-ico:disabled { opacity: .5; }
 
   /* LOCATION BAR */
   .loc-bar {
-    background: rgba(255,255,255,.75); backdrop-filter: blur(8px);
-    border-radius: 30px; padding: 7px 14px;
+    background: rgba(255,255,255,.8); backdrop-filter: blur(8px);
+    border-radius: 30px; padding: 8px 16px;
     display: flex; align-items: center; gap: 6px;
     font-size: 12px; color: #333; margin-bottom: 12px;
     position: relative; z-index: 50;
+    border: 2.5px solid rgba(45,52,54,.2);
   }
   .loc-bar i { width: 14px; height: 14px; color: #e74c3c; flex-shrink: 0; }
   .loc-input {
     flex: 1; border: none; background: transparent;
-    font-size: 12px; color: #333; outline: none;
+    font-size: 13px; color: #333; outline: none;
     font-family: inherit; min-width: 0;
   }
   .loc-input::placeholder { color: #999; }
   .loc-dropdown {
     position: absolute; top: 100%; left: 0; right: 0; z-index: 100;
-    background: white; border-radius: 12px; margin-top: 4px;
+    background: white; border-radius: 14px; margin-top: 4px;
     box-shadow: var(--shadow-lg); max-height: 200px; overflow-y: auto;
-    border: 1px solid rgba(0,0,0,.08);
+    border: 2.5px solid #2d3436;
   }
   .loc-dropdown.hidden { display: none; }
   .loc-dropdown-item {
-    padding: 10px 14px; font-size: 12px; color: var(--text);
-    cursor: pointer; border-bottom: 1px solid rgba(0,0,0,.04);
+    padding: 10px 14px; font-size: 13px; color: var(--text);
+    cursor: pointer; border-bottom: 2px dashed rgba(0,0,0,.08);
     transition: background .1s;
   }
   .loc-dropdown-item:last-child { border-bottom: none; }
-  .loc-dropdown-item:hover, .loc-dropdown-item.active { background: #f0f7ff; }
+  .loc-dropdown-item:hover, .loc-dropdown-item.active { background: #ffeaa7; }
   .loc-dropdown-item .ld-sub {
     font-size: 11px; color: var(--muted); margin-top: 1px;
   }
@@ -116,10 +146,11 @@
   }
   .cloud {
     position: absolute;
-    background: rgba(255,255,255,.85);
+    background: rgba(255,255,255,.88);
     border-radius: 50px;
     animation: drift linear infinite;
     will-change: transform;
+    filter: drop-shadow(2px 2px 0px rgba(0,0,0,.12));
   }
   .cloud::before, .cloud::after {
     content: ''; position: absolute;
@@ -138,7 +169,7 @@
   .c2 {
     width: 50px; height: 16px;
     top: 32px; left: 40%;
-    opacity: .5;
+    opacity: .55;
     animation-duration: 35s;
     animation-delay: -10s;
   }
@@ -148,7 +179,7 @@
   .c3 {
     width: 70px; height: 20px;
     top: 14px; right: 8%;
-    opacity: .8;
+    opacity: .85;
     animation-duration: 26s;
     animation-delay: -6s;
   }
@@ -158,7 +189,7 @@
   .c4 {
     width: 40px; height: 12px;
     top: 40px; left: 18%;
-    opacity: .4;
+    opacity: .45;
     animation-duration: 40s;
     animation-delay: -18s;
   }
@@ -168,7 +199,7 @@
   .c5 {
     width: 80px; height: 24px;
     top: 24px; right: 25%;
-    opacity: .6;
+    opacity: .65;
     animation-duration: 30s;
     animation-delay: -14s;
   }
@@ -184,34 +215,50 @@
 
   /* CHARACTER CARD */
   .char-card {
-    background: var(--card-bg); backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-radius: 20px; padding: 14px;
+    background: #fff5f5;
+    border-radius: 24px; padding: 14px;
     display: flex; align-items: center; gap: 10px;
     margin-bottom: 12px;
-    box-shadow: var(--shadow-md);
-    border: 1px solid rgba(255,255,255,.7);
+    box-shadow: var(--cartoon-shadow);
+    border: var(--cartoon-border);
+    transform: rotate(-0.3deg);
+    position: relative;
+  }
+  /* Decorative sparkle on character card */
+  .char-card::before {
+    content: '✦';
+    position: absolute;
+    top: -8px; right: -8px;
+    font-size: 18px;
+    color: var(--accent);
+    transform: rotate(15deg);
+    filter: drop-shadow(1px 1px 0px rgba(0,0,0,.1));
   }
 
   /* SPEECH BUBBLE */
   .bubble {
-    flex: 1; background: white; border-radius: 16px;
-    padding: 14px 18px; font-size: 14px; line-height: 1.55;
-    color: var(--text); font-weight: 500; position: relative;
-    box-shadow: var(--shadow-sm);
+    flex: 1; background: white; border-radius: 24px;
+    padding: 14px 18px; font-size: 15px; line-height: 1.55;
+    color: var(--text); font-weight: 600; position: relative;
     min-height: 56px;
     display: flex; align-items: center; gap: 8px;
     align-self: stretch;
-    border: 1px solid rgba(0,0,0,.06);
+    border: var(--cartoon-border);
   }
   .bubble::after {
-    content: ''; position: absolute; right: -8px; top: 50%;
+    content: ''; position: absolute; right: -12px; top: 50%;
     transform: translateY(-50%);
-    border: 6px solid transparent; border-left: 8px solid white;
-    filter: drop-shadow(1px 0 1px rgba(0,0,0,.06));
+    border: 8px solid transparent; border-left: 12px solid white;
+    filter: drop-shadow(2px 0 0 #2d3436);
+  }
+  .bubble::before {
+    content: ''; position: absolute; right: -15px; top: 50%;
+    transform: translateY(-50%);
+    border: 8px solid transparent; border-left: 12px solid #2d3436;
+    z-index: -1;
   }
   .bubble.loading { color: var(--muted); font-style: italic; }
-  .bubble i { width: 16px; height: 16px; flex-shrink: 0; }
+  .bubble i { width: 18px; height: 18px; flex-shrink: 0; }
 
   /* KID GIF */
   .kid-wrap {
@@ -228,17 +275,17 @@
     top: -10px;
     left: 50%;
     transform: translateX(-50%);
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 700;
     color: var(--text);
-    background: white;
-    padding: 3px 14px;
+    background: #ffeaa7;
+    padding: 3px 16px;
     border-radius: 20px;
-    box-shadow: var(--shadow-sm);
+    box-shadow: 3px 3px 0px #2d3436;
     white-space: nowrap;
     z-index: 1;
-    border: 1px solid rgba(0,0,0,.04);
-    letter-spacing: .3px;
+    border: 2.5px solid #2d3436;
+    letter-spacing: .5px;
   }
   .kid-gif {
     height: 190px;
@@ -268,100 +315,153 @@
   .status-pill {
     display: inline-flex; align-items: center; gap: 6px;
     width: fit-content; margin: 0 auto 14px;
-    padding: 7px 18px; border-radius: 30px;
-    font-size: 14px; font-weight: 700; color: white;
-    box-shadow: 0 2px 8px rgba(0,0,0,.2);
+    padding: 8px 20px; border-radius: 30px;
+    font-size: 15px; font-weight: 700; color: white;
+    box-shadow: 4px 4px 0px rgba(0,0,0,.15);
     letter-spacing: .3px;
+    border: 2.5px solid #2d3436;
+    transform: rotate(-0.5deg);
   }
   .status-pill i { width: 16px; height: 16px; }
-  .pill-safe    { background: #2ecc71; }
-  .pill-warning { background: #e67e22; }
-  .pill-danger  { background: #e74c3c; animation: pulse-red 1s infinite; }
-  @keyframes pulse-red { 0%,100% { box-shadow: 0 0 0 0 rgba(231,76,60,.5); } 50% { box-shadow: 0 0 0 8px rgba(231,76,60,0); } }
+  .pill-safe    { background: #00b894; }
+  .pill-warning { background: #fdcb6e; color: #2d3436; }
+  .pill-danger  { background: #e17055; animation: pulse-red 1s infinite; }
+  @keyframes pulse-red { 0%,100% { box-shadow: 4px 4px 0px rgba(0,0,0,.15); } 50% { box-shadow: 4px 4px 0px rgba(0,0,0,.15), 0 0 0 8px rgba(225,112,85,0.3); } }
 
   /* STATS ROW */
   .stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
   .stat {
-    background: var(--card-bg); border-radius: var(--radius); padding: 14px;
-    text-align: center; box-shadow: var(--shadow-sm);
-    border: 1px solid rgba(255,255,255,.7);
+    background: var(--card-bg); border-radius: var(--radius); padding: 14px 10px;
+    text-align: center; box-shadow: var(--cartoon-shadow);
+    border: var(--cartoon-border);
+    position: relative;
+    overflow: hidden;
   }
-  .stat-num { font-size: 26px; font-weight: 800; color: var(--text); }
-  .stat-lbl  { font-size: 11px; color: var(--muted); margin-top: 3px; font-weight: 500; }
+  .stat::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image: radial-gradient(circle at 50% 0%, rgba(253,121,168,.08) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .stat-num { font-size: 32px; font-weight: 800; color: var(--text); position: relative; }
+  .stat-lbl  { font-size: 11px; color: var(--muted); margin-top: 3px; font-weight: 600; position: relative; }
 
   /* QUAKE LIST CARD */
   .list-card {
     background: var(--card-bg); border-radius: var(--radius);
-    box-shadow: var(--shadow-sm);
-    border: 1px solid rgba(255,255,255,.7); overflow: hidden;
+    box-shadow: var(--cartoon-shadow);
+    border: var(--cartoon-border); overflow: hidden;
     margin-bottom: 12px;
   }
   .list-header {
     display: flex; align-items: center; gap: 6px;
-    padding: 12px 16px; font-size: 12px; font-weight: 700;
+    padding: 12px 16px; font-size: 13px; font-weight: 700;
     color: var(--muted); letter-spacing: .6px; text-transform: uppercase;
-    border-bottom: 1px solid rgba(0,0,0,.06);
+    border-bottom: 2.5px dashed #2d3436;
+    background: rgba(255,245,245,.4);
   }
   .list-header i { width: 14px; height: 14px; }
+  .list-header { position: relative; }
+  #listTitle { flex: 1; }
+  .sort-wrap { position: relative; }
+  .sort-btn {
+    width: 30px; height: 30px; border-radius: 10px;
+    border: 2.5px solid #2d3436; background: white; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--muted); transition: background .15s, transform .15s;
+    box-shadow: 2px 2px 0px #2d3436;
+  }
+  .sort-btn:active { background: #ffeaa7; transform: scale(.92); }
+  .sort-btn i { width: 14px; height: 14px; }
+  .sort-dropdown {
+    position: absolute; top: 100%; right: 0; z-index: 100;
+    background: white; border-radius: 14px; margin-top: 6px;
+    box-shadow: 4px 4px 0px #2d3436; min-width: 150px;
+    border: 2.5px solid #2d3436; overflow: hidden;
+  }
+  .sort-dropdown.hidden { display: none; }
+  .sort-option {
+    padding: 10px 14px; font-size: 13px; font-weight: 600;
+    color: var(--text); cursor: pointer;
+    transition: background .1s; white-space: nowrap;
+    border-bottom: 2px dashed rgba(0,0,0,.06);
+  }
+  .sort-option:last-child { border-bottom: none; }
+  .sort-option:hover { background: #ffeaa7; }
+  .sort-option.active { background: #dfe6e9; color: #2d3436; }
   .quake-item {
     display: flex; align-items: center; gap: 12px;
-    padding: 12px 16px; border-bottom: 1px solid rgba(0,0,0,.05);
+    padding: 12px 16px;
+    border-bottom: 2px dashed rgba(0,0,0,.08);
     transition: background .15s;
   }
+  .quake-item:nth-child(even) { background: rgba(255,245,245,.3); }
   .quake-item:last-child { border-bottom: none; }
-  .quake-item:active { background: rgba(0,0,0,.03); }
+  .quake-item:active { background: #ffeaa7; }
   .mag-badge {
-    width: 44px; height: 44px; border-radius: 12px;
+    width: 46px; height: 46px; border-radius: 14px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 13px; font-weight: 800; color: white; flex-shrink: 0;
+    font-size: 14px; font-weight: 800; color: white; flex-shrink: 0;
+    border: 2.5px solid #2d3436;
+    box-shadow: 3px 3px 0px #2d3436;
   }
-  .mag-low     { background: #2ecc71; }
-  .mag-minor   { background: #f39c12; }
-  .mag-moderate{ background: #e67e22; }
-  .mag-strong  { background: #e74c3c; }
-  .mag-major   { background: #8e44ad; }
+  .mag-low     { background: #00b894; }
+  .mag-minor   { background: #fdcb6e; color: #2d3436; }
+  .mag-moderate{ background: #e17055; }
+  .mag-strong  { background: #d63031; }
+  .mag-major   { background: #6c5ce7; }
   .q-info { flex: 1; min-width: 0; }
   .q-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-  .q-place { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .q-meta  { font-size: 11px; color: var(--muted); margin-top: 2px; }
-  .q-dist  { font-size: 13px; font-weight: 700; color: var(--muted); flex-shrink: 0; }
+  .q-place { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .q-meta  { font-size: 12px; color: var(--muted); margin-top: 2px; font-weight: 500; }
+  .q-dist  { font-size: 14px; font-weight: 700; color: var(--muted); flex-shrink: 0; }
 
   /* PAGINATION */
   .pagination {
     display: flex; align-items: center; justify-content: center; gap: 8px;
-    padding: 10px 16px 14px; border-top: 1px solid rgba(0,0,0,.06);
+    padding: 10px 16px 14px;
+    border-top: 2.5px dashed #2d3436;
   }
   .page-btn {
-    width: 32px; height: 32px; border-radius: 8px; border: none;
-    background: rgba(0,0,0,.06); color: var(--text); font-size: 13px; font-weight: 600;
+    width: 36px; height: 36px; border-radius: 12px;
+    border: 2.5px solid #2d3436;
+    background: white; color: var(--text); font-size: 14px; font-weight: 700;
     cursor: pointer; display: flex; align-items: center; justify-content: center;
-    transition: background .15s;
+    transition: background .15s, transform .15s;
+    box-shadow: 2px 2px 0px #2d3436;
   }
-  .page-btn:active { background: rgba(0,0,0,.12); }
-  .page-btn:disabled { opacity: .3; cursor: default; }
+  .page-btn:active { background: #ffeaa7; transform: scale(.9); }
+  .page-btn:disabled { opacity: .35; cursor: default; box-shadow: none; transform: none; }
   .page-btn.active { background: var(--safe-sky1); color: white; }
-  .page-info { font-size: 12px; color: var(--muted); font-weight: 500; min-width: 60px; text-align: center; }
+  .page-info { font-size: 13px; color: var(--muted); font-weight: 600; min-width: 60px; text-align: center; }
 
   /* EMPTY */
-  .empty { padding: 28px; text-align: center; color: var(--muted); font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .empty { padding: 28px; text-align: center; color: var(--muted); font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 500; }
   .empty i { width: 18px; height: 18px; }
 
   /* INSTALL BANNER */
   .install-banner {
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, #fd79a8, #e17055);
     border-radius: var(--radius); padding: 14px 16px;
     display: flex; align-items: center; gap: 12px;
     color: white; margin-bottom: 12px; cursor: pointer;
-    box-shadow: 0 4px 12px rgba(102,126,234,.4);
+    box-shadow: var(--cartoon-shadow);
+    border: var(--cartoon-border);
     transition: opacity .3s, transform .3s;
+    animation: bounceIn .5s ease;
+  }
+  @keyframes bounceIn {
+    0% { transform: scale(0.8); opacity: 0; }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); opacity: 1; }
   }
   .install-banner.hidden { display: none; }
-  .install-banner:active { transform: scale(.97); }
+  .install-banner:active { transform: scale(.95); }
   .install-banner i:first-child { width: 24px; height: 24px; }
   .install-banner i:last-child { width: 18px; height: 18px; }
   .install-text { flex: 1; }
-  .install-title { display: block; font-size: 14px; }
-  .install-desc { font-size: 12px; opacity: .85; }
+  .install-title { display: block; font-size: 15px; }
+  .install-desc { font-size: 12px; opacity: .9; }
 
   /* INSTALL TUTORIAL MODAL */
   .modal-overlay {
@@ -375,60 +475,69 @@
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
   .modal-card {
-    background: white; border-radius: 20px;
+    background: white; border-radius: 24px;
     max-width: 380px; width: 100%;
-    box-shadow: 0 20px 60px rgba(0,0,0,.25);
+    box-shadow: 6px 6px 0px #2d3436;
     animation: slideUp .3s ease;
     position: relative;
     overflow: hidden;
+    border: 3px solid #2d3436;
   }
   .modal-close {
     position: absolute; top: 12px; right: 12px;
     width: 32px; height: 32px; border-radius: 50%;
-    border: none; background: rgba(0,0,0,.06);
+    border: 2.5px solid #2d3436; background: white;
     font-size: 20px; line-height: 1; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     color: var(--muted); z-index: 2;
+    box-shadow: 2px 2px 0px #2d3436;
   }
-  .modal-close:active { background: rgba(0,0,0,.12); }
+  .modal-close:active { background: #ffeaa7; }
   .modal-header {
     text-align: center; padding: 28px 24px 12px;
   }
-  .modal-header i { width: 48px; height: 48px; color: #667eea; margin-bottom: 8px; }
-  .modal-title { font-size: 18px; font-weight: 700; color: var(--text); }
+  .modal-header i { width: 48px; height: 48px; color: #fd79a8; margin-bottom: 8px; }
+  .modal-title { font-size: 20px; font-weight: 700; color: var(--text); }
   .modal-steps {
     padding: 8px 24px 16px;
   }
   .modal-step {
     display: flex; align-items: flex-start; gap: 12px;
     padding: 10px 0;
-    border-bottom: 1px solid rgba(0,0,0,.05);
+    border-bottom: 2px dashed rgba(0,0,0,.08);
   }
   .modal-step:last-child { border-bottom: none; }
   .modal-step-num {
-    width: 26px; height: 26px; border-radius: 50%;
-    background: #667eea; color: white;
-    font-size: 13px; font-weight: 700;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: #fd79a8; color: white;
+    font-size: 14px; font-weight: 700;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0; margin-top: 1px;
+    border: 2px solid #2d3436;
+    box-shadow: 2px 2px 0px #2d3436;
   }
-  .modal-step-text { font-size: 14px; color: var(--text); line-height: 1.5; }
-  .modal-step-text strong { display: block; font-size: 13px; color: var(--muted); margin-bottom: 2px; }
+  .modal-step-text { font-size: 14px; color: var(--text); line-height: 1.5; font-weight: 500; }
+  .modal-step-text strong { display: block; font-size: 13px; color: var(--muted); margin-bottom: 2px; font-weight: 600; }
   .modal-footer { padding: 8px 24px 20px; text-align: center; }
   .modal-btn {
-    width: 100%; padding: 12px; border: none; border-radius: 12px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white; font-size: 15px; font-weight: 700;
-    cursor: pointer; transition: opacity .2s;
+    width: 100%; padding: 12px; border: 2.5px solid #2d3436; border-radius: 14px;
+    background: linear-gradient(135deg, #fd79a8, #e17055);
+    color: white; font-size: 16px; font-weight: 700;
+    cursor: pointer; transition: opacity .2s, transform .15s;
+    box-shadow: 4px 4px 0px #2d3436;
   }
-  .modal-btn:active { opacity: .85; }
+  .modal-btn:active { opacity: .9; transform: scale(.97); }
 
   /* FOOTER */
-  .footer { text-align: center; font-size: 11px; color: rgba(255,255,255,.7); padding-top: 8px; display: flex; align-items: center; justify-content: center; gap: 4px; }
-  .footer i { width: 12px; height: 12px; }
+  .footer { text-align: center; font-size: 12px; color: rgba(255,255,255,.8); padding-top: 8px; display: flex; align-items: center; justify-content: center; gap: 4px; font-weight: 500; }
+  .footer i { width: 12px; height: 12px; animation: heartBeat 1.5s ease infinite; }
+  @keyframes heartBeat {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+  }
 
   /* LAST UPDATE */
-  .last-update { text-align: center; font-size: 11px; color: rgba(0,0,0,.4); padding: 4px 0 8px; }
+  .last-update { text-align: center; font-size: 11px; color: rgba(0,0,0,.4); padding: 4px 0 8px; font-weight: 500; }
 
   /* SPIN */
   .spin { animation: spin 1s linear infinite; display: inline-block; }
@@ -532,811 +641,759 @@
   <div class="list-card">
     <div class="list-header">
       <i data-lucide="target" aria-hidden="true"></i>
-      Nearest Earthquakes
-    </div>
-    <div id="quakeList" role="list" aria-label="Nearest earthquakes">
-      <div class="empty">
-        <i data-lucide="loader-2" class="spin" aria-hidden="true"></i>
-        Loading earthquake data...
+      <span id="listTitle">Nearest Earthquakes</span>
+      <div class="sort-wrap">
+        <button class="sort-btn" id="sortBtn" aria-label="Sort earthquakes">
+          <i data-lucide="arrow-up-down" aria-hidden="true"></i>
+        </button>
+        <div class="sort-dropdown hidden" id="sortDropdown">
+          <div class="sort-option active" data-sort="nearest">📍 Nearest</div>
+          <div class="sort-option" data-sort="newest">🕐 Newest</div>
+          <div class="sort-option" data-sort="strongest">💪 Strongest</div>
+        </div>
       </div>
     </div>
-    <div class="pagination hidden" id="pagination">
-      <button class="page-btn" id="pagePrev" aria-label="Previous page">
+    <div id="quakeList"></div>
+    <div class="pagination" id="pagination">
+      <button class="page-btn" id="prevPage" aria-label="Previous page">
         <i data-lucide="chevron-left" aria-hidden="true"></i>
       </button>
-      <span class="page-info" id="pageInfo">1 / 1</span>
-      <button class="page-btn" id="pageNext" aria-label="Next page">
+      <span class="page-info" id="pageInfo">Page 1</span>
+      <button class="page-btn" id="nextPage" aria-label="Next page">
         <i data-lucide="chevron-right" aria-hidden="true"></i>
       </button>
     </div>
   </div>
 
-  <div class="last-update" id="lastUpdate" aria-live="polite"></div>
+  <!-- Footer -->
   <div class="footer">
-    <span>Data from USGS</span>
-    <span aria-hidden="true">&middot;</span>
-    <span>Updates every 5 min</span>
-    <span aria-hidden="true">&middot;</span>
-    <span>Javi watches over you</span>
-    <i data-lucide="heart" aria-hidden="true"></i>
+    Made with <i data-lucide="heart" aria-hidden="true"></i> by Javi
   </div>
+  <div class="last-update" id="lastUpdate"></div>
+
 </div>
 </main>
 
 <script>
-// ============================================================
-// Constants
-// ============================================================
-const API = {
-  USGS: 'https://earthquake.usgs.gov/fdsnws/event/1/query',
-  NOMINATIM: 'https://nominatim.openstreetmap.org/reverse',
-  NOMINATIM_SEARCH: 'https://nominatim.openstreetmap.org/search',
-  OPENROUTER: 'https://openrouter.ai/api/v1/chat/completions'
-};
-const OPENROUTER_KEY = ['sk','or','v1','58f7dc74e2b5ffa6940c0241e8a2579f954bf7fe7eaaa7004dad7555e555294a'].join('-');
-const OPENROUTER_MODEL = 'meta-llama/llama-3.2-3b-instruct:free';
+(function() {
+  'use strict';
 
-const CONFIG = {
-  QUAKE_LIMIT: 25,
-  MIN_MAGNITUDE: 1,
-  DISPLAY_COUNT: 10,
-  AUTO_REFRESH_MS: 300000, // 5 minutes
-  DANGER_THRESHOLD: 5.0,
-  WARNING_THRESHOLD: 3.0,
-  RECENT_WINDOW_MS: 172800000, // 48 hours
-  TODAY_WINDOW_MS: 86400000 // 24 hours
-};
+  // ─── API & CONFIG ────────────────────────────────────────────
+  const API = {
+    USGS: 'https://earthquake.usgs.gov/fdsnws/event/1/query',
+    NOMINATIM: 'https://nominatim.openstreetmap.org/reverse',
+    NOMINATIM_SEARCH: 'https://nominatim.openstreetmap.org/search',
+    OPENROUTER: 'https://openrouter.ai/api/v1/chat/completions'
+  };
+  const OPENROUTER_KEY = ['sk','or','v1','58f7dc74e2b5ffa6940c0241e8a2579f954bf7fe7eaaa7004dad7555e555294a'].join('-');
+  const OPENROUTER_MODEL = 'meta-llama/llama-3.2-3b-instruct:free';
 
-const DEFAULT_LOCATION = { lat: 10.3157, lon: 123.8854, name: 'Cebu City, Philippines' };
+  const CONFIG = {
+    QUAKE_LIMIT: 25,
+    MIN_MAGNITUDE: 1,
+    DISPLAY_COUNT: 10,
+    AUTO_REFRESH_MS: 300000,
+    DANGER_THRESHOLD: 5.0,
+    WARNING_THRESHOLD: 3.0,
+    RECENT_WINDOW_MS: 172800000,
+    TODAY_WINDOW_MS: 86400000
+  };
 
-// ============================================================
-// Utility Functions (pure, no DOM)
-// ============================================================
-function magClass(m) {
-  if (m < 2) return 'mag-low';
-  if (m < 3) return 'mag-minor';
-  if (m < 5) return 'mag-moderate';
-  if (m < 6) return 'mag-strong';
-  return 'mag-major';
-}
+  // ─── FALLBACK MESSAGES (when AI fails) ───────────────────────
+  const FALLBACK_MESSAGES = {
+    safe: [
+      "Safe tayo dito, walang malakas na lindol sa paligid natin.",
+      "Okay lang dito sa area natin, walang malakas na pagyanig.",
+      "Wala akong nakitang malakas na lindol malapit sa atin.",
+      "Relax lang, safe naman tayo ngayon.",
+      "Walang malakas na earthquake na malapit sa atin.",
+      "Tahimik ang lupa sa paligid natin ngayon.",
+      "Safe ang pakiramdam ko dito, walang malakas na lindol.",
+      "Wala akong na-detect na malakas na pagyanig sa area natin."
+    ],
+    warning: [
+      "May naramdaman akong katamtamang pagyanig, mag-ingat tayo.",
+      "Alert, may moderate na lindol sa malapit, stay aware.",
+      "Medyo may galaw ang lupa, ingat lang tayo sa mga susunod.",
+      "May nakitang pagyanig na katamtaman, huwag maging kampante.",
+      "Ingat, may moderate earthquake na na-detect ako malapit.",
+      "May naramdaman akong yanig, stay alert lang tayo.",
+      "Katamtamang lindol ang na-detect ko, mag-ingat palagi.",
+      "Alert tayo, may moderate na pagyanig na malapit sa atin."
+    ],
+    danger: [
+      "MALAKAS na lindol! Kailangan nating mag-ingat at sumilong!",
+      "Emergency! May malakas na pagyanig, manatiling kalmado at safe.",
+      "Malakas na lindol ang na-detect ko! Stay safe at mag-ingat.",
+      "Danger! May malakas na earthquake, mag-ingat tayo.",
+      "Malakas na pagyanig! Sumilong at manatiling safe.",
+      "Alert! May malakas na lindol, kailangan nating maging handa.",
+      "Malakas na lindol ang na-detect ko! Stay calm at mag-ingat.",
+      "Emergency! Malakas na pagyanig, ingat at manatiling safe."
+    ]
+  };
 
-function timeSince(ms) {
-  const s = (Date.now() - ms) / 1000;
-  if (s < 60) return `${Math.round(s)}s ago`;
-  if (s < 3600) return `${Math.round(s / 60)}m ago`;
-  if (s < 86400) return `${Math.round(s / 3600)}h ago`;
-  return `${Math.round(s / 86400)}d ago`;
-}
-
-function distKm(la1, lo1, la2, lo2) {
-  const R = 6371, d2r = Math.PI / 180;
-  const dLa = (la2 - la1) * d2r, dLo = (lo2 - lo1) * d2r;
-  const a = Math.sin(dLa / 2) ** 2 + Math.cos(la1 * d2r) * Math.cos(la2 * d2r) * Math.sin(dLo / 2) ** 2;
-  return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
-}
-
-/**
- * Parse USGS place name like "20 km SSW of La Paz, Philippines"
- * into { location: "La Paz, Philippines", distance: "20", direction: "SSW" }
- */
-function parsePlaceName(raw) {
-  const match = raw ? raw.match(/^([\d.]+)\s*km\s+(\w+)\s+of\s+(.+)/i) : null;
-  if (match) {
-    return {
-      location: match[3],
-      distance: match[1],
-      direction: match[2].toUpperCase()
-    };
-  }
-  // Fallback: return raw as-is
-  return { location: raw || 'Unknown', distance: '', direction: '' };
-}
-
-function determineAlertLevel(recentMag) {
-  if (recentMag >= CONFIG.DANGER_THRESHOLD) return 'danger';
-  if (recentMag >= CONFIG.WARNING_THRESHOLD) return 'warning';
-  return 'safe';
-}
-
-function pickRandom(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
-
-// ============================================================
-// JaviAlertApp Class
-// ============================================================
-class JaviAlertApp {
-  constructor() {
-    this.userLat = DEFAULT_LOCATION.lat;
-    this.userLon = DEFAULT_LOCATION.lon;
-    this.deferredPrompt = null;
-    this.currentPage = 1;
-    this.allQuakes = [];
-
-    this.cache = {
-      quakes: [],
-      locationName: DEFAULT_LOCATION.name
-    };
-
-    this.init();
+  // ─── HELPER FUNCTIONS ────────────────────────────────────────
+  function timeSince(ts) {
+    const diff = Date.now() - new Date(ts).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return mins + 'm ago';
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return hrs + 'h ago';
+    const days = Math.floor(hrs / 24);
+    if (days < 30) return days + 'd ago';
+    return Math.floor(days / 30) + 'mo ago';
   }
 
-  // ---------- Initialization ----------
-  init() {
-    this.setupInstallPrompt();
-    this.setupRefreshButton();
-    this.setupInstallBanner();
-    this.setupPagination();
-    this.setupLocationSearch();
-    this.requestNotificationPermission();
-    this.detectLocation();
-    this.startAutoRefresh();
-    this.registerServiceWorker();
-    try { lucide.createIcons(); } catch (_) {}
+  function getCompassDir(lat1, lon1, lat2, lon2) {
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const y = Math.sin(dLon) * Math.cos((lat2 * Math.PI) / 180);
+    const x = Math.cos((lat1 * Math.PI) / 180) * Math.sin((lat2 * Math.PI) / 180) -
+              Math.sin((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.cos(dLon);
+    const brng = ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
+    const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+    return dirs[Math.round(brng / 22.5) % 16];
   }
 
-  setupInstallPrompt() {
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const isAndroid = /Android/.test(navigator.userAgent);
-    const isDesktop = !isIOS && !isAndroid;
-    const isStandalone = window.navigator.standalone === true;
+  function getDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a = Math.sin(dLat / 2) ** 2 +
+              Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
 
-    // Show install banner on all platforms if not already installed
-    if (!isStandalone && !window.matchMedia('(display-mode: standalone)').matches) {
-      const banner = document.getElementById('installBanner');
-      if (isIOS) {
-        banner.querySelector('.install-title').textContent = 'Install on iOS';
-        banner.querySelector('.install-desc').textContent = 'Tap Share > Add to Home Screen';
-      } else if (isAndroid) {
-        banner.querySelector('.install-title').textContent = 'Install on Android';
-        banner.querySelector('.install-desc').textContent = 'Add to home screen for alerts';
-      } else {
-        banner.querySelector('.install-title').textContent = 'Install on Desktop';
-        banner.querySelector('.install-desc').textContent = 'Use Chrome or Edge to install';
-      }
-      banner.classList.remove('hidden');
-
-      // Click banner -> show tutorial modal
-      banner.addEventListener('click', () => this.showInstallTutorial(isIOS, isAndroid, isDesktop));
+  function parsePlaceName(raw) {
+    // USGS format: "20 km SSW of La Paz, Philippines"
+    const match = raw.match(/^([\d.]+)\s*km\s+(\w+)\s+of\s+(.+)$/i);
+    if (match) {
+      return {
+        distance: parseFloat(match[1]),
+        direction: match[2].toUpperCase(),
+        place: match[3].trim()
+      };
     }
-
-    // Android/Chrome: also listen for beforeinstallprompt
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      this.deferredPrompt = e;
-    });
+    return { distance: null, direction: null, place: raw };
   }
 
-  showInstallTutorial(isIOS, isAndroid, isDesktop) {
-    const modal = document.getElementById('installModal');
-    const icon = document.getElementById('modalDeviceIcon');
-    const title = document.getElementById('modalTitle');
-    const steps = document.getElementById('modalSteps');
-
-    if (isIOS) {
-      icon.setAttribute('data-lucide', 'smartphone');
-      title.textContent = 'Install on iPhone / iPad';
-      steps.innerHTML = `
-        <div class="modal-step">
-          <div class="modal-step-num">1</div>
-          <div class="modal-step-text"><strong>Open in Safari</strong>Make sure you're using Safari browser</div>
-        </div>
-        <div class="modal-step">
-          <div class="modal-step-num">2</div>
-          <div class="modal-step-text"><strong>Tap Share</strong>Tap the Share icon at the bottom of the screen</div>
-        </div>
-        <div class="modal-step">
-          <div class="modal-step-num">3</div>
-          <div class="modal-step-text"><strong>Scroll down</strong>Scroll down and tap <b>"Add to Home Screen"</b></div>
-        </div>
-        <div class="modal-step">
-          <div class="modal-step-num">4</div>
-          <div class="modal-step-text"><strong>Tap Add</strong>Tap "Add" in the top right corner</div>
-        </div>
-      `;
-    } else if (isAndroid) {
-      icon.setAttribute('data-lucide', 'smartphone');
-      title.textContent = 'Install on Android';
-      steps.innerHTML = `
-        <div class="modal-step">
-          <div class="modal-step-num">1</div>
-          <div class="modal-step-text"><strong>Open in Chrome</strong>Make sure you're using Chrome browser</div>
-        </div>
-        <div class="modal-step">
-          <div class="modal-step-num">2</div>
-          <div class="modal-step-text"><strong>Tap Menu</strong>Tap the three-dot menu in the top right</div>
-        </div>
-        <div class="modal-step">
-          <div class="modal-step-num">3</div>
-          <div class="modal-step-text"><strong>Tap Install</strong>Tap <b>"Install app"</b> or <b>"Add to Home screen"</b></div>
-        </div>
-        <div class="modal-step">
-          <div class="modal-step-num">4</div>
-          <div class="modal-step-text"><strong>Tap Install</strong>Tap "Install" in the popup</div>
-        </div>
-      `;
-    } else {
-      icon.setAttribute('data-lucide', 'monitor');
-      title.textContent = 'Install on Desktop';
-      steps.innerHTML = `
-        <div class="modal-step">
-          <div class="modal-step-num">1</div>
-          <div class="modal-step-text"><strong>Open Chrome or Edge</strong>Use Chrome, Edge, or any Chromium browser</div>
-        </div>
-        <div class="modal-step">
-          <div class="modal-step-num">2</div>
-          <div class="modal-step-text"><strong>Click Install</strong>Click the install icon in the address bar</div>
-        </div>
-        <div class="modal-step">
-          <div class="modal-step-num">3</div>
-          <div class="modal-step-text"><strong>Click Install</strong>Click <b>"Install"</b> in the popup dialog</div>
-        </div>
-        <div class="modal-step">
-          <div class="modal-step-num">4</div>
-          <div class="modal-step-text"><strong>Launch</strong>Open Quake Buddy from your desktop or Start menu</div>
-        </div>
-      `;
-    }
-
-    modal.classList.remove('hidden');
-    try { lucide.createIcons(); } catch (_) {}
-
-    // Close handlers
-    const close = () => modal.classList.add('hidden');
-    document.getElementById('modalClose').onclick = close;
-    document.getElementById('modalGotIt').onclick = close;
-    modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+  function magClass(mag) {
+    if (mag < 3) return 'mag-low';
+    if (mag < 4) return 'mag-minor';
+    if (mag < 5) return 'mag-moderate';
+    if (mag < 6) return 'mag-strong';
+    return 'mag-major';
   }
 
-  setupRefreshButton() {
-    document.getElementById('refreshBtn').addEventListener('click', () => this.loadData());
-  }
-
-  setupInstallBanner() {
-    // Banner click is handled in setupInstallPrompt (shows tutorial modal)
-    // Keep keyboard support for accessibility
-    const banner = document.getElementById('installBanner');
-    banner.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') banner.click();
-    });
-  }
-
-  requestNotificationPermission() {
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
-    }
-  }
-
-  setupPagination() {
-    document.getElementById('pagePrev').addEventListener('click', async () => {
-      if (this.currentPage > 1) {
-        this.currentPage--;
-        await this.renderQuakeList(this.allQuakes);
-      }
-    });
-    document.getElementById('pageNext').addEventListener('click', async () => {
-      const totalPages = Math.ceil(this.allQuakes.length / CONFIG.DISPLAY_COUNT);
-      if (this.currentPage < totalPages) {
-        this.currentPage++;
-        await this.renderQuakeList(this.allQuakes);
-      }
-    });
-  }
-
-  startAutoRefresh() {
-    setInterval(() => this.loadData(), CONFIG.AUTO_REFRESH_MS);
-  }
-
-  registerServiceWorker() {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js');
-    }
-  }
-
-  // ---------- PWA Install ----------
-  installApp() {
-    if (!this.deferredPrompt) return;
-    this.deferredPrompt.prompt();
-    this.deferredPrompt.userChoice.then(() => {
-      document.getElementById('installBanner').classList.add('hidden');
+  // ─── JAVIALERT APP ───────────────────────────────────────────
+  class JaviAlertApp {
+    constructor() {
+      this.userLat = null;
+      this.userLon = null;
+      this.userPlace = '';
+      this.currentMood = 'safe';
+      this.currentPage = 1;
+      this.allQuakes = [];
+      this.sortMode = 'nearest';
+      this.isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      this.isAndroid = /Android/.test(navigator.userAgent);
       this.deferredPrompt = null;
-    });
-  }
+      this.refreshTimer = null;
 
-  // ---------- Location Detection ----------
-  async detectLocation() {
-    if (!navigator.geolocation) {
-      this.setLocationInput(DEFAULT_LOCATION.name);
-      this.loadData();
-      return;
+      // Bind
+      this.init = this.init.bind(this);
+      this.loadData = this.loadData.bind(this);
+      this.fetchEarthquakeData = this.fetchEarthquakeData.bind(this);
+      this.processQuakeData = this.processQuakeData.bind(this);
+      this.updateUI = this.updateUI.bind(this);
+      this.renderQuakeList = this.renderQuakeList.bind(this);
+      this.setMood = this.setMood.bind(this);
+      this.getJaviMessage = this.getJaviMessage.bind(this);
+      this.detectLocation = this.detectLocation.bind(this);
+      this.fetchLocationName = this.fetchLocationName.bind(this);
+      this.setupLocationSearch = this.setupLocationSearch.bind(this);
+      this.setupSortDropdown = this.setupSortDropdown.bind(this);
+      this.applySortAndRender = this.applySortAndRender.bind(this);
+      this.setupPagination = this.setupPagination.bind(this);
+      this.showInstallTutorial = this.showInstallTutorial.bind(this);
+      this.setupInstallPrompt = this.setupInstallPrompt.bind(this);
     }
 
-    // Timeout fallback: if geolocation doesn't respond within 10s, use default
-    const timeoutId = setTimeout(() => {
-      this.setLocationInput(DEFAULT_LOCATION.name);
-      this.loadData();
-    }, 10000);
+    // ─── INIT ──────────────────────────────────────────────────
+    async init() {
+      // Register SW
+      if ('serviceWorker' in navigator) {
+        try {
+          await navigator.serviceWorker.register('sw.js');
+        } catch (_) { /* ignore */ }
+      }
 
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        clearTimeout(timeoutId);
+      // Setup UI
+      document.getElementById('refreshBtn').addEventListener('click', () => this.loadData());
+      document.getElementById('installBanner').addEventListener('click', () => this.showInstallTutorial());
+      document.getElementById('modalClose').addEventListener('click', () => {
+        document.getElementById('installModal').classList.add('hidden');
+      });
+      document.getElementById('modalGotIt').addEventListener('click', () => {
+        document.getElementById('installModal').classList.add('hidden');
+      });
+
+      this.setupLocationSearch();
+      this.setupSortDropdown();
+      this.setupPagination();
+      this.setupInstallPrompt();
+
+      // Lucide
+      try { lucide.createIcons(); } catch (_) { /* ignore */ }
+
+      // Detect location then load
+      await this.detectLocation();
+      await this.loadData();
+
+      // Auto-refresh
+      this.refreshTimer = setInterval(() => this.loadData(), CONFIG.AUTO_REFRESH_MS);
+    }
+
+    // ─── LOCATION DETECTION ────────────────────────────────────
+    async detectLocation() {
+      // Try stored location first
+      const stored = localStorage.getItem('javiUserLocation');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          this.userLat = parsed.lat;
+          this.userLon = parsed.lon;
+          this.userPlace = parsed.place || '';
+          if (this.userPlace) {
+            document.getElementById('locInput').value = this.userPlace;
+          }
+          return;
+        } catch (_) { /* ignore */ }
+      }
+
+      // Geolocation API with timeout
+      try {
+        const pos = await new Promise((resolve, reject) => {
+          const timeoutId = setTimeout(() => reject(new Error('timeout')), 10000);
+          navigator.geolocation.getCurrentPosition(
+            (p) => { clearTimeout(timeoutId); resolve(p); },
+            (e) => { clearTimeout(timeoutId); reject(e); },
+            { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }
+          );
+        });
         this.userLat = pos.coords.latitude;
         this.userLon = pos.coords.longitude;
-        const name = await this.fetchLocationName(this.userLat, this.userLon);
-        this.cache.locationName = name;
-        this.setLocationInput(name);
-        this.loadData();
-      },
-      () => {
-        clearTimeout(timeoutId);
-        this.setLocationInput(DEFAULT_LOCATION.name);
-        this.loadData();
-      },
-      { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }
-    );
-  }
-
-  setLocationInput(text) {
-    const input = document.getElementById('locInput');
-    if (input) input.value = text;
-  }
-
-  // ---------- Location Search with Autocomplete ----------
-  setupLocationSearch() {
-    const input = document.getElementById('locInput');
-    const dropdown = document.getElementById('locDropdown');
-    if (!input || !dropdown) return;
-
-    let debounceTimer = null;
-    let selectedIndex = -1;
-    let results = [];
-
-    // Close dropdown on outside click
-    document.addEventListener('click', (e) => {
-      if (!e.target.closest('.loc-bar')) {
-        dropdown.classList.add('hidden');
+      } catch (_) {
+        // Fallback: Manila
+        this.userLat = 14.5995;
+        this.userLon = 120.9842;
       }
-    });
 
-    // Event delegation: handle clicks on any dropdown item
-    dropdown.addEventListener('click', (e) => {
-      const item = e.target.closest('.loc-dropdown-item');
-      if (!item) return;
-      const idx = parseInt(item.dataset.index);
-      if (!isNaN(idx) && results[idx]) {
-        this.selectLocation(results[idx], idx);
-      }
-    });
+      // Reverse geocode
+      await this.fetchLocationName();
+    }
 
-    input.addEventListener('input', () => {
-      clearTimeout(debounceTimer);
-      const q = input.value.trim();
-      if (q.length < 3) {
-        dropdown.classList.add('hidden');
-        return;
+    async fetchLocationName() {
+      try {
+        const url = API.NOMINATIM + '?format=json&lat=' + this.userLat + '&lon=' + this.userLon + '&addressdetails=1';
+        const res = await fetch(url, { headers: { 'User-Agent': 'JaviAlert/1.0' } });
+        if (!res.ok) throw new Error('Nominatim failed');
+        const data = await res.json();
+        const a = data.address || {};
+        const parts = [];
+        if (a.road) parts.push(a.road);
+        if (a.suburb) parts.push(a.suburb);
+        if (a.neighbourhood) parts.push(a.neighbourhood);
+        if (a.district) parts.push(a.district);
+        if (a.municipality) parts.push(a.municipality);
+        if (a.state) parts.push(a.state);
+        if (a.country) parts.push(a.country);
+        this.userPlace = parts.join(', ') || data.display_name || '';
+        document.getElementById('locInput').value = this.userPlace;
+        localStorage.setItem('javiUserLocation', JSON.stringify({
+          lat: this.userLat, lon: this.userLon, place: this.userPlace
+        }));
+      } catch (_) {
+        this.userPlace = this.userLat.toFixed(2) + ', ' + this.userLon.toFixed(2);
+        document.getElementById('locInput').value = this.userPlace;
       }
-      debounceTimer = setTimeout(async () => {
-        try {
-          const url = `${API.NOMINATIM_SEARCH}?format=json&q=${encodeURIComponent(q)}&limit=5&addressdetails=1`;
-          const res = await fetch(url);
-          const data = await res.json();
-          results = data || [];
-          selectedIndex = -1;
-          if (results.length === 0) {
-            dropdown.classList.add('hidden');
-          } else {
-            dropdown.innerHTML = results.map((r, i) => {
-              const display = r.display_name || r.name || '';
-              const cls = r.type || '';
-              return `<div class="loc-dropdown-item" data-index="${i}">
-                <div>${display}</div>
-                <div class="ld-sub">${cls} · ${parseFloat(r.lat).toFixed(4)}, ${parseFloat(r.lon).toFixed(4)}</div>
-              </div>`;
-            }).join('');
+    }
+
+    // ─── LOCATION SEARCH (Nominatim autocomplete) ──────────────
+    setupLocationSearch() {
+      const input = document.getElementById('locInput');
+      const dropdown = document.getElementById('locDropdown');
+      let debounceTimer = null;
+
+      input.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        const q = input.value.trim();
+        if (q.length < 3) {
+          dropdown.classList.add('hidden');
+          return;
+        }
+        debounceTimer = setTimeout(async () => {
+          try {
+            const url = API.NOMINATIM_SEARCH + '?format=json&q=' + encodeURIComponent(q) + '&limit=5';
+            const res = await fetch(url, { headers: { 'User-Agent': 'JaviAlert/1.0' } });
+            if (!res.ok) throw new Error('Search failed');
+            const results = await res.json();
+            dropdown.innerHTML = '';
+            if (!results.length) {
+              dropdown.classList.add('hidden');
+              return;
+            }
+            results.forEach((r) => {
+              const div = document.createElement('div');
+              div.className = 'loc-dropdown-item';
+              div.dataset.lat = r.lat;
+              div.dataset.lon = r.lon;
+              div.dataset.display = r.display_name;
+              const name = r.display_name.split(',')[0] || r.display_name;
+              div.innerHTML = '<div>' + name + '</div><div class="ld-sub">' + r.display_name + '</div>';
+              dropdown.appendChild(div);
+            });
             dropdown.classList.remove('hidden');
+          } catch (_) {
+            dropdown.classList.add('hidden');
           }
-        } catch {
+        }, 400);
+      });
+
+      // Event delegation on dropdown
+      dropdown.addEventListener('click', (e) => {
+        const item = e.target.closest('.loc-dropdown-item');
+        if (!item) return;
+        this.userLat = parseFloat(item.dataset.lat);
+        this.userLon = parseFloat(item.dataset.lon);
+        this.userPlace = item.dataset.display;
+        input.value = this.userPlace.split(',')[0] || this.userPlace;
+        dropdown.classList.add('hidden');
+        localStorage.setItem('javiUserLocation', JSON.stringify({
+          lat: this.userLat, lon: this.userLon, place: this.userPlace
+        }));
+        this.loadData();
+      });
+
+      // Close dropdown on outside click
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('.loc-bar')) {
           dropdown.classList.add('hidden');
         }
-      }, 400);
-    });
+      });
 
-    // Keyboard navigation
-    input.addEventListener('keydown', (e) => {
-      const items = dropdown.querySelectorAll('.loc-dropdown-item');
-      if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
-        items.forEach((el, i) => el.classList.toggle('active', i === selectedIndex));
-        if (items[selectedIndex]) items[selectedIndex].scrollIntoView({ block: 'nearest' });
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        selectedIndex = Math.max(selectedIndex - 1, -1);
-        items.forEach((el, i) => el.classList.toggle('active', i === selectedIndex));
-      } else if (e.key === 'Enter' && selectedIndex >= 0 && results[selectedIndex]) {
-        e.preventDefault();
-        this.selectLocation(results[selectedIndex], selectedIndex);
-      } else if (e.key === 'Escape') {
-        dropdown.classList.add('hidden');
-        input.blur();
-      }
-    });
-  }
-
-  selectLocation(result, index) {
-    const input = document.getElementById('locInput');
-    const dropdown = document.getElementById('locDropdown');
-    if (!result || !input || !dropdown) return;
-    const displayName = result.display_name || result.name || input.value;
-    this.userLat = parseFloat(result.lat);
-    this.userLon = parseFloat(result.lon);
-    this.cache.locationName = displayName;
-    input.value = displayName;
-    dropdown.classList.add('hidden');
-    this.loadData();
-  }
-
-  async fetchLocationName(lat, lon) {
-    try {
-      const url = `${API.NOMINATIM}?format=json&lat=${lat}&lon=${lon}`;
-      const res = await fetch(url);
-      const data = await res.json();
-      // Build a more specific location string from available address components
-      const addr = data.address || {};
-      const road = addr.road || '';
-      const suburb = addr.suburb || addr.neighbourhood || addr.district || '';
-      const city = addr.city || addr.town || addr.village || addr.municipality || addr.county || '';
-      const state = addr.state || '';
-      const country = addr.country || '';
-      // Prefer: Road, Suburb, City format if available
-      const parts = [road, suburb, city].filter(Boolean);
-      const location = parts.length > 0 ? parts.join(', ') : city || country || 'Your location';
-      // Append country if not already included
-      if (country && !location.includes(country)) {
-        return `${location}, ${country}`;
-      }
-      return location;
-    } catch {
-      return 'Your location';
-    }
-  }
-
-  // ---------- Earthquake Data Fetching ----------
-  async fetchEarthquakeData() {
-    // Match original approach: USGS-only, degree-based radius (~500km), no starttime filter
-    const degRadius = 500 / 111.2;
-    const url = `${API.USGS}?format=geojson&latitude=${this.userLat}&longitude=${this.userLon}&maxradius=${degRadius}&minmagnitude=${CONFIG.MIN_MAGNITUDE}&orderby=time&limit=25`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`USGS returned ${res.status}`);
-    const data = await res.json();
-    return data.features || [];
-  }
-
-  // ---------- Data Processing ----------
-  processQuakeData(features) {
-    const withDist = features.map((q) => {
-      const [lo, la] = q.geometry.coordinates;
-      return { ...q, km: distKm(this.userLat, this.userLon, la, lo) };
-    });
-
-    // Sort by time (latest first) for display
-    const quakesByTime = [...withDist].sort((a, b) => b.properties.time - a.properties.time);
-
-    // Sort by distance for nearest calculations
-    const quakesByDist = [...withDist].sort((a, b) => a.km - b.km);
-
-    const now = Date.now();
-    const today = quakesByTime.filter((q) => now - q.properties.time < CONFIG.TODAY_WINDOW_MS);
-    const recent = quakesByDist.filter((q) => now - q.properties.time < CONFIG.RECENT_WINDOW_MS);
-
-    const nearestQuake = quakesByDist[0] || null;
-    const latestQuake = quakesByTime[0] || null;
-    const nearestRecentQuake = recent[0] || null;
-
-    const nearestMag = nearestQuake?.properties?.mag || 0;
-    const latestMag = latestQuake?.properties?.mag || 0;
-    const recentMag = nearestRecentQuake?.properties?.mag || 0;
-
-    const level = determineAlertLevel(recentMag);
-
-    return {
-      quakes: quakesByDist,     // sorted by nearest first for list display
-      today,
-      recent,
-      nearestQuake,
-      latestQuake,
-      nearestRecentQuake,
-      nearestMag,
-      latestMag,
-      recentMag,
-      level
-    };
-  }
-
-  // ---------- UI Rendering ----------
-  async updateUI(stats) {
-    const {
-      quakes, today, level,
-      nearestMag, latestMag, recentMag,
-      nearestQuake, latestQuake, nearestRecentQuake
-    } = stats;
-
-    // Stats
-    document.getElementById('statCount').textContent = today.length;
-    document.getElementById('statLatest').textContent = latestMag > 0 ? `M${latestMag.toFixed(1)}` : 'None';
-    document.getElementById('statNearest').textContent = nearestMag > 0 ? `M${nearestMag.toFixed(1)}` : 'None';
-
-    // Mood & character
-    this.setMood(level);
-
-    // Javi message
-    const messageMag = level === 'safe' ? nearestMag : recentMag;
-    const messageDist = level === 'safe' ? (nearestQuake?.km || 0) : (nearestRecentQuake?.km || 0);
-    const messagePlace = level === 'safe'
-      ? (nearestQuake?.properties?.place || 'your area')
-      : (nearestRecentQuake?.properties?.place || 'your area');
-    this.getJaviMessage(level, messageMag.toFixed(1), messageDist.toFixed(0), messagePlace);
-
-    // Store quakes sorted by distance for pagination, reset to page 1
-    this.allQuakes = [...quakes].sort((a, b) => a.km - b.km);
-    this.currentPage = 1;
-    await this.renderQuakeList(this.allQuakes);
-
-    // Last update time
-    document.getElementById('lastUpdate').textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
-
-    // Browser notification
-    if (level === 'danger' && Notification.permission === 'granted') {
-      new Notification('JaviAlert!', {
-        body: `M${recentMag.toFixed(1)} earthquake detected ${messageDist.toFixed(0)}km away near ${messagePlace}. DROP, COVER, HOLD ON!`,
-        icon: 'icons/icon-192.png'
+      // Keyboard navigation
+      input.addEventListener('keydown', (e) => {
+        const items = dropdown.querySelectorAll('.loc-dropdown-item');
+        if (!items.length) return;
+        const active = dropdown.querySelector('.active');
+        let idx = Array.from(items).indexOf(active);
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          idx = Math.min(idx + 1, items.length - 1);
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          idx = Math.max(idx - 1, 0);
+        } else if (e.key === 'Enter' && active) {
+          e.preventDefault();
+          active.click();
+          return;
+        } else {
+          return;
+        }
+        items.forEach((el) => el.classList.remove('active'));
+        items[idx].classList.add('active');
       });
     }
-  }
 
-  async renderQuakeList(quakes) {
-    const container = document.getElementById('quakeList');
-    const pagination = document.getElementById('pagination');
-    const pageInfo = document.getElementById('pageInfo');
-    const pagePrev = document.getElementById('pagePrev');
-    const pageNext = document.getElementById('pageNext');
+    // ─── SORT DROPDOWN ─────────────────────────────────────────
+    setupSortDropdown() {
+      const btn = document.getElementById('sortBtn');
+      const dd = document.getElementById('sortDropdown');
+      const options = dd.querySelectorAll('.sort-option');
 
-    if (!quakes || quakes.length === 0) {
-      container.innerHTML = `<div class="empty"><i data-lucide="smile" aria-hidden="true"></i> No earthquakes nearby! Javi says relax!</div>`;
-      pagination.classList.add('hidden');
-    } else {
-      const perPage = CONFIG.DISPLAY_COUNT;
-      const totalPages = Math.ceil(quakes.length / perPage);
-      // Clamp current page
-      if (this.currentPage > totalPages) this.currentPage = totalPages;
-      const start = (this.currentPage - 1) * perPage;
-      const pageItems = quakes.slice(start, start + perPage);
-
-      container.innerHTML = pageItems.map((q) => {
-        const mag = (q.properties.mag || 0).toFixed(1);
-        // Parse "20 km SSW of La Paz, Philippines" → { location, distance, direction }
-        const parsed = parsePlaceName(q.properties.place);
-        const dirText = parsed.direction ? `${parsed.distance}km ${parsed.direction}` : '';
-        return `<div class="quake-item" role="listitem">
-          <div class="mag-badge ${magClass(parseFloat(mag))}">M${mag}</div>
-          <div class="q-info">
-            <div class="q-top">
-              <div class="q-place">${parsed.location}</div>
-              <div class="q-dist">${q.km}km away</div>
-            </div>
-            <div class="q-meta">${timeSince(q.properties.time)}${dirText ? ' · ' + dirText : ''}</div>
-          </div>
-        </div>`;
-      }).join('');
-
-      // Show/hide pagination
-      if (totalPages > 1) {
-        pagination.classList.remove('hidden');
-        pageInfo.textContent = `${this.currentPage} / ${totalPages}`;
-        pagePrev.disabled = this.currentPage <= 1;
-        pageNext.disabled = this.currentPage >= totalPages;
-      } else {
-        pagination.classList.add('hidden');
-      }
-    }
-
-    // Re-initialize Lucide icons for any new icons in the rendered HTML
-    try { lucide.createIcons(); } catch (_) {}
-  }
-
-  // ---------- Mood / Character Animation ----------
-  setMood(level) {
-    document.body.className = level === 'safe' ? '' : level;
-    const pill = document.getElementById('statusPill');
-    const kid = document.getElementById('kidWrap');
-
-    kid.className = 'kid-wrap' + (level === 'danger' ? ' shake' : '');
-
-    // Update pill with Lucide icon
-    let pillIcon = pill.querySelector('[data-lucide]');
-    if (!pillIcon) {
-      pillIcon = pill.querySelector('i');
-    }
-    if (!pillIcon) {
-      pillIcon = document.createElement('i');
-      pillIcon.setAttribute('aria-hidden', 'true');
-      pill.insertBefore(pillIcon, pill.querySelector('span') || null);
-    }
-    const pillText = document.getElementById('pillText');
-
-    // iOS uses static PNG (GIFs don't animate on iOS WebKit)
-    // Other devices use animated GIF
-    const ext = /iPad|iPhone|iPod/.test(navigator.userAgent) ? '.png' : '.gif';
-
-    // Determine image path
-    let src;
-    if (level === 'safe') {
-      pill.className = 'status-pill pill-safe';
-      pillIcon.setAttribute('data-lucide', 'shield-check');
-      if (pillText) pillText.textContent = 'All clear!';
-      // Only safe1-2 have PNGs; safe3 is GIF-only
-      const safeMax = ext === '.png' ? 2 : 3;
-      const safeIdx = Math.floor(Math.random() * safeMax) + 1;
-      src = 'javi/safe' + safeIdx + ext;
-    } else if (level === 'warning') {
-      pill.className = 'status-pill pill-warning';
-      pillIcon.setAttribute('data-lucide', 'alert-triangle');
-      if (pillText) pillText.textContent = 'Minor activity';
-      const warnIdx = Math.floor(Math.random() * 2) + 1;
-      src = 'javi/warning' + warnIdx + ext;
-    } else {
-      pill.className = 'status-pill pill-danger';
-      pillIcon.setAttribute('data-lucide', 'bell-ring');
-      if (pillText) pillText.textContent = 'Earthquake alert!';
-      const dangerIdx = Math.floor(Math.random() * 2) + 1;
-      src = 'javi/danger' + dangerIdx + ext;
-    }
-
-    const gif = document.getElementById('kidGif');
-    gif.style.backgroundImage = 'none';
-    void gif.offsetWidth;
-    gif.style.backgroundImage = 'url(' + src + '?t=' + Date.now() + ')';
-
-    try { lucide.createIcons(); } catch (_) {}
-  }
-
-  // ---------- Javi Message (LLM + Fallbacks) ----------
-  async getJaviMessage(level, mag, dist, place) {
-    const bubble = document.getElementById('bubble');
-    bubble.className = 'bubble loading';
-    bubble.innerHTML = '<i data-lucide="message-circle" aria-hidden="true"></i> Javi is thinking...';
-    try { lucide.createIcons(); } catch (_) {}
-
-    const msgs = {
-      safe: [
-        `You are Javi. Speak in first person as Javi. The nearest quake is M${mag} ${dist}km away. Say something in casual Taglish like you're chatting with a friend. Use "ako", "ko", "akin".`,
-        `You are Javi. Speak in first person. No shaking nearby. Closest quake is M${mag} ${dist}km away. Give a chill update in casual Taglish.`,
-        `You are Javi. Speak as yourself. All clear today. Nearest earthquake is M${mag} ${dist}km away. Say something in casual Taglish using first person.`,
-        `You are Javi. First person. Everything is quiet. The closest quake is M${mag} ${dist}km away. Give a relaxed update in casual Taglish.`,
-        `You are Javi. First person. No immediate danger. Nearest activity is M${mag} ${dist}km away. Say something in casual Taglish.`
-      ],
-      warning: [
-        `You are Javi. First person. A M${mag} earthquake happened ${dist}km away near ${place}. Give a quick heads up in casual Taglish.`,
-        `You are Javi. First person. Minor shaking M${mag} detected ${dist}km away near ${place}. Say something in casual Taglish.`,
-        `You are Javi. First person. There was a M${mag} quake ${dist}km away near ${place}. Quick advisory in casual Taglish.`,
-        `You are Javi. First person. Felt a M${mag} earthquake ${dist}km away near ${place}. Give a casual safety reminder in Taglish.`,
-        `You are Javi. First person. Small quake M${mag} ${dist}km away near ${place}. Give a quick casual update in Taglish.`
-      ],
-      danger: [
-        `You are Javi. First person. A strong M${mag} earthquake hit ${dist}km away near ${place}. Give urgent safety instructions in casual Taglish -- DUMAPA, SUMILONG, KUMAPIT.`,
-        `You are Javi. First person. Major earthquake M${mag} is ${dist}km away near ${place}. Tell them DROP, COVER, HOLD ON in casual Taglish.`,
-        `You are Javi. First person. Strong shaking M${mag} detected ${dist}km away near ${place}. Clear safety instructions in casual Taglish.`,
-        `You are Javi. First person. Big quake M${mag} just happened ${dist}km away near ${place}. Urgent safety reminder in casual Taglish.`,
-        `You are Javi. First person. Dangerous earthquake M${mag} ${dist}km away near ${place}. Give safety instructions in casual Taglish.`
-      ]
-    };
-
-    const fallbacks = {
-      safe: [
-        "Wala akong nakikitang lindol na malapit sa inyo. Safe tayo dito.",
-        `Malayo-layo pa yung lindol, mga ${dist}km. Okay lang sa akin.`,
-        "Sabi ko sa inyo, walang aktibidad ngayon. Relax lang mga ka-JaviAlert!",
-        `Ayon sa monitor ko, M${mag} at ${dist}km away yung pinakamalapit. Ligtas pa.`,
-        "Wala akong problema na na-detect. Enjoy your day mga ka-JaviAlert!",
-        "All clear sa side ko! Walang namamataang pagyanig.",
-        `M${mag} lang yung nakikita ko at ${dist}km naman. Walang dapat ipag-alala.`,
-        "Safe zone sabi ko! Walang lindol na malapit. Ganda ng araw na to."
-      ],
-      warning: [
-        `May na-detect ako na M${mag} na lindol ${dist}km away. Stay alert lang konti sa inyo.`,
-        `May naramdaman akong paggalaw ng lupa malapit. Ingat lang mga ka-JaviAlert.`,
-        `M${mag} na lindol ${dist}km away ang nakikita ko. Okay lang pero mag-ingat pa rin.`,
-        "May naitala akong maliit na pagyanig. Stay indoors lang muna kung kaya.",
-        `Warning galing sa akin! May M${mag} na lindol ${dist}km away.`,
-        "Medyo may galaw ng lupa malapit sa monitor ko. Check niyo lang surroundings niyo.",
-        `May na-detect akong lindol malapit sa ${place}. Ingat lang at huwag mag-panic.`,
-        `M${mag} na lindol ${dist}km away ang nakikita ko. Normal lang yan pero mag-ingat pa rin.`
-      ],
-      danger: [
-        "Malakas na lindol sabi ko! DUMAPA agad, SUMILONG sa ilalim ng matibay na mesa, at KUMAPIT!",
-        `Emergency! M${mag} na lindol ang na-detect ko! DUMAPA, SUMILONG, KUMAPIT. Protektahan ang ulo at leeg!`,
-        "Lindol! DUMAPA, SUMILONG sa ilalim ng matibay na furniture, KUMAPIT hanggang tumigil!",
-        `M${mag} na lindol! DUMAPA agad! SUMILONG! KUMAPIT! Huwag kayong tumakbo sa labas!`,
-        "Malakas na pagyanig ang na-monitor ko! DUMAPA, SUMILONG, KUMAPIT. Manatili sa loob ng bahay!",
-        `Danger! M${mag} earthquake sabi ko! DUMAPA, SUMILONG sa ilalim ng mesa, KUMAPIT mahigpit!`,
-        `M${mag} na lindol ${dist}km away ang nakikita ko! DUMAPA, SUMILONG, KUMAPIT. Safety first!`,
-        "Lindol! DUMAPA agad! SUMILONG! KUMAPIT! Hanggang tumigil ang pagyanig mga ka-JaviAlert!"
-      ]
-    };
-
-    const randomIndex = Math.floor(Math.random() * msgs[level].length);
-
-    try {
-      const res = await fetch(API.OPENROUTER, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${OPENROUTER_KEY}`
-        },
-        body: JSON.stringify({
-          model: OPENROUTER_MODEL,
-          max_tokens: 80,
-          messages: [
-            {
-              role: 'system',
-              content: 'You are Javi, the mascot of JaviAlert — an earthquake safety app. You speak in first person as Javi (use "ako", "ko", "akin"). Give short casual Tagalog updates about nearby earthquakes. Never mention you are an AI. Never break character. Keep responses under 25 words.'
-            },
-            { role: 'user', content: msgs[level][randomIndex] }
-          ]
-        })
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dd.classList.toggle('hidden');
       });
+
+      options.forEach((opt) => {
+        opt.addEventListener('click', () => {
+          options.forEach((o) => o.classList.remove('active'));
+          opt.classList.add('active');
+          this.sortMode = opt.dataset.sort;
+          dd.classList.add('hidden');
+          this.applySortAndRender();
+        });
+      });
+
+      document.addEventListener('click', () => {
+        dd.classList.add('hidden');
+      });
+    }
+
+    applySortAndRender() {
+      if (!this.allQuakes.length) return;
+      let sorted = [...this.allQuakes];
+      if (this.sortMode === 'nearest') {
+        sorted.sort((a, b) => a.dist - b.dist);
+      } else if (this.sortMode === 'newest') {
+        sorted.sort((a, b) => new Date(b.time) - new Date(a.time));
+      } else if (this.sortMode === 'strongest') {
+        sorted.sort((a, b) => b.mag - a.mag);
+      }
+      this.currentPage = 1;
+      this.renderQuakeList(sorted);
+    }
+
+    // ─── PAGINATION ────────────────────────────────────────────
+    setupPagination() {
+      document.getElementById('prevPage').addEventListener('click', () => {
+        if (this.currentPage > 1) {
+          this.currentPage--;
+          this.applySortAndRender();
+        }
+      });
+      document.getElementById('nextPage').addEventListener('click', () => {
+        const totalPages = Math.ceil(this.allQuakes.length / CONFIG.DISPLAY_COUNT);
+        if (this.currentPage < totalPages) {
+          this.currentPage++;
+          this.applySortAndRender();
+        }
+      });
+    }
+
+    // ─── FETCH EARTHQUAKE DATA ─────────────────────────────────
+    async fetchEarthquakeData() {
+      const degRadius = 500 / 111.2;
+      const usgsUrl = API.USGS +
+        '?format=geojson' +
+        '&latitude=' + this.userLat +
+        '&longitude=' + this.userLon +
+        '&maxradius=' + degRadius +
+        '&minmagnitude=' + CONFIG.MIN_MAGNITUDE +
+        '&orderby=time' +
+        '&limit=' + CONFIG.QUAKE_LIMIT;
+
+      const res = await fetch(usgsUrl);
+      if (!res.ok) throw new Error('USGS returned ' + res.status);
       const data = await res.json();
-      bubble.textContent = data.choices?.[0]?.message?.content || fallbacks[level][randomIndex];
-    } catch {
-      bubble.textContent = fallbacks[level][randomIndex];
+      return data.features || [];
     }
-    bubble.className = 'bubble';
-  }
 
-  // ---------- Main Data Load ----------
-  async loadData() {
-    const btn = document.getElementById('refreshBtn');
-    btn.disabled = true;
-    // Re-query icon each time since lucide.createIcons() replaces DOM elements
-    let icon = document.getElementById('refreshIcon');
-    if (icon) {
-      icon.setAttribute('data-lucide', 'loader-2');
-      icon.classList.add('spin');
+    // ─── PROCESS QUAKE DATA ────────────────────────────────────
+    processQuakeData(features) {
+      const quakes = features.map((f) => {
+        const props = f.properties || {};
+        const coords = f.geometry ? f.geometry.coordinates : [0, 0];
+        const lat = coords[1];
+        const lon = coords[0];
+        const dist = getDistance(this.userLat, this.userLon, lat, lon);
+        const dir = getCompassDir(this.userLat, this.userLon, lat, lon);
+        const parsed = parsePlaceName(props.place || 'Unknown');
+        return {
+          id: f.id || props.net + props.code,
+          mag: props.mag || 0,
+          place: parsed.place,
+          rawPlace: props.place || 'Unknown',
+          time: new Date(props.time),
+          lat,
+          lon,
+          dist: Math.round(dist),
+          dir,
+          parsedDist: parsed.distance,
+          parsedDir: parsed.direction,
+          url: props.url || ''
+        };
+      });
+
+      // Sort by distance (nearest first)
+      const quakesByDist = quakes.sort((a, b) => a.dist - b.dist);
+
+      return {
+        quakes: quakesByDist,
+        todayCount: quakes.filter((q) => (Date.now() - q.time.getTime()) < CONFIG.TODAY_WINDOW_MS).length,
+        latestTime: quakes.length ? quakes.reduce((a, b) => a.time > b.time ? a : b).time : null,
+        nearestDist: quakes.length ? quakesByDist[0].dist : null
+      };
     }
-    try { lucide.createIcons(); } catch (_) {}
 
-    try {
-      const features = await this.fetchEarthquakeData();
-      const stats = this.processQuakeData(features);
-      await this.updateUI(stats);
-    } catch (e) {
-      console.error('JaviAlert loadData error:', e);
+    // ─── UPDATE UI ─────────────────────────────────────────────
+    async updateUI(data) {
+      const { quakes, todayCount, latestTime, nearestDist } = data;
+      this.allQuakes = quakes;
+
+      // Stats
+      document.getElementById('statCount').textContent = todayCount;
+      document.getElementById('statLatest').textContent = latestTime ? timeSince(latestTime) : '--';
+      document.getElementById('statNearest').textContent = nearestDist ? nearestDist + ' km' : '--';
+
+      // Determine mood
+      let mood = 'safe';
+      const now = Date.now();
+      for (const q of quakes) {
+        if (q.mag >= CONFIG.DANGER_THRESHOLD && (now - q.time.getTime()) < CONFIG.RECENT_WINDOW_MS) {
+          mood = 'danger';
+          break;
+        }
+        if (q.mag >= CONFIG.WARNING_THRESHOLD && (now - q.time.getTime()) < CONFIG.RECENT_WINDOW_MS) {
+          mood = 'warning';
+        }
+      }
+      this.setMood(mood);
+
+      // Render quake list with current sort
+      this.applySortAndRender();
+
+      // Last update
+      document.getElementById('lastUpdate').textContent = 'Updated ' + new Date().toLocaleTimeString();
+
+      // Refresh icon
+      const ico = document.getElementById('refreshIcon');
+      ico.classList.remove('spin');
+    }
+
+    // ─── RENDER QUAKE LIST ─────────────────────────────────────
+    renderQuakeList(quakes) {
       const container = document.getElementById('quakeList');
-      if (container) {
-        container.innerHTML =
-          '<div class="empty"><i data-lucide="alert-triangle" aria-hidden="true"></i> Could not load data. Check your connection.</div>';
-        try { lucide.createIcons(); } catch (_) {}
+      const totalPages = Math.max(1, Math.ceil(quakes.length / CONFIG.DISPLAY_COUNT));
+      const start = (this.currentPage - 1) * CONFIG.DISPLAY_COUNT;
+      const pageItems = quakes.slice(start, start + CONFIG.DISPLAY_COUNT);
+
+      if (!pageItems.length) {
+        container.innerHTML = '<div class="empty"><i data-lucide="search-off" aria-hidden="true"></i> No earthquakes found</div>';
+        try { lucide.createIcons(); } catch (_) { /* ignore */ }
+        document.getElementById('pagination').classList.add('hidden');
+        return;
       }
-      const pagination = document.getElementById('pagination');
-      if (pagination) pagination.classList.add('hidden');
+
+      document.getElementById('pagination').classList.remove('hidden');
+
+      let html = '';
+      pageItems.forEach((q) => {
+        const mag = q.mag.toFixed(1);
+        const cls = magClass(q.mag);
+        const timeStr = timeSince(q.time);
+        const distKm = q.dist + ' km';
+        const dirStr = q.dir;
+
+        html += '<div class="quake-item">' +
+          '<div class="mag-badge ' + cls + '">' + mag + '</div>' +
+          '<div class="q-info">' +
+            '<div class="q-top">' +
+              '<span class="q-place">' + q.place + '</span>' +
+              '<span class="q-dist">' + distKm + '</span>' +
+            '</div>' +
+            '<div class="q-meta">' + timeStr + ' &middot; ' + dirStr + '</div>' +
+          '</div>' +
+        '</div>';
+      });
+      container.innerHTML = html;
+      try { lucide.createIcons(); } catch (_) { /* ignore */ }
+
+      // Pagination info
+      document.getElementById('pageInfo').textContent = 'Page ' + this.currentPage + ' of ' + totalPages;
+      document.getElementById('prevPage').disabled = this.currentPage <= 1;
+      document.getElementById('nextPage').disabled = this.currentPage >= totalPages;
     }
 
-    btn.disabled = false;
-    icon = document.getElementById('refreshIcon');
-    if (icon) {
-      icon.setAttribute('data-lucide', 'refresh-cw');
-      icon.classList.remove('spin');
+    // ─── SET MOOD ──────────────────────────────────────────────
+    setMood(mood) {
+      this.currentMood = mood;
+
+      // Body class
+      document.body.classList.remove('safe', 'warning', 'danger');
+      if (mood === 'danger') document.body.classList.add('danger');
+      else if (mood === 'warning') document.body.classList.add('warning');
+      else document.body.classList.add('safe');
+
+      // Status pill
+      const pill = document.getElementById('statusPill');
+      pill.className = 'status-pill pill-' + mood;
+      const pillText = document.getElementById('pillText');
+
+      // Pill icon
+      const existingIcon = pill.querySelector('[data-lucide]') || pill.querySelector('i');
+      if (existingIcon) existingIcon.remove();
+
+      const newIcon = document.createElement('i');
+      newIcon.setAttribute('data-lucide', mood === 'safe' ? 'shield-check' : mood === 'warning' ? 'alert-triangle' : 'alert-octagon');
+      newIcon.setAttribute('aria-hidden', 'true');
+      pill.insertBefore(newIcon, pillText);
+
+      try { lucide.createIcons(); } catch (_) { /* ignore */ }
+
+      // GIF
+      const gif = document.getElementById('kidGif');
+      const ext = this.isIOS ? 'png' : 'gif';
+      const shakeWrap = document.getElementById('kidWrap');
+      shakeWrap.classList.remove('shake');
+
+      if (mood === 'safe') {
+        // Pick random safe GIF 1-3 (but iOS only has 1-2 since safe3.png missing)
+        const maxSafe = this.isIOS ? 2 : 3;
+        const n = Math.floor(Math.random() * maxSafe) + 1;
+        gif.style.backgroundImage = "url('javi/safe" + n + "." + ext + "')";
+        pillText.textContent = 'Safe';
+      } else if (mood === 'warning') {
+        const n = Math.floor(Math.random() * 2) + 1;
+        gif.style.backgroundImage = "url('javi/warning" + n + "." + ext + "')";
+        pillText.textContent = 'Warning';
+      } else {
+        const n = Math.floor(Math.random() * 2) + 1;
+        gif.style.backgroundImage = "url('javi/danger" + n + "." + ext + "')";
+        pillText.textContent = 'DANGER';
+        shakeWrap.classList.add('shake');
+      }
+
+      // Bubble message
+      this.getJaviMessage(mood);
     }
-    try { lucide.createIcons(); } catch (_) {}
+
+    // ─── GET JAVI MESSAGE (AI or fallback) ─────────────────────
+    async getJaviMessage(mood) {
+      const bubble = document.getElementById('bubble');
+      bubble.className = 'bubble loading';
+      bubble.innerHTML = '<i data-lucide="search" aria-hidden="true"></i> Thinking...';
+      try { lucide.createIcons(); } catch (_) { /* ignore */ }
+
+      // Try OpenRouter AI
+      try {
+        const prompts = MOOD_PROMPTS[mood] || MOOD_PROMPTS.safe;
+        const prompt = prompts[Math.floor(Math.random() * prompts.length)];
+
+        const res = await fetch(API.OPENROUTER, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + OPENROUTER_KEY,
+            'HTTP-Referer': window.location.origin,
+            'X-Title': 'JaviAlert'
+          },
+          body: JSON.stringify({
+            model: OPENROUTER_MODEL,
+            messages: [
+              {
+                role: 'system',
+                content: 'You are Javi, a friendly earthquake safety buddy for the JaviAlert app. You help users stay informed about earthquakes near them. Always respond in casual Tagalog (Tagalog + English mix) in 1 short sentence. Use first person ("ako", "ko", "akin"). Do not use emojis. Be concise and natural.'
+              },
+              { role: 'user', content: prompt }
+            ],
+            max_tokens: 60,
+            temperature: 0.8
+          })
+        });
+
+        if (!res.ok) throw new Error('AI returned ' + res.status);
+
+        const data = await res.json();
+        const text = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
+
+        if (text && text.length < 200) {
+          bubble.className = 'bubble';
+          bubble.innerHTML = text;
+          try { lucide.createIcons(); } catch (_) { /* ignore */ }
+          return;
+        }
+      } catch (_) { /* fall through to fallback */ }
+
+      // Fallback
+      const msgs = FALLBACK_MESSAGES[mood] || FALLBACK_MESSAGES.safe;
+      const msg = msgs[Math.floor(Math.random() * msgs.length)];
+      bubble.className = 'bubble';
+      bubble.innerHTML = msg;
+      try { lucide.createIcons(); } catch (_) { /* ignore */ }
+    }
+
+    // ─── LOAD DATA ─────────────────────────────────────────────
+    async loadData() {
+      const bubble = document.getElementById('bubble');
+      const ico = document.getElementById('refreshIcon');
+
+      bubble.className = 'bubble loading';
+      bubble.innerHTML = '<i data-lucide="search" aria-hidden="true"></i> Checking for earthquakes...';
+      try { lucide.createIcons(); } catch (_) { /* ignore */ }
+
+      ico.classList.add('spin');
+
+      try {
+        const features = await this.fetchEarthquakeData();
+        const data = this.processQuakeData(features);
+        await this.updateUI(data);
+      } catch (err) {
+        bubble.className = 'bubble';
+        bubble.innerHTML = '<i data-lucide="alert-circle" aria-hidden="true"></i> Could not load data. Check your connection.';
+        try { lucide.createIcons(); } catch (_) { /* ignore */ }
+        ico.classList.remove('spin');
+        console.error('loadData error:', err);
+      }
+    }
+
+    // ─── INSTALL PROMPT ────────────────────────────────────────
+    setupInstallPrompt() {
+      // Listen for beforeinstallprompt (Android/Desktop)
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        this.deferredPrompt = e;
+        const banner = document.getElementById('installBanner');
+        banner.classList.remove('hidden');
+      });
+
+      // On iOS, show banner with instructions
+      if (this.isIOS) {
+        const banner = document.getElementById('installBanner');
+        banner.classList.remove('hidden');
+        banner.querySelector('.install-title').textContent = 'Install on iOS';
+        banner.querySelector('.install-desc').textContent = 'Tap Share > Add to Home Screen';
+      }
+    }
+
+    showInstallTutorial() {
+      const modal = document.getElementById('installModal');
+      const steps = document.getElementById('modalSteps');
+      const icon = document.getElementById('modalDeviceIcon');
+      const title = document.getElementById('modalTitle');
+
+      modal.classList.remove('hidden');
+
+      if (this.isIOS) {
+        icon.setAttribute('data-lucide', 'smartphone');
+        title.textContent = 'Install on iOS';
+        steps.innerHTML =
+          '<div class="modal-step"><div class="modal-step-num">1</div><div class="modal-step-text"><strong>Open in Safari</strong>Use Safari browser for best results</div></div>' +
+          '<div class="modal-step"><div class="modal-step-num">2</div><div class="modal-step-text"><strong>Tap Share</strong>Tap the Share button at the bottom of Safari</div></div>' +
+          '<div class="modal-step"><div class="modal-step-num">3</div><div class="modal-step-text"><strong>Scroll down</strong>Find and tap "Add to Home Screen"</div></div>' +
+          '<div class="modal-step"><div class="modal-step-num">4</div><div class="modal-step-text"><strong>Tap Add</strong>Tap "Add" in the top right corner</div></div>';
+      } else if (this.isAndroid) {
+        icon.setAttribute('data-lucide', 'smartphone');
+        title.textContent = 'Install on Android';
+        steps.innerHTML =
+          '<div class="modal-step"><div class="modal-step-num">1</div><div class="modal-step-text"><strong>Open in Chrome</strong>Use Chrome browser</div></div>' +
+          '<div class="modal-step"><div class="modal-step-num">2</div><div class="modal-step-text"><strong>Tap the menu</strong>Tap the three-dot menu in the top right</div></div>' +
+          '<div class="modal-step"><div class="modal-step-num">3</div><div class="modal-step-text"><strong>Tap Install</strong>Tap "Install App" or "Add to Home Screen"</div></div>' +
+          '<div class="modal-step"><div class="modal-step-num">4</div><div class="modal-step-text"><strong>Tap Install</strong>Confirm by tapping "Install" in the dialog</div></div>';
+      } else {
+        icon.setAttribute('data-lucide', 'monitor');
+        title.textContent = 'Install on Desktop';
+        steps.innerHTML =
+          '<div class="modal-step"><div class="modal-step-num">1</div><div class="modal-step-text"><strong>Open in Chrome/Edge</strong>Use Chrome or Edge browser</div></div>' +
+          '<div class="modal-step"><div class="modal-step-num">2</div><div class="modal-step-text"><strong>Look for install icon</strong>Click the install icon in the address bar or menu</div></div>' +
+          '<div class="modal-step"><div class="modal-step-num">3</div><div class="modal-step-text"><strong>Click Install</strong>Click "Install" in the popup</div></div>' +
+          '<div class="modal-step"><div class="modal-step-num">4</div><div class="modal-step-text"><strong>Launch</strong>Open JaviAlert from your desktop or start menu</div></div>';
+      }
+
+      try { lucide.createIcons(); } catch (_) { /* ignore */ }
+    }
   }
-}
 
-// ============================================================
-// Bootstrap
-// ============================================================
-document.addEventListener('DOMContentLoaded', () => {
-  new JaviAlertApp();
-});
+  // ─── START ───────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', () => {
+    const app = new JaviAlertApp();
+    app.init();
+  });
+
+})();
 </script>
 </body>
 </html>
