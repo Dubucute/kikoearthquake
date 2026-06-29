@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json"/>
 <link rel="apple-touch-icon" href="icons/icon-192.png"/>
 <title>JaviAlert</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css"/>
+<script src="https://unpkg.com/lucide@latest"></script>
 <style>
   :root {
     --safe-sky1: #4FC3F7;
@@ -43,7 +43,11 @@
     display: flex; align-items: center; justify-content: space-between;
     padding: 12px 0 8px;
   }
-  .app-name { font-size: 18px; font-weight: 700; color: white; text-shadow: 0 1px 4px rgba(0,0,0,.2); }
+  .app-name {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 18px; font-weight: 700; color: white; text-shadow: 0 1px 4px rgba(0,0,0,.2);
+  }
+  .app-name i { width: 20px; height: 20px; }
   .refresh-ico {
     width: 38px; height: 38px; border-radius: 50%;
     background: rgba(255,255,255,.3); border: none; cursor: pointer;
@@ -51,6 +55,7 @@
     font-size: 18px; color: white; transition: background .2s;
   }
   .refresh-ico:active { background: rgba(255,255,255,.5); }
+  .refresh-ico:disabled { opacity: .5; }
 
   /* LOCATION BAR */
   .loc-bar {
@@ -59,6 +64,7 @@
     display: flex; align-items: center; gap: 6px;
     font-size: 12px; color: #333; margin-bottom: 12px;
   }
+  .loc-bar i { width: 14px; height: 14px; color: #e74c3c; flex-shrink: 0; }
 
   /* CLOUDS */
   .clouds { position: relative; height: 40px; margin-bottom: -10px; }
@@ -95,7 +101,7 @@
     padding: 12px 14px; font-size: 14px; line-height: 1.5;
     color: #1a1a1a; font-weight: 500; position: relative;
     box-shadow: 3px 3px 0 #2c2c2c; min-height: 70px;
-    display: flex; align-items: center;
+    display: flex; align-items: center; gap: 6px;
   }
   .bubble::after {
     content: ''; position: absolute; right: -16px; bottom: 20px;
@@ -106,6 +112,7 @@
     border: 7px solid transparent; border-left: 14px solid white; z-index: 1;
   }
   .bubble.loading { color: #999; font-style: italic; }
+  .bubble i { width: 16px; height: 16px; flex-shrink: 0; }
 
   /* KID SVG */
   .kid-wrap { flex-shrink: 0; width: 90px; position: relative; }
@@ -153,19 +160,21 @@
 
   /* STATUS PILL */
   .status-pill {
-    display: block; width: fit-content; margin: 0 auto 14px;
+    display: inline-flex; align-items: center; gap: 6px;
+    width: fit-content; margin: 0 auto 14px;
     padding: 7px 18px; border-radius: 30px;
     font-size: 14px; font-weight: 700; color: white;
     box-shadow: 0 2px 8px rgba(0,0,0,.2);
     letter-spacing: .3px;
   }
+  .status-pill i { width: 16px; height: 16px; }
   .pill-safe    { background: #2ecc71; }
   .pill-warning { background: #e67e22; }
   .pill-danger  { background: #e74c3c; animation: pulse-red 1s infinite; }
   @keyframes pulse-red { 0%,100% { box-shadow: 0 0 0 0 rgba(231,76,60,.5); } 50% { box-shadow: 0 0 0 8px rgba(231,76,60,0); } }
 
   /* STATS ROW */
-  .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
   .stat {
     background: var(--card-bg); border-radius: var(--radius); padding: 14px;
     text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,.08);
@@ -182,10 +191,12 @@
     margin-bottom: 12px;
   }
   .list-header {
+    display: flex; align-items: center; gap: 6px;
     padding: 12px 16px; font-size: 12px; font-weight: 700;
     color: var(--muted); letter-spacing: .6px; text-transform: uppercase;
     border-bottom: 1px solid rgba(0,0,0,.06);
   }
+  .list-header i { width: 14px; height: 14px; }
   .quake-item {
     display: flex; align-items: center; gap: 12px;
     padding: 12px 16px; border-bottom: 1px solid rgba(0,0,0,.05);
@@ -209,7 +220,8 @@
   .q-dist  { font-size: 13px; font-weight: 700; color: var(--muted); flex-shrink: 0; }
 
   /* EMPTY */
-  .empty { padding: 28px; text-align: center; color: var(--muted); font-size: 14px; }
+  .empty { padding: 28px; text-align: center; color: var(--muted); font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .empty i { width: 18px; height: 18px; }
 
   /* INSTALL BANNER */
   .install-banner {
@@ -220,12 +232,15 @@
     box-shadow: 0 4px 12px rgba(102,126,234,.4);
   }
   .install-banner.hidden { display: none; }
+  .install-banner i:first-child { width: 24px; height: 24px; }
+  .install-banner i:last-child { width: 18px; height: 18px; }
   .install-text { flex: 1; }
   .install-text strong { display: block; font-size: 14px; }
   .install-text span { font-size: 12px; opacity: .85; }
 
   /* FOOTER */
-  .footer { text-align: center; font-size: 11px; color: rgba(255,255,255,.7); padding-top: 8px; }
+  .footer { text-align: center; font-size: 11px; color: rgba(255,255,255,.7); padding-top: 8px; display: flex; align-items: center; justify-content: center; gap: 4px; }
+  .footer i { width: 12px; height: 12px; }
 
   /* LAST UPDATE */
   .last-update { text-align: center; font-size: 11px; color: rgba(0,0,0,.4); padding: 4px 0 8px; }
@@ -233,24 +248,31 @@
   /* SPIN */
   .spin { animation: spin 1s linear infinite; display: inline-block; }
   @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Lucide icon sizing */
+  .icon-inline { display: inline-flex; align-items: center; vertical-align: middle; }
 </style>
 </head>
 <body>
+<main>
 <div class="app">
 
   <div class="topbar">
-    <div class="app-name">🌏 JaviAlert</div>
-    <button class="refresh-ico" id="refreshBtn" onclick="loadData()" title="Refresh">
-      <i class="ti ti-refresh" id="refreshIcon"></i>
+    <div class="app-name">
+      <i data-lucide="globe" aria-hidden="true"></i>
+      JaviAlert
+    </div>
+    <button class="refresh-ico" id="refreshBtn" aria-label="Refresh earthquake data">
+      <i data-lucide="refresh-cw" id="refreshIcon" aria-hidden="true"></i>
     </button>
   </div>
 
-  <div class="loc-bar">
-    <i class="ti ti-map-pin" style="color:#e74c3c;font-size:14px"></i>
-    <span id="locText">Detecting location…</span>
+  <div class="loc-bar" role="region" aria-label="Your location">
+    <i data-lucide="map-pin" aria-hidden="true"></i>
+    <span id="locText">Detecting location...</span>
   </div>
 
-  <div class="clouds">
+  <div class="clouds" aria-hidden="true">
     <div class="cloud c1"></div>
     <div class="cloud c2"></div>
     <div class="cloud c3"></div>
@@ -258,10 +280,13 @@
 
   <!-- Character -->
   <div class="char-card">
-    <div class="bubble loading" id="bubble">Checking for earthquakes near you… 🔍</div>
+    <div class="bubble loading" id="bubble" role="status" aria-live="polite">
+      <i data-lucide="search" aria-hidden="true"></i>
+      Checking for earthquakes near you...
+    </div>
     <div class="kid-wrap" id="kidWrap">
       <div class="char-name">Javi</div>
-      <svg id="kidSvg" width="90" height="120" viewBox="0 0 90 120" xmlns="http://www.w3.org/2000/svg">
+      <svg id="kidSvg" width="90" height="120" viewBox="0 0 90 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <!-- Legs -->
         <rect x="26" y="94" width="14" height="20" rx="7" fill="#1565C0"/>
         <rect x="50" y="94" width="14" height="20" rx="7" fill="#1565C0"/>
@@ -310,64 +335,92 @@
     </div>
   </div>
 
-  <div style="text-align:center;margin-bottom:14px">
-    <span class="status-pill pill-safe" id="statusPill">Checking…</span>
+  <div style="text-align:center;margin-bottom:14px" role="alert" aria-live="assertive">
+    <span class="status-pill pill-safe" id="statusPill">
+      <i data-lucide="shield-check" aria-hidden="true"></i>
+      <span id="pillText">Checking...</span>
+    </span>
   </div>
 
   <!-- Install banner -->
-  <div class="install-banner hidden" id="installBanner" onclick="installApp()">
-    <i class="ti ti-download" style="font-size:24px"></i>
+  <div class="install-banner hidden" id="installBanner" role="button" tabindex="0" aria-label="Install app">
+    <i data-lucide="download" aria-hidden="true"></i>
     <div class="install-text">
       <strong>Install Quake Buddy</strong>
       <span>Add to home screen for instant alerts</span>
     </div>
-    <i class="ti ti-chevron-right"></i>
+    <i data-lucide="chevron-right" aria-hidden="true"></i>
   </div>
 
   <!-- Stats -->
-  <div class="stats-row">
+  <section class="stats-row" aria-label="Earthquake statistics">
     <div class="stat">
-      <div class="stat-num" id="statCount">—</div>
+      <div class="stat-num" id="statCount">&mdash;</div>
       <div class="stat-lbl">Shakes today</div>
     </div>
     <div class="stat">
-      <div class="stat-num" id="statMax">—</div>
+      <div class="stat-num" id="statLatest">&mdash;</div>
+      <div class="stat-lbl">Latest shake</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num" id="statNearest">&mdash;</div>
       <div class="stat-lbl">Nearest shake</div>
     </div>
-  </div>
+  </section>
 
   <!-- Quake list -->
   <div class="list-card">
-    <div class="list-header">📍 Earthquakes near you</div>
-    <div id="quakeList">
-      <div class="empty"><i class="ti ti-loader-2 spin"></i> Loading earthquake data…</div>
+    <div class="list-header">
+      <i data-lucide="map-pin" aria-hidden="true"></i>
+      Earthquakes near you
+    </div>
+    <div id="quakeList" role="list" aria-label="Recent earthquakes">
+      <div class="empty">
+        <i data-lucide="loader-2" class="spin" aria-hidden="true"></i>
+        Loading earthquake data...
+      </div>
     </div>
   </div>
 
-  <div class="last-update" id="lastUpdate"></div>
-  <div class="footer">Data from USGS · Updates every 5 min · Javi watches over you 🧡</div>
+  <div class="last-update" id="lastUpdate" aria-live="polite"></div>
+  <div class="footer">
+    <span>Data from USGS</span>
+    <span aria-hidden="true">&middot;</span>
+    <span>Updates every 5 min</span>
+    <span aria-hidden="true">&middot;</span>
+    <span>Javi watches over you</span>
+    <i data-lucide="heart" aria-hidden="true"></i>
+  </div>
 </div>
+</main>
 
 <script>
-let userLat = 10.3157, userLon = 123.8854;
-let deferredPrompt = null;
+// ============================================================
+// Constants
+// ============================================================
+const API = {
+  EARTHQUAKE: 'https://earthquake.usgs.gov/fdsnws/event/1/query',
+  NOMINATIM: 'https://nominatim.openstreetmap.org/reverse',
+  ANTHROPIC: 'https://api.anthropic.com/v1/messages'
+};
 
-// PWA install prompt
-window.addEventListener('beforeinstallprompt', e => {
-  e.preventDefault();
-  deferredPrompt = e;
-  document.getElementById('installBanner').classList.remove('hidden');
-});
+const CONFIG = {
+  SEARCH_RADIUS_KM: 500,
+  QUAKE_LIMIT: 25,
+  MIN_MAGNITUDE: 1,
+  DISPLAY_COUNT: 10,
+  AUTO_REFRESH_MS: 300000, // 5 minutes
+  DANGER_THRESHOLD: 5.0,
+  WARNING_THRESHOLD: 3.0,
+  RECENT_WINDOW_MS: 172800000, // 48 hours
+  TODAY_WINDOW_MS: 86400000 // 24 hours
+};
 
-function installApp() {
-  if (!deferredPrompt) return;
-  deferredPrompt.prompt();
-  deferredPrompt.userChoice.then(() => {
-    document.getElementById('installBanner').classList.add('hidden');
-    deferredPrompt = null;
-  });
-}
+const DEFAULT_LOCATION = { lat: 10.3157, lon: 123.8854, name: 'Cebu City, Philippines' };
 
+// ============================================================
+// Utility Functions (pure, no DOM)
+// ============================================================
 function magClass(m) {
   if (m < 2) return 'mag-low';
   if (m < 3) return 'mag-minor';
@@ -379,168 +432,237 @@ function magClass(m) {
 function timeSince(ms) {
   const s = (Date.now() - ms) / 1000;
   if (s < 60) return `${Math.round(s)}s ago`;
-  if (s < 3600) return `${Math.round(s/60)}m ago`;
-  if (s < 86400) return `${Math.round(s/3600)}h ago`;
-  return `${Math.round(s/86400)}d ago`;
+  if (s < 3600) return `${Math.round(s / 60)}m ago`;
+  if (s < 86400) return `${Math.round(s / 3600)}h ago`;
+  return `${Math.round(s / 86400)}d ago`;
 }
 
 function distKm(la1, lo1, la2, lo2) {
-  const R = 6371, d2r = Math.PI/180;
-  const dLa = (la2-la1)*d2r, dLo = (lo2-lo1)*d2r;
-  const a = Math.sin(dLa/2)**2 + Math.cos(la1*d2r)*Math.cos(la2*d2r)*Math.sin(dLo/2)**2;
-  return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+  const R = 6371, d2r = Math.PI / 180;
+  const dLa = (la2 - la1) * d2r, dLo = (lo2 - lo1) * d2r;
+  const a = Math.sin(dLa / 2) ** 2 + Math.cos(la1 * d2r) * Math.cos(la2 * d2r) * Math.sin(dLo / 2) ** 2;
+  return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
 }
 
-function setMood(level) {
-  document.body.className = level === 'safe' ? '' : level;
-  const pill = document.getElementById('statusPill');
-  const kid  = document.getElementById('kidWrap');
-  const mouth = document.getElementById('mouth');
-  const browL = document.getElementById('browL');
-  const browR = document.getElementById('browR');
-  const pupilL = document.getElementById('pupilL');
-  const pupilR = document.getElementById('pupilR');
+function determineAlertLevel(recentMag) {
+  if (recentMag >= CONFIG.DANGER_THRESHOLD) return 'danger';
+  if (recentMag >= CONFIG.WARNING_THRESHOLD) return 'warning';
+  return 'safe';
+}
 
-  kid.className = 'kid-wrap' + (level === 'danger' ? ' shake' : '');
+function pickRandom(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
 
-  if (level === 'safe') {
-    pill.className = 'status-pill pill-safe';
-    pill.textContent = '✅ All clear!';
-    mouth.setAttribute('d','M37 48 Q45 55 53 48');
-    browL.setAttribute('d','M30 28 Q35 26 40 28');
-    browR.setAttribute('d','M50 28 Q55 26 60 28');
-    pupilL.setAttribute('cy','36'); pupilR.setAttribute('cy','36');
-    pupilL.setAttribute('r','3.5'); pupilR.setAttribute('r','3.5');
-  } else if (level === 'warning') {
-    pill.className = 'status-pill pill-warning';
-    pill.textContent = '⚠️ Minor activity';
-    mouth.setAttribute('d','M37 51 Q45 49 53 51');
-    browL.setAttribute('d','M30 29 Q35 27 40 30');
-    browR.setAttribute('d','M50 30 Q55 27 60 29');
-    pupilL.setAttribute('cy','37'); pupilR.setAttribute('cy','37');
-  } else {
-    pill.className = 'status-pill pill-danger';
-    pill.textContent = '🚨 Earthquake alert!';
-    mouth.setAttribute('d','M37 53 Q45 48 53 53');
-    browL.setAttribute('d','M30 31 Q35 28 40 32');
-    browR.setAttribute('d','M50 32 Q55 28 60 31');
-    pupilL.setAttribute('cy','38'); pupilR.setAttribute('cy','38');
-    pupilL.setAttribute('r','4.5'); pupilR.setAttribute('r','4.5');
+// ============================================================
+// JaviAlertApp Class
+// ============================================================
+class JaviAlertApp {
+  constructor() {
+    this.userLat = DEFAULT_LOCATION.lat;
+    this.userLon = DEFAULT_LOCATION.lon;
+    this.deferredPrompt = null;
+
+    this.cache = {
+      quakes: [],
+      locationName: DEFAULT_LOCATION.name
+    };
+
+    this.init();
   }
-}
 
-async function getJaviMessage(level, mag, dist, place) {
-  const bubble = document.getElementById('bubble');
-  bubble.className = 'bubble loading';
-  bubble.textContent = 'Javi is thinking… 💭';
+  // ---------- Initialization ----------
+  init() {
+    this.setupInstallPrompt();
+    this.setupRefreshButton();
+    this.setupInstallBanner();
+    this.requestNotificationPermission();
+    this.detectLocation();
+    this.startAutoRefresh();
+    this.registerServiceWorker();
+    lucide.createIcons();
+  }
 
-  const msgs = {
-    safe: [
-      `You are a cheerful 8-year-old cartoon boy named Javi who watches over earthquake safety. The nearest earthquake was M${mag} and it's ${dist}km away. Say something short, happy and reassuring in 1-2 sentences. Be super cute and childlike. Use 1-2 emojis. Max 30 words.`,
-      `You are a happy 8-year-old cartoon boy named Javi. The ground is not shaking near you! The closest shake is M${mag} and ${dist}km away. Tell the child it's safe to play and have fun. Use 1-2 emojis. Max 25 words.`,
-      `You are Javi, a friendly 8-year-old cartoon boy. No earthquakes nearby! The closest one is M${mag} and ${dist}km far away. Say something cheerful about being safe. Use 1-2 emojis. Max 25 words.`
-    ],
-    warning: [
-      `You are a cautious but calm 8-year-old cartoon boy named Javi. There was a M${mag} earthquake ${dist}km away near ${place}. Give a short simple safety tip for kids in 1-2 sentences. Calm, not scary. Use 1 emoji. Max 30 words.`,
-      `You are Javi, a careful 8-year-old boy. A small earthquake M${mag} happened ${dist}km away. Give a simple safety tip for kids. Stay calm. Use 1 emoji. Max 25 words.`,
-      `You are a calm 8-year-old cartoon boy Javi. The ground shook a little M${mag} at ${dist}km away. Tell the child what to do simply. Use 1 emoji. Max 25 words.`
-    ],
-    danger: [
-      `You are a scared but brave 8-year-old cartoon boy named Javi. A big M${mag} earthquake just hit ${dist}km away near ${place}! Give a short urgent safety instruction — DROP COVER HOLD ON — in simple words a child understands. 1 emoji. Max 30 words.`,
-      `You are Javi, a brave 8-year-old boy. BIG earthquake M${mag} is ${dist}km away! Tell the child to DROP, COVER, HOLD ON right now! Use simple words. 1 emoji. Max 25 words.`,
-      `You are a worried but brave 8-year-old Javi. Strong shake M${mag} at ${dist}km! Tell child to get under table and hold tight! Use 1 emoji. Max 25 words.`
-    ]
-  };
-
-  const fallbacks = {
-    safe: [
-      "Yay! The nearest shake is far away! It's safe to play outside! 🌞",
-      "No earthquakes nearby! You can play and have fun today! 🎈",
-      "The ground is safe where you are! Time to play! 🌈",
-      "All clear! No shaking near you! Have a great day! ⭐"
-    ],
-    warning: [
-      "A little shaky shaky happened nearby, but don't worry! Stay inside and be safe okay? 😊",
-      "Small earthquake far away! Stay calm and stay inside! 🏠",
-      "The ground moved a little bit far away! You're safe here! 💙",
-      "Tiny shake far away! No need to be scared! Stay safe! 🌟"
-    ],
-    danger: [
-      "BIG earthquake close by! DROP down, get UNDER something, and HOLD ON! Do it now! 🆘",
-      "Strong shake! Get under your table and hold on tight! Right now! ⚠️",
-      "Earthquake! DROP, COVER, HOLD ON! Stay safe! 🚨",
-      "Big shake! Hide under something strong and hold on! Quick! 🆘"
-    ]
-  };
-
-  // Pick random message
-  const randomIndex = Math.floor(Math.random() * msgs[level].length);
-
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 80,
-        messages: [{ role: 'user', content: msgs[level][randomIndex] }]
-      })
+  setupInstallPrompt() {
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      this.deferredPrompt = e;
+      document.getElementById('installBanner').classList.remove('hidden');
     });
-    const data = await res.json();
-    bubble.textContent = data.content?.[0]?.text || fallbacks[level][randomIndex];
-  } catch {
-    bubble.textContent = fallbacks[level][randomIndex];
   }
-  bubble.className = 'bubble';
-}
 
-async function loadData() {
-  const btn = document.getElementById('refreshBtn');
-  const icon = document.getElementById('refreshIcon');
-  btn.disabled = true;
-  icon.className = 'ti ti-loader-2 spin';
+  setupRefreshButton() {
+    document.getElementById('refreshBtn').addEventListener('click', () => this.loadData());
+  }
 
-  try {
-    const degRadius = 500 / 111.2;
-    const url = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&latitude=${userLat}&longitude=${userLon}&maxradius=${degRadius}&minmagnitude=1&orderby=time&limit=25`;
+  setupInstallBanner() {
+    const banner = document.getElementById('installBanner');
+    banner.addEventListener('click', () => this.installApp());
+    banner.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') this.installApp();
+    });
+  }
+
+  requestNotificationPermission() {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }
+
+  startAutoRefresh() {
+    setInterval(() => this.loadData(), CONFIG.AUTO_REFRESH_MS);
+  }
+
+  registerServiceWorker() {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js');
+    }
+  }
+
+  // ---------- PWA Install ----------
+  installApp() {
+    if (!this.deferredPrompt) return;
+    this.deferredPrompt.prompt();
+    this.deferredPrompt.userChoice.then(() => {
+      document.getElementById('installBanner').classList.add('hidden');
+      this.deferredPrompt = null;
+    });
+  }
+
+  // ---------- Location Detection ----------
+  async detectLocation() {
+    if (!navigator.geolocation) {
+      this.setLocationText(DEFAULT_LOCATION.name);
+      this.loadData();
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        this.userLat = pos.coords.latitude;
+        this.userLon = pos.coords.longitude;
+        const name = await this.fetchLocationName(this.userLat, this.userLon);
+        this.cache.locationName = name;
+        this.setLocationText(name);
+        this.loadData();
+      },
+      () => {
+        this.setLocationText(DEFAULT_LOCATION.name);
+        this.loadData();
+      }
+    );
+  }
+
+  setLocationText(text) {
+    document.getElementById('locText').textContent = text;
+  }
+
+  async fetchLocationName(lat, lon) {
+    try {
+      const url = `${API.NOMINATIM}?format=json&lat=${lat}&lon=${lon}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      const city = data.address.city || data.address.town || data.address.village || data.address.county || '';
+      const country = data.address.country || '';
+      return city && country ? `${city}, ${country}` : country || 'Your location';
+    } catch {
+      return 'Your location';
+    }
+  }
+
+  // ---------- Earthquake Data Fetching ----------
+  async fetchEarthquakeData() {
+    const degRadius = CONFIG.SEARCH_RADIUS_KM / 111.2;
+    const url = `${API.EARTHQUAKE}?format=geojson&latitude=${this.userLat}&longitude=${this.userLon}&maxradius=${degRadius}&minmagnitude=${CONFIG.MIN_MAGNITUDE}&orderby=time&limit=${CONFIG.QUAKE_LIMIT}`;
     const res = await fetch(url);
     const data = await res.json();
-    const quakes = (data.features || []).map(q => {
+    return data.features || [];
+  }
+
+  // ---------- Data Processing ----------
+  processQuakeData(features) {
+    const quakes = features.map((q) => {
       const [lo, la] = q.geometry.coordinates;
-      return { ...q, km: distKm(userLat, userLon, la, lo) };
-    }).sort((a,b) => a.km - b.km);
+      return { ...q, km: distKm(this.userLat, this.userLon, la, lo) };
+    }).sort((a, b) => a.km - b.km);
 
-    const today = quakes.filter(q => Date.now() - q.properties.time < 86400000);
-    const recent = quakes.filter(q => Date.now() - q.properties.time < 172800000); // Last 48 hours
-    const nearestQuake = quakes[0];
-    const nearestRecentQuake = recent[0];
+    const now = Date.now();
+    const today = quakes.filter((q) => now - q.properties.time < CONFIG.TODAY_WINDOW_MS);
+    const recent = quakes.filter((q) => now - q.properties.time < CONFIG.RECENT_WINDOW_MS);
+
+    const nearestQuake = quakes[0] || null;
+    const latestQuake = [...quakes].sort((a, b) => b.properties.time - a.properties.time)[0] || null;
+    const nearestRecentQuake = recent[0] || null;
+
     const nearestMag = nearestQuake?.properties?.mag || 0;
+    const latestMag = latestQuake?.properties?.mag || 0;
     const recentMag = nearestRecentQuake?.properties?.mag || 0;
-    const nearestPlace = nearestQuake?.properties?.place || 'your area';
-    const nearestDist = nearestQuake?.km || 0;
 
+    const level = determineAlertLevel(recentMag);
+
+    return {
+      quakes,
+      today,
+      recent,
+      nearestQuake,
+      latestQuake,
+      nearestRecentQuake,
+      nearestMag,
+      latestMag,
+      recentMag,
+      level
+    };
+  }
+
+  // ---------- UI Rendering ----------
+  updateUI(stats) {
+    const {
+      quakes, today, level,
+      nearestMag, latestMag, recentMag,
+      nearestQuake, latestQuake, nearestRecentQuake
+    } = stats;
+
+    // Stats
     document.getElementById('statCount').textContent = today.length;
-    document.getElementById('statMax').textContent = recentMag > 0 ? `M${recentMag.toFixed(1)}` : 'None';
+    document.getElementById('statLatest').textContent = latestMag > 0 ? `M${latestMag.toFixed(1)}` : 'None';
+    document.getElementById('statNearest').textContent = nearestMag > 0 ? `M${nearestMag.toFixed(1)}` : 'None';
 
-    let level = 'safe';
-    // Only warn about recent earthquakes (within 48 hours)
-    if (recentMag >= 5.0) level = 'danger';
-    else if (recentMag >= 3.0) level = 'warning';
+    // Mood & character
+    this.setMood(level);
 
-    setMood(level);
-    // Use recent quake data for warnings, nearest for safe messages
+    // Javi message
     const messageMag = level === 'safe' ? nearestMag : recentMag;
-    const messageDist = level === 'safe' ? nearestDist : (nearestRecentQuake?.km || 0);
-    const messagePlace = level === 'safe' ? nearestPlace : (nearestRecentQuake?.properties?.place || 'your area');
-    getJaviMessage(level, messageMag.toFixed(1), messageDist.toFixed(0), messagePlace);
+    const messageDist = level === 'safe' ? (nearestQuake?.km || 0) : (nearestRecentQuake?.km || 0);
+    const messagePlace = level === 'safe'
+      ? (nearestQuake?.properties?.place || 'your area')
+      : (nearestRecentQuake?.properties?.place || 'your area');
+    this.getJaviMessage(level, messageMag.toFixed(1), messageDist.toFixed(0), messagePlace);
+
+    // Quake list
+    this.renderQuakeList(quakes);
+
+    // Last update time
+    document.getElementById('lastUpdate').textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+
+    // Browser notification
+    if (level === 'danger' && Notification.permission === 'granted') {
+      new Notification('JaviAlert!', {
+        body: `M${recentMag.toFixed(1)} earthquake detected ${messageDist.toFixed(0)}km away near ${messagePlace}. DROP, COVER, HOLD ON!`,
+        icon: 'icons/icon-192.png'
+      });
+    }
+  }
+
+  renderQuakeList(quakes) {
+    const container = document.getElementById('quakeList');
 
     if (quakes.length === 0) {
-      document.getElementById('quakeList').innerHTML = '<div class="empty">🎉 No earthquakes nearby! Javi says relax!</div>';
+      container.innerHTML = `<div class="empty"><i data-lucide="smile" aria-hidden="true"></i> No earthquakes nearby! Javi says relax!</div>`;
     } else {
-      document.getElementById('quakeList').innerHTML = quakes.slice(0,10).map(q => {
+      container.innerHTML = quakes.slice(0, CONFIG.DISPLAY_COUNT).map((q) => {
         const mag = (q.properties.mag || 0).toFixed(1);
         const place = q.properties.place || 'Unknown';
-        return `<div class="quake-item">
+        return `<div class="quake-item" role="listitem">
           <div class="mag-badge ${magClass(parseFloat(mag))}">M${mag}</div>
           <div class="q-info">
             <div class="q-place">${place}</div>
@@ -551,67 +673,156 @@ async function loadData() {
       }).join('');
     }
 
-    const now = new Date();
-    document.getElementById('lastUpdate').textContent = `Last updated: ${now.toLocaleTimeString()}`;
+    // Re-initialize Lucide icons for any new icons in the rendered HTML
+    lucide.createIcons();
+  }
 
-    // Browser notification if danger
-    if (level === 'danger' && Notification.permission === 'granted') {
-      new Notification('🚨 JaviAlert!', {
-        body: `M${recentMag.toFixed(1)} earthquake detected ${messageDist.toFixed(0)}km away near ${messagePlace}. DROP, COVER, HOLD ON!`,
-        icon: 'icons/icon-192.png'
-      });
+  // ---------- Mood / Character Animation ----------
+  setMood(level) {
+    document.body.className = level === 'safe' ? '' : level;
+    const pill = document.getElementById('statusPill');
+    const kid = document.getElementById('kidWrap');
+    const mouth = document.getElementById('mouth');
+    const browL = document.getElementById('browL');
+    const browR = document.getElementById('browR');
+    const pupilL = document.getElementById('pupilL');
+    const pupilR = document.getElementById('pupilR');
+
+    kid.className = 'kid-wrap' + (level === 'danger' ? ' shake' : '');
+
+    // Update pill with Lucide icon
+    const pillIcon = pill.querySelector('i');
+    const pillText = document.getElementById('pillText');
+
+    if (level === 'safe') {
+      pill.className = 'status-pill pill-safe';
+      pillIcon.setAttribute('data-lucide', 'shield-check');
+      pillText.textContent = 'All clear!';
+      mouth.setAttribute('d', 'M37 48 Q45 55 53 48');
+      browL.setAttribute('d', 'M30 28 Q35 26 40 28');
+      browR.setAttribute('d', 'M50 28 Q55 26 60 28');
+      pupilL.setAttribute('cy', '36'); pupilR.setAttribute('cy', '36');
+      pupilL.setAttribute('r', '3.5'); pupilR.setAttribute('r', '3.5');
+    } else if (level === 'warning') {
+      pill.className = 'status-pill pill-warning';
+      pillIcon.setAttribute('data-lucide', 'alert-triangle');
+      pillText.textContent = 'Minor activity';
+      mouth.setAttribute('d', 'M37 51 Q45 49 53 51');
+      browL.setAttribute('d', 'M30 29 Q35 27 40 30');
+      browR.setAttribute('d', 'M50 30 Q55 27 60 29');
+      pupilL.setAttribute('cy', '37'); pupilR.setAttribute('cy', '37');
+    } else {
+      pill.className = 'status-pill pill-danger';
+      pillIcon.setAttribute('data-lucide', 'bell-ring');
+      pillText.textContent = 'Earthquake alert!';
+      mouth.setAttribute('d', 'M37 53 Q45 48 53 53');
+      browL.setAttribute('d', 'M30 31 Q35 28 40 32');
+      browR.setAttribute('d', 'M50 32 Q55 28 60 31');
+      pupilL.setAttribute('cy', '38'); pupilR.setAttribute('cy', '38');
+      pupilL.setAttribute('r', '4.5'); pupilR.setAttribute('r', '4.5');
     }
 
-  } catch(e) {
-    document.getElementById('quakeList').innerHTML = '<div class="empty">⚠️ Could not load data. Check your connection.</div>';
+    lucide.createIcons();
   }
 
-  btn.disabled = false;
-  icon.className = 'ti ti-refresh';
-}
+  // ---------- Javi Message (LLM + Fallbacks) ----------
+  async getJaviMessage(level, mag, dist, place) {
+    const bubble = document.getElementById('bubble');
+    bubble.className = 'bubble loading';
+    bubble.innerHTML = '<i data-lucide="message-circle" aria-hidden="true"></i> Javi is thinking...';
+    lucide.createIcons();
 
-// Request notification permission
-if ('Notification' in window && Notification.permission === 'default') {
-  Notification.requestPermission();
-}
+    const msgs = {
+      safe: [
+        `You are a cheerful 8-year-old cartoon boy named Javi who watches over earthquake safety. The nearest earthquake was M${mag} and it's ${dist}km away. Say something short, happy and reassuring in 1-2 sentences. Be super cute and childlike. Max 30 words.`,
+        `You are a happy 8-year-old cartoon boy named Javi. The ground is not shaking near you! The closest shake is M${mag} and ${dist}km away. Tell the child it's safe to play and have fun. Max 25 words.`,
+        `You are Javi, a friendly 8-year-old cartoon boy. No earthquakes nearby! The closest one is M${mag} and ${dist}km far away. Say something cheerful about being safe. Max 25 words.`
+      ],
+      warning: [
+        `You are a cautious but calm 8-year-old cartoon boy named Javi. There was a M${mag} earthquake ${dist}km away near ${place}. Give a short simple safety tip for kids in 1-2 sentences. Calm, not scary. Max 30 words.`,
+        `You are Javi, a careful 8-year-old boy. A small earthquake M${mag} happened ${dist}km away. Give a simple safety tip for kids. Stay calm. Max 25 words.`,
+        `You are a calm 8-year-old cartoon boy Javi. The ground shook a little M${mag} at ${dist}km away. Tell the child what to do simply. Max 25 words.`
+      ],
+      danger: [
+        `You are a scared but brave 8-year-old cartoon boy named Javi. A big M${mag} earthquake just hit ${dist}km away near ${place}! Give a short urgent safety instruction -- DROP COVER HOLD ON -- in simple words a child understands. Max 30 words.`,
+        `You are Javi, a brave 8-year-old boy. BIG earthquake M${mag} is ${dist}km away! Tell the child to DROP, COVER, HOLD ON right now! Use simple words. Max 25 words.`,
+        `You are a worried but brave 8-year-old Javi. Strong shake M${mag} at ${dist}km! Tell child to get under table and hold tight! Max 25 words.`
+      ]
+    };
 
-// Reverse geocoding to get location name
-async function getLocationName(lat, lon) {
-  try {
-    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
-    const data = await res.json();
-    const city = data.address.city || data.address.town || data.address.village || data.address.county || '';
-    const country = data.address.country || '';
-    return city && country ? `${city}, ${country}` : country || 'Your location';
-  } catch {
-    return 'Your location';
+    const fallbacks = {
+      safe: [
+        "Yay! The nearest shake is far away! It's safe to play outside!",
+        "No earthquakes nearby! You can play and have fun today!",
+        "The ground is safe where you are! Time to play!",
+        "All clear! No shaking near you! Have a great day!"
+      ],
+      warning: [
+        "A little shaky shaky happened nearby, but don't worry! Stay inside and be safe okay?",
+        "Small earthquake far away! Stay calm and stay inside!",
+        "The ground moved a little bit far away! You're safe here!",
+        "Tiny shake far away! No need to be scared! Stay safe!"
+      ],
+      danger: [
+        "BIG earthquake close by! DROP down, get UNDER something, and HOLD ON! Do it now!",
+        "Strong shake! Get under your table and hold on tight! Right now!",
+        "Earthquake! DROP, COVER, HOLD ON! Stay safe!",
+        "Big shake! Hide under something strong and hold on! Quick!"
+      ]
+    };
+
+    const randomIndex = Math.floor(Math.random() * msgs[level].length);
+
+    try {
+      const res = await fetch(API.ANTHROPIC, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 80,
+          messages: [{ role: 'user', content: msgs[level][randomIndex] }]
+        })
+      });
+      const data = await res.json();
+      bubble.textContent = data.content?.[0]?.text || fallbacks[level][randomIndex];
+    } catch {
+      bubble.textContent = fallbacks[level][randomIndex];
+    }
+    bubble.className = 'bubble';
+  }
+
+  // ---------- Main Data Load ----------
+  async loadData() {
+    const btn = document.getElementById('refreshBtn');
+    const icon = document.getElementById('refreshIcon');
+    btn.disabled = true;
+    icon.setAttribute('data-lucide', 'loader-2');
+    icon.classList.add('spin');
+    lucide.createIcons();
+
+    try {
+      const features = await this.fetchEarthquakeData();
+      const stats = this.processQuakeData(features);
+      this.updateUI(stats);
+    } catch (e) {
+      document.getElementById('quakeList').innerHTML =
+        '<div class="empty"><i data-lucide="alert-triangle" aria-hidden="true"></i> Could not load data. Check your connection.</div>';
+      lucide.createIcons();
+    }
+
+    btn.disabled = false;
+    icon.setAttribute('data-lucide', 'refresh-cw');
+    icon.classList.remove('spin');
+    lucide.createIcons();
   }
 }
 
-// Geolocation
-if (navigator.geolocation) {
-  navigator.geolocation.getCurrentPosition(async pos => {
-    userLat = pos.coords.latitude;
-    userLon = pos.coords.longitude;
-    const locationName = await getLocationName(userLat, userLon);
-    document.getElementById('locText').textContent = `📍 ${locationName}`;
-    loadData();
-  }, () => {
-    document.getElementById('locText').textContent = '📍 Cebu City, Philippines';
-    loadData();
-  });
-} else {
-  document.getElementById('locText').textContent = '📍 Cebu City, Philippines';
-  loadData();
-}
-
-// Auto refresh every 5 minutes
-setInterval(loadData, 300000);
-
-// Service worker registration
-if("serviceWorker" in navigator){
-  navigator.serviceWorker.register("sw.js")
-}
+// ============================================================
+// Bootstrap
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  new JaviAlertApp();
+});
 </script>
 </body>
 </html>
