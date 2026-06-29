@@ -1012,27 +1012,50 @@ class JaviAlertApp {
   }
 
   async fetchEarthquakeData() {
-    // Try PHIVOLCS first (local PH data, more accurate for Philippines)
+    // Fetch from both PHIVOLCS (recent, accurate for PH) and USGS (7-day coverage)
+    let allFeatures = [];
+
+    // 1. Try PHIVOLCS first
     try {
       const phivolcsFeatures = await this.fetchPhivolcsData();
       console.log(`JaviAlert: Loaded ${phivolcsFeatures.length} quakes from PHIVOLCS`);
-      return phivolcsFeatures;
+      allFeatures = phivolcsFeatures;
     } catch (phErr) {
-      console.warn('JaviAlert: PHIVOLCS failed, falling back to USGS:', phErr.message);
+      console.warn('JaviAlert: PHIVOLCS failed:', phErr.message);
     }
 
-    // Fallback: USGS with Philippines bounding box
-    const phBounds = 'minlatitude=4.5&maxlatitude=21.5&minlongitude=116&maxlongitude=127';
-    const startTime = new Date(Date.now() - 7 * 86400000).toISOString();
-    const url = `${API.USGS}?format=geojson&${phBounds}&minmagnitude=${CONFIG.MIN_MAGNITUDE}&orderby=time&limit=${CONFIG.QUAKE_LIMIT}&starttime=${startTime}`;
-    const res = await fetch(url);
-    if (!res.ok) {
-      throw new Error(`USGS API returned ${res.status}: ${res.statusText}`);
+    // 2. Also fetch USGS for broader coverage (7 days)
+    try {
+      const phBounds = 'minlatitude=4.5&maxlatitude=21.5&minlongitude=116&maxlongitude=127';
+      const startTime = new Date(Date.now() - 7 * 86400000).toISOString();
+      const url = `${API.USGS}?format=geojson&${phBounds}&minmagnitude=${CONFIG.MIN_MAGNITUDE}&orderby=time&limit=${CONFIG.QUAKE_LIMIT}&starttime=${startTime}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`USGS returned ${res.status}`);
+      const data = await res.json();
+      const usgsFeatures = data.features || [];
+      console.log(`JaviAlert: Loaded ${usgsFeatures.length} quakes from USGS`);
+
+      // Merge: add USGS quakes that aren't already in PHIVOLCS (dedup by time+lat+lon)
+      const existingKeys = new Set(allFeatures.map(f =>
+        `${f.properties.time}-${f.geometry.coordinates[1].toFixed(1)}-${f.geometry.coordinates[0].toFixed(1)}`
+      ));
+      for (const usgsQ of usgsFeatures) {
+        const key = `${usgsQ.properties.time}-${usgsQ.geometry.coordinates[1].toFixed(1)}-${usgsQ.geometry.coordinates[0].toFixed(1)}`;
+        if (!existingKeys.has(key)) {
+          allFeatures.push(usgsQ);
+          existingKeys.add(key);
+        }
+      }
+      console.log(`JaviAlert: Total ${allFeatures.length} quakes after merge`);
+    } catch (usgsErr) {
+      console.warn('JaviAlert: USGS failed:', usgsErr.message);
     }
-    const data = await res.json();
-    const features = data.features || [];
-    console.log(`JaviAlert: Loaded ${features.length} quakes from USGS (fallback)`);
-    return features;
+
+    if (allFeatures.length === 0) {
+      throw new Error('No earthquake data available from any source');
+    }
+
+    return allFeatures;
   }
 
   // ---------- Data Processing ----------
