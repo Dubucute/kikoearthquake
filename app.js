@@ -5,34 +5,8 @@
   const API = {
     USGS: 'https://earthquake.usgs.gov/fdsnws/event/1/query',
     NOMINATIM: 'https://nominatim.openstreetmap.org/reverse',
-    NOMINATIM_SEARCH: 'https://nominatim.openstreetmap.org/search',
-    OPENROUTER: 'https://openrouter.ai/api/v1/chat/completions'
+    NOMINATIM_SEARCH: 'https://nominatim.openstreetmap.org/search'
   };
-  const OPENROUTER_KEY = ['sk','or','v1','58f7dc74e2b5ffa6940c0241e8a2579f954bf7fe7eaaa7004dad7555e555294a'].join('-');
-  const OPENROUTER_MODELS = [
-    'meta-llama/llama-3.2-3b-instruct:free',
-    'meta-llama/llama-3.3-70b-instruct:free',
-    'qwen/qwen3-next-80b-a3b-instruct:free',
-    'qwen/qwen3-coder:free',
-    'openai/gpt-oss-120b:free',
-    'openai/gpt-oss-20b:free',
-    'nousresearch/hermes-3-llama-3.1-405b:free',
-    'cognitivecomputations/dolphin-mistral-24b-venice-edition:free',
-    'poolside/laguna-xs.2:free',
-    'poolside/laguna-m.1:free',
-    'cohere/north-mini-code:free',
-    'liquid/lfm-2.5-1.2b-instruct:free',
-    'liquid/lfm-2.5-1.2b-thinking:free',
-    'nvidia/nemotron-3-nano-30b-a3b:free',
-    'nvidia/nemotron-3-super-120b-a12b:free',
-    'nvidia/nemotron-3-ultra-550b-a55b:free',
-    'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
-    'nvidia/nemotron-nano-12b-v2-vl:free',
-    'nvidia/nemotron-nano-9b-v2:free',
-    'nvidia/nemotron-3.5-content-safety:free',
-    'google/gemma-4-26b-a4b-it:free',
-    'google/gemma-4-31b-it:free'
-  ];
 
   const CONFIG = {
     QUAKE_LIMIT: 25,
@@ -46,33 +20,8 @@
     TODAY_WINDOW_MS: 86400000
   };
 
-  // ─── AI PROMPTS ──────────────────────────────────────────────
-  const MOOD_PROMPTS = {
-    safe: [
-      "Safe tayo dito, walang malakas na lindol sa paligid natin. Sabihin mo sa casual Taglish na ikaw si Javi.",
-      "Okay lang dito sa area natin, walang malakas na pagyanig. Casual Taglish, first person.",
-      "Wala akong nakitang malakas na lindol malapit sa atin. Casual Taglish lang.",
-      "Relax lang, safe naman tayo ngayon. Casual Taglish, ikaw si Javi.",
-      "Walang malakas na earthquake na malapit sa atin. Casual Taglish."
-    ],
-    warning: [
-      "May naramdaman akong katamtamang pagyanig, mag-ingat tayo. Casual Taglish, first person.",
-      "Alert, may moderate na lindol sa malapit, stay aware. Casual Taglish.",
-      "Medyo may galaw ang lupa, ingat lang tayo. Casual Taglish, ikaw si Javi.",
-      "May nakitang pagyanig na katamtaman, huwag maging kampante. Casual Taglish.",
-      "Ingat, may moderate earthquake na na-detect ko malapit. Casual Taglish."
-    ],
-    danger: [
-      "MALAKAS na lindol! Kailangan nating mag-ingat at sumilong! Casual Taglish, first person.",
-      "Emergency! May malakas na pagyanig, manatiling kalmado at safe. Casual Taglish.",
-      "Malakas na lindol ang na-detect ko! Stay safe at mag-ingat. Casual Taglish.",
-      "Danger! May malakas na earthquake, mag-ingat tayo. Casual Taglish.",
-      "Malakas na pagyanig! Sumilong at manatiling safe. Casual Taglish."
-    ]
-  };
-
-  // ─── FALLBACK MESSAGES (when AI fails) ───────────────────────
-  const FALLBACK_MESSAGES = {
+  // ─── JAVI MESSAGES ───────────────────────────────────────────
+  const JAVI_MESSAGES = {
     safe: [
       "Safe tayo dito, walang malakas na lindol sa paligid natin.",
       "Okay lang dito sa area natin, walang malakas na pagyanig.",
@@ -81,7 +30,19 @@
       "Walang malakas na earthquake na malapit sa atin.",
       "Tahimik ang lupa sa paligid natin ngayon.",
       "Safe ang pakiramdam ko dito, walang malakas na lindol.",
-      "Wala akong na-detect na malakas na pagyanig sa area natin."
+      "Wala akong na-detect na malakas na pagyanig sa area natin.",
+      "Panatag ang loob ko, walang malakas na lindol ngayon.",
+      "Good news! Walang malakas na earthquake na malapit.",
+      "Kalmado ang lupa ngayon, safe tayo.",
+      "Walang dapat ipag-alala, walang malakas na pagyanig.",
+      "Maaliwalas ang monitoring ko, walang malakas na lindol.",
+      "Safe ang paligid natin ngayon, relax lang.",
+      "Wala akong nakikitang threat na lindol sa ngayon.",
+      "Okay ang lahat, walang malakas na earthquake na malapit.",
+      "Tahimik ang seismic activity sa area natin.",
+      "Walang malakas na pagyanig na na-detect, safe tayo.",
+      "Maganda ang balita, walang malakas na lindol ngayon.",
+      "Safe zone tayo ngayon, walang malakas na earthquake."
     ],
     warning: [
       "May naramdaman akong katamtamang pagyanig, mag-ingat tayo.",
@@ -91,7 +52,19 @@
       "Ingat, may moderate earthquake na na-detect ako malapit.",
       "May naramdaman akong yanig, stay alert lang tayo.",
       "Katamtamang lindol ang na-detect ko, mag-ingat palagi.",
-      "Alert tayo, may moderate na pagyanig na malapit sa atin."
+      "Alert tayo, may moderate na pagyanig na malapit sa atin.",
+      "May naramdaman akong paggalaw ng lupa, ingat tayo.",
+      "Moderate na lindol ang na-detect ko, maging handa tayo.",
+      "Alert level, may katamtamang pagyanig sa malapit.",
+      "May nakitang pagyanig, stay vigilant tayo.",
+      "Ingat, may naramdaman akong yanig sa area natin.",
+      "Moderate earthquake alert, mag-ingat sa mga susunod na oras.",
+      "May pagyanig na na-detect, huwag balewalain.",
+      "Alert tayo, may moderate seismic activity malapit.",
+      "Nakaramdam ako ng yanig, mag-ingat sa paligid.",
+      "May katamtamang lindol, stay safe at alerto.",
+      "Warning, may moderate na pagyanig, maging handa.",
+      "May nakitang paggalaw ng lupa, ingat tayo sa aftershocks."
     ],
     danger: [
       "MALAKAS na lindol! Kailangan nating mag-ingat at sumilong!",
@@ -101,9 +74,45 @@
       "Malakas na pagyanig! Sumilong at manatiling safe.",
       "Alert! May malakas na lindol, kailangan nating maging handa.",
       "Malakas na lindol ang na-detect ko! Stay calm at mag-ingat.",
-      "Emergency! Malakas na pagyanig, ingat at manatiling safe."
+      "Emergency! Malakas na pagyanig, ingat at manatiling safe.",
+      "MALAKAS na earthquake! DROP, COVER, and HOLD ON!",
+      "Mapanganib na lindol! Lumayo sa mga bintana at sumilong!",
+      "Malakas na pagyanig! Iwasan ang mga falling objects!",
+      "DANGER! Malakas na lindol, manatili sa safe spot!",
+      "Malakas na earthquake! Sumilong sa ilalim ng matibay na mesa!",
+      "Emergency alert! Malakas na pagyanig, protektahan ang sarili!",
+      "Malakas na lindol! Huwag tumakbo sa labas, sumilong sa loob!",
+      "Danger! May malakas na pagyanig, DROP COVER HOLD ON!",
+      "Malakas na earthquake! Manatiling kalmado at sumilong agad!",
+      "Alert! Malakas na lindol, lumayo sa mga pader at bintana!",
+      "Mapanganib na pagyanig! Gamitin ang safety position!",
+      "Malakas na lindol! Manatili sa loob hanggang tumigil ang pagyanig!"
     ]
   };
+
+  // ─── EARTHQUAKE SAFETY TIPS ──────────────────────────────────
+  const SAFETY_TIPS = [
+    "DROP, COVER, and HOLD ON! Dapa, sumilong sa ilalim ng matibay na mesa, at hawakan ito.",
+    "Lumayo sa mga bintana, salamin, at mga pwedeng mahulog na bagay.",
+    "Kung nasa loob ng bahay, manatili sa loob. Huwag tumakbo sa labas habang umuuga.",
+    "Kung nasa labas, lumayo sa mga gusali, poste, at wires.",
+    "Kung nasa sasakyan, huminto sa safe na lugar at manatili sa loob.",
+    "Pagkatapos ng lindol, mag-ingat sa aftershocks at suriin ang paligid.",
+    "Maghanda ng emergency kit: tubig, pagkain, flashlight, at first aid.",
+    "Alamin ang safe spots sa bahay niyo — ilalim ng matibay na mesa o pinto.",
+    "Huwag gumamit ng elevator pagkatapos ng lindol, baka mawalan ng kuryente.",
+    "Kung may gas leak, patayin ang gas at buksan ang mga bintana.",
+    "Suriin ang pamilya at mga kasama pagkatapos ng lindol.",
+    "Mag-identify ng evacuation route sa inyong lugar.",
+    "Itago ang importanteng dokumento sa waterproof container.",
+    "Magkaroon ng emergency plan kasama ang pamilya.",
+    "Kung nasa beach at malakas ang lindol, lumayo sa coast dahil baka may tsunami.",
+    "Huwag maniwala sa false rumors, makinig lang sa official announcements.",
+    "Mag-stock ng extra batteries at power bank para sa communication.",
+    "Alamin kung saan ang pinakamalapit na evacuation center.",
+    "Turuan ang mga bata kung ano ang gagawin kapag may lindol.",
+    "Manatiling kalmado at huwag mag-panic — makatutulong ito sa malinaw na pag-iisip."
+  ];
 
   // ─── HELPER FUNCTIONS ────────────────────────────────────────
   function timeSince(ts) {
@@ -673,106 +682,41 @@
       this.getJaviMessage(mood);
     }
 
-    // ─── GET JAVI MESSAGE (AI or fallback) ─────────────────────
+    // ─── GET JAVI MESSAGE ──────────────────────────────────────
     async getJaviMessage(mood) {
       const bubble = document.getElementById('bubble');
       bubble.className = 'bubble loading';
-      bubble.innerHTML = '<i data-lucide="search" aria-hidden="true"></i> Thinking...';
+      bubble.innerHTML = '<i data-lucide="search" aria-hidden="true"></i> Javi...';
       try { lucide.createIcons(); } catch (_) { /* ignore */ }
 
-      // Try OpenRouter AI with model fallback chain (streaming)
-      const prompts = MOOD_PROMPTS[mood] || MOOD_PROMPTS.safe;
-      const prompt = prompts[Math.floor(Math.random() * prompts.length)];
-
-      for (const model of OPENROUTER_MODELS) {
-        try {
-          const res = await fetch(API.OPENROUTER, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer ' + OPENROUTER_KEY,
-              'HTTP-Referer': window.location.origin,
-              'X-Title': 'JaviAlert'
-            },
-            body: JSON.stringify({
-              model: model,
-              stream: true,
-              reasoning: { enabled: true },
-              messages: [
-                {
-                  role: 'system',
-                  content: 'You are Javi, a friendly earthquake safety buddy for the JaviAlert app. You help users stay informed about earthquakes near them. Respond in casual Tagalog (Tagalog + English mix) in exactly 1 short sentence. Use first person ("ako", "ko", "akin"). Do not use emojis. Be concise and natural.\n\nExamples of good responses:\n- "Safe tayo dito, walang malakas na lindol sa paligid."\n- "May naramdaman akong yanig, mag-ingat tayo."\n- "Ingat, may moderate na lindol sa malapit."\n- "Relax lang, walang earthquake na malapit sa atin."\n- "Alert tayo, may pagyanig na malapit."'
-                },
-                { role: 'user', content: prompt }
-              ],
-              max_tokens: 120,
-              temperature: 0.8
-            })
-          });
-
-          if (!res.ok) {
-            throw new Error('AI returned ' + res.status + ' for ' + model);
-          }
-
-          // Stream the response for a typing effect
-          bubble.className = 'bubble';
-          bubble.innerHTML = '';
-          try { lucide.createIcons(); } catch (_) { /* ignore */ }
-
-          const reader = res.body.getReader();
-          const decoder = new TextDecoder();
-          let fullText = '';
-          let buffer = '';
-
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split('\n');
-            buffer = lines.pop() || '';
-
-            for (const line of lines) {
-              const trimmed = line.trim();
-              if (!trimmed || !trimmed.startsWith('data: ')) continue;
-              const data = trimmed.slice(6);
-              if (data === '[DONE]') break;
-
-              try {
-                const chunk = JSON.parse(data);
-                const delta = chunk.choices && chunk.choices[0] && chunk.choices[0].delta;
-                const content = delta && delta.content;
-                if (content) {
-                  fullText += content;
-                  bubble.innerHTML = fullText;
-                }
-              } catch (_) { /* skip malformed chunk */ }
-            }
-          }
-
-          // Final check: skip empty or too-long responses
-          if (!fullText || fullText.length >= 200) continue;
-
-          try { lucide.createIcons(); } catch (_) { /* ignore */ }
-          return;
-        } catch (_) {
-          // Try next model in the fallback chain
-          continue;
-        }
-      }
-
-      // Fallback (all models failed) — type out a local message
-      const msgs = FALLBACK_MESSAGES[mood] || FALLBACK_MESSAGES.safe;
+      // Pick a random message for the current mood
+      const msgs = JAVI_MESSAGES[mood] || JAVI_MESSAGES.safe;
       const msg = msgs[Math.floor(Math.random() * msgs.length)];
+
+      // Type out the message character by character
       bubble.className = 'bubble';
       bubble.innerHTML = '';
       try { lucide.createIcons(); } catch (_) { /* ignore */ }
 
-      // Type out the fallback message character by character
       for (let i = 0; i < msg.length; i++) {
         bubble.innerHTML = msg.slice(0, i + 1);
-        await new Promise(r => setTimeout(r, 30));
+        await new Promise(r => setTimeout(r, 25));
       }
+      try { lucide.createIcons(); } catch (_) { /* ignore */ }
+
+      // Show a safety tip after the message if warning or danger
+      if (mood === 'warning' || mood === 'danger') {
+        await new Promise(r => setTimeout(r, 3000));
+        this.showSafetyTip();
+      }
+    }
+
+    // ─── SHOW SAFETY TIP ───────────────────────────────────────
+    showSafetyTip() {
+      const bubble = document.getElementById('bubble');
+      const tip = SAFETY_TIPS[Math.floor(Math.random() * SAFETY_TIPS.length)];
+      const tipHtml = '<br><br><span style="display:inline-flex;align-items:center;gap:4px;font-size:0.85em;opacity:0.85"><i data-lucide="shield" aria-hidden="true" style="width:14px;height:14px;flex-shrink:0"></i> ' + tip + '</span>';
+      bubble.innerHTML += tipHtml;
       try { lucide.createIcons(); } catch (_) { /* ignore */ }
     }
 
