@@ -543,15 +543,14 @@
 // ============================================================
 const API = {
   USGS: 'https://earthquake.usgs.gov/fdsnws/event/1/query',
+  EMSC: 'https://www.seismicportal.eu/fdsnws/event/1/query',
   NOMINATIM: 'https://nominatim.openstreetmap.org/reverse',
-  BIGDATACLOUD: 'https://api.bigdatacloud.net/data/reverse-geocode-client',
   OPENROUTER: 'https://openrouter.ai/api/v1/chat/completions'
 };
 const OPENROUTER_KEY = ['sk','or','v1','58f7dc74e2b5ffa6940c0241e8a2579f954bf7fe7eaaa7004dad7555e555294a'].join('-');
 const OPENROUTER_MODEL = 'meta-llama/llama-3.2-3b-instruct:free';
 
 const CONFIG = {
-  SEARCH_RADIUS_KM: 700,
   QUAKE_LIMIT: 25,
   MIN_MAGNITUDE: 1,
   DISPLAY_COUNT: 10,
@@ -862,101 +861,46 @@ class JaviAlertApp {
     }
   }
 
-  /**
-   * Get the best place name for a quake.
-   * Uses the USGS place name with distance prefix stripped — it's the most
-   * reliable source for the nearest populated place to the epicenter.
-   * Falls back to BigDataCloud reverse geocoding for richer hierarchy
-   * (city/province/country) when available.
-   * Caches results by "lat,lon" key.
-   * @param {number} lat - Latitude
-   * @param {number} lon - Longitude
-   * @param {string} usgsName - USGS place name with distance prefix already stripped
-   */
-  async fetchQuakePlaceName(lat, lon, usgsName) {
-    const key = `${lat.toFixed(2)},${lon.toFixed(2)}`;
-    if (this.cache.quakePlaces && this.cache.quakePlaces[key]) {
-      return this.cache.quakePlaces[key];
-    }
-    // Start with USGS name as baseline (most reliable for nearest populated place)
-    let bestName = usgsName || 'Unknown';
-    try {
-      const url = `${API.BIGDATACLOUD}?latitude=${lat}&longitude=${lon}&localityLanguage=en`;
-      const res = await fetch(url);
-      const data = await res.json();
-      const city = data.city || '';
-      const country = (data.countryName || '').replace(/ \(the\)$/, '');
-      // Extract province from administrative array (adminLevel 4)
-      let province = '';
-      if (data.localityInfo && data.localityInfo.administrative) {
-        for (const entry of data.localityInfo.administrative) {
-          if (entry.adminLevel === 4) {
-            province = entry.name;
-            break;
-          }
-        }
-      }
-      // Only use BigDataCloud if we got a real city name (not a sea/ocean)
-      if (city && city !== country) {
-        const parts = [city, province, country].filter(Boolean);
-        const unique = [];
-        for (const p of parts) {
-          if (!unique.includes(p)) unique.push(p);
-        }
-        if (unique.length >= 2) {
-          bestName = unique.join(', ');
-        }
-      }
-    } catch {
-      // Ignore errors, fall back to USGS name
-    }
-    if (!this.cache.quakePlaces) this.cache.quakePlaces = {};
-    this.cache.quakePlaces[key] = bestName;
-    return bestName;
-  }
-
   // ---------- Earthquake Data Fetching ----------
   async fetchEarthquakeData() {
-    // Philippines bounding box — only get quakes within PH territory
     const phBounds = 'minlatitude=4.5&maxlatitude=21.5&minlongitude=116&maxlongitude=127';
-    // Look back 7 days for comprehensive coverage
     const startTime = new Date(Date.now() - 7 * 86400000).toISOString();
-    const url = `${API.USGS}?format=geojson&${phBounds}&minmagnitude=${CONFIG.MIN_MAGNITUDE}&orderby=time&limit=${CONFIG.QUAKE_LIMIT}&starttime=${startTime}`;
-    const res = await fetch(url);
-    if (!res.ok) {
-      throw new Error(`USGS API returned ${res.status}: ${res.statusText}`);
+
+    const [usgsResult, emscResult] = await Promise.allSettled([
+      fetch(`${API.USGS}?format=geojson&${phBounds}&minmagnitude=${CONFIG.MIN_MAGNITUDE}&orderby=time&limit=25&starttime=${startTime}`)
+        .then(r => r.json()).then(d => d.features || []),
+      fetch(`${API.EMSC}?format=geojson&${phBounds}&minmagnitude=${CONFIG.MIN_MAGNITUDE}&orderby=time&limit=25&starttime=${startTime}`)
+        .then(r => r.json()).then(d => d.features || [])
+    ]);
+
+    const usgs = usgsResult.status === 'fulfilled' ? usgsResult.value : [];
+    const emsc = emscResult.status === 'fulfilled' ? emscResult.value : [];
+
+    // Merge and deduplicate by time proximity (same event = within 60s + 0.3 mag diff)
+    const combined = [...usgs];
+    for (const eq of emsc) {
+      const isDuplicate = combined.some(u =>
+        Math.abs(u.properties.time - eq.properties.time) < 60000 &&
+        Math.abs((u.properties.mag || 0) - (eq.properties.mag || 0)) < 0.3
+      );
+      if (!isDuplicate) combined.push(eq);
     }
-    const data = await res.json();
-    return data.features || [];
+
+    return combined.sort((a, b) => b.properties.time - a.properties.time);
   }
 
   // ---------- Data Processing ----------
   processQuakeData(features) {
-    // Calculate distance for each quake
     const withDist = features.map((q) => {
       const [lo, la] = q.geometry.coordinates;
       return { ...q, km: distKm(this.userLat, this.userLon, la, lo) };
     });
 
-    // Filter to only quakes within search radius
-    const withinRadius = withDist.filter((q) => q.km <= CONFIG.SEARCH_RADIUS_KM);
-
-    // Deduplicate by place name — keep only the strongest quake per location
-    const seen = new Map();
-    for (const q of withinRadius) {
-      const place = q.properties.place || 'Unknown';
-      const existing = seen.get(place);
-      if (!existing || (q.properties.mag || 0) > (existing.properties.mag || 0)) {
-        seen.set(place, q);
-      }
-    }
-    const deduped = [...seen.values()];
-
     // Sort by time (latest first) for display
-    const quakesByTime = [...deduped].sort((a, b) => b.properties.time - a.properties.time);
+    const quakesByTime = [...withDist].sort((a, b) => b.properties.time - a.properties.time);
 
-    // Sort by distance for alert calculations
-    const quakesByDist = [...deduped].sort((a, b) => a.km - b.km);
+    // Sort by distance for nearest calculations
+    const quakesByDist = [...withDist].sort((a, b) => a.km - b.km);
 
     const now = Date.now();
     const today = quakesByTime.filter((q) => now - q.properties.time < CONFIG.TODAY_WINDOW_MS);
@@ -973,7 +917,7 @@ class JaviAlertApp {
     const level = determineAlertLevel(recentMag);
 
     return {
-      quakes: quakesByTime,     // sorted by latest first for display
+      quakes: quakesByDist,     // sorted by nearest first for list display
       today,
       recent,
       nearestQuake,
@@ -1045,25 +989,15 @@ class JaviAlertApp {
       const start = (this.currentPage - 1) * perPage;
       const pageItems = quakes.slice(start, start + perPage);
 
-      // Enrich place names for displayed items via reverse geocoding
-      const enriched = await Promise.all(pageItems.map(async (q) => {
+      container.innerHTML = pageItems.map((q) => {
         const mag = (q.properties.mag || 0).toFixed(1);
         // Strip USGS distance prefix e.g. "20 km SSW of La Paz" → "La Paz"
         const rawPlace = q.properties.place || 'Unknown';
-        const stripped = rawPlace.replace(/^[\d.]+\s*km\s+\w+\s+of\s+/i, '');
-        // Try to get full hierarchy via reverse geocoding
-        const [lo, la] = q.geometry.coordinates;
-        const fullPlace = await this.fetchQuakePlaceName(la, lo, stripped);
-        // Use enriched name if available, otherwise use stripped USGS name
-        const place = fullPlace || stripped;
-        return { ...q, _place: place, _mag: mag };
-      }));
-
-      container.innerHTML = enriched.map((q) => {
+        const place = rawPlace.replace(/^[\d.]+\s*km\s+\w+\s+of\s+/i, '');
         return `<div class="quake-item" role="listitem">
-          <div class="mag-badge ${magClass(parseFloat(q._mag))}">M${q._mag}</div>
+          <div class="mag-badge ${magClass(parseFloat(mag))}">M${mag}</div>
           <div class="q-info">
-            <div class="q-place">${q._place}</div>
+            <div class="q-place">${place}</div>
             <div class="q-meta">${timeSince(q.properties.time)}</div>
           </div>
           <div class="q-dist">${q.km}km away</div>
