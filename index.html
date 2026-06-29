@@ -290,17 +290,17 @@
   <div class="stats-row">
     <div class="stat">
       <div class="stat-num" id="statCount">—</div>
-      <div class="stat-lbl">Quakes today</div>
+      <div class="stat-lbl">Shakes today</div>
     </div>
     <div class="stat">
       <div class="stat-num" id="statMax">—</div>
-      <div class="stat-lbl">Strongest nearby</div>
+      <div class="stat-lbl">Nearest shake</div>
     </div>
   </div>
 
   <!-- Quake list -->
   <div class="list-card">
-    <div class="list-header">📍 Recent earthquakes nearby</div>
+    <div class="list-header">📍 Earthquakes near you</div>
     <div id="quakeList">
       <div class="empty"><i class="ti ti-loader-2 spin"></i> Loading earthquake data…</div>
     </div>
@@ -397,16 +397,46 @@ async function getKikoMessage(level, mag, dist, place) {
   bubble.textContent = 'Kiko is thinking… 💭';
 
   const msgs = {
-    safe: `You are a cheerful 8-year-old cartoon boy named Kiko who watches over earthquake safety. The nearest earthquake was M${mag} and it's ${dist}km away. Say something short, happy and reassuring in 1-2 sentences. Be super cute and childlike. Use 1-2 emojis. Max 30 words.`,
-    warning: `You are a cautious but calm 8-year-old cartoon boy named Kiko. There was a M${mag} earthquake ${dist}km away near ${place}. Give a short simple safety tip for kids in 1-2 sentences. Calm, not scary. Use 1 emoji. Max 30 words.`,
-    danger: `You are a scared but brave 8-year-old cartoon boy named Kiko. A big M${mag} earthquake just hit ${dist}km away near ${place}! Give a short urgent safety instruction — DROP COVER HOLD ON — in simple words a child understands. 1 emoji. Max 30 words.` 
+    safe: [
+      `You are a cheerful 8-year-old cartoon boy named Kiko who watches over earthquake safety. The nearest earthquake was M${mag} and it's ${dist}km away. Say something short, happy and reassuring in 1-2 sentences. Be super cute and childlike. Use 1-2 emojis. Max 30 words.`,
+      `You are a happy 8-year-old cartoon boy named Kiko. The ground is not shaking near you! The closest shake is M${mag} and ${dist}km away. Tell the child it's safe to play and have fun. Use 1-2 emojis. Max 25 words.`,
+      `You are Kiko, a friendly 8-year-old cartoon boy. No earthquakes nearby! The closest one is M${mag} and ${dist}km far away. Say something cheerful about being safe. Use 1-2 emojis. Max 25 words.`
+    ],
+    warning: [
+      `You are a cautious but calm 8-year-old cartoon boy named Kiko. There was a M${mag} earthquake ${dist}km away near ${place}. Give a short simple safety tip for kids in 1-2 sentences. Calm, not scary. Use 1 emoji. Max 30 words.`,
+      `You are Kiko, a careful 8-year-old boy. A small earthquake M${mag} happened ${dist}km away. Give a simple safety tip for kids. Stay calm. Use 1 emoji. Max 25 words.`,
+      `You are a calm 8-year-old cartoon boy Kiko. The ground shook a little M${mag} at ${dist}km away. Tell the child what to do simply. Use 1 emoji. Max 25 words.`
+    ],
+    danger: [
+      `You are a scared but brave 8-year-old cartoon boy named Kiko. A big M${mag} earthquake just hit ${dist}km away near ${place}! Give a short urgent safety instruction — DROP COVER HOLD ON — in simple words a child understands. 1 emoji. Max 30 words.`,
+      `You are Kiko, a brave 8-year-old boy. BIG earthquake M${mag} is ${dist}km away! Tell the child to DROP, COVER, HOLD ON right now! Use simple words. 1 emoji. Max 25 words.`,
+      `You are a worried but brave 8-year-old Kiko. Strong shake M${mag} at ${dist}km! Tell child to get under table and hold tight! Use 1 emoji. Max 25 words.`
+    ]
   };
 
   const fallbacks = {
-    safe: "Yay! The nearest shake is far away! It's safe to play outside! 🌞",
-    warning: "A little shaky shaky happened nearby, but don't worry! Stay inside and be safe okay? 😊",
-    danger: "BIG earthquake close by! DROP down, get UNDER something, and HOLD ON! Do it now! 🆘"
+    safe: [
+      "Yay! The nearest shake is far away! It's safe to play outside! 🌞",
+      "No earthquakes nearby! You can play and have fun today! 🎈",
+      "The ground is safe where you are! Time to play! 🌈",
+      "All clear! No shaking near you! Have a great day! ⭐"
+    ],
+    warning: [
+      "A little shaky shaky happened nearby, but don't worry! Stay inside and be safe okay? 😊",
+      "Small earthquake far away! Stay calm and stay inside! 🏠",
+      "The ground moved a little bit far away! You're safe here! 💙",
+      "Tiny shake far away! No need to be scared! Stay safe! 🌟"
+    ],
+    danger: [
+      "BIG earthquake close by! DROP down, get UNDER something, and HOLD ON! Do it now! 🆘",
+      "Strong shake! Get under your table and hold on tight! Right now! ⚠️",
+      "Earthquake! DROP, COVER, HOLD ON! Stay safe! 🚨",
+      "Big shake! Hide under something strong and hold on! Quick! 🆘"
+    ]
   };
+
+  // Pick random message
+  const randomIndex = Math.floor(Math.random() * msgs[level].length);
 
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -415,13 +445,13 @@ async function getKikoMessage(level, mag, dist, place) {
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 80,
-        messages: [{ role: 'user', content: msgs[level] }]
+        messages: [{ role: 'user', content: msgs[level][randomIndex] }]
       })
     });
     const data = await res.json();
-    bubble.textContent = data.content?.[0]?.text || fallbacks[level];
+    bubble.textContent = data.content?.[0]?.text || fallbacks[level][randomIndex];
   } catch {
-    bubble.textContent = fallbacks[level];
+    bubble.textContent = fallbacks[level][randomIndex];
   }
   bubble.className = 'bubble';
 }
@@ -464,14 +494,13 @@ async function loadData() {
       document.getElementById('quakeList').innerHTML = quakes.slice(0,10).map(q => {
         const mag = (q.properties.mag || 0).toFixed(1);
         const place = q.properties.place || 'Unknown';
-        const depth = q.geometry.coordinates[2]?.toFixed(0) || '?';
         return `<div class="quake-item">
           <div class="mag-badge ${magClass(parseFloat(mag))}">M${mag}</div>
           <div class="q-info">
             <div class="q-place">${place}</div>
-            <div class="q-meta">${timeSince(q.properties.time)} · ${depth}km deep</div>
+            <div class="q-meta">${timeSince(q.properties.time)} ago</div>
           </div>
-          <div class="q-dist">${q.km}km</div>
+          <div class="q-dist">${q.km}km away</div>
         </div>`;
       }).join('');
     }
@@ -505,14 +534,14 @@ if (navigator.geolocation) {
   navigator.geolocation.getCurrentPosition(pos => {
     userLat = pos.coords.latitude;
     userLon = pos.coords.longitude;
-    document.getElementById('locText').textContent = `Your live location · ${userLat.toFixed(3)}°, ${userLon.toFixed(3)}°`;
+    document.getElementById('locText').textContent = `📍 Your location found!`;
     loadData();
   }, () => {
-    document.getElementById('locText').textContent = 'Cebu City, PH (default location)';
+    document.getElementById('locText').textContent = '📍 Cebu City, Philippines';
     loadData();
   });
 } else {
-  document.getElementById('locText').textContent = 'Cebu City, PH (default location)';
+  document.getElementById('locText').textContent = '📍 Cebu City, Philippines';
   loadData();
 }
 
