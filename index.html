@@ -149,9 +149,10 @@
   }
   .kid-gif {
     height: 190px;
-    width: auto;
-    max-width: 120px;
-    object-fit: contain;
+    width: 120px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center center;
     display: block;
   }
   .kid-wrap.shake .kid-gif {
@@ -308,7 +309,7 @@
     </div>
     <div class="kid-wrap" id="kidWrap">
       <div class="char-name">Javi</div>
-      <img id="kidGif" class="kid-gif" src="javi/safe1.gif" alt="Javi animation" aria-hidden="true">
+      <div id="kidGif" class="kid-gif" role="img" aria-label="Javi animation"></div>
     </div>
   </div>
 
@@ -783,18 +784,15 @@ class JaviAlertApp {
       src = 'javi/danger' + dangerIdx + '.gif';
     }
 
-    // iOS Safari GIF fix: create a completely new <img> element each time
-    // iOS caches decoded GIF frames on existing elements, so re-using the
-    // same <img> and changing src will NOT restart animation.
-    const oldGif = document.getElementById('kidGif');
-    const newGif = document.createElement('img');
-    newGif.id = 'kidGif';
-    newGif.className = 'kid-gif';
-    newGif.alt = 'Javi animation';
-    newGif.setAttribute('aria-hidden', 'true');
-    // Use cache-busting query param to force fresh decode
-    newGif.src = src + '?t=' + Date.now();
-    oldGif.parentNode.replaceChild(newGif, oldGif);
+    // iOS Safari GIF fix: use CSS background-image on a div instead of <img> src
+    // iOS WebKit does not animate GIFs loaded via JS src assignment on <img> elements.
+    // Using background-image forces WebKit's image decoder to treat it as an animated image.
+    const gif = document.getElementById('kidGif');
+    // Reset by removing and re-adding to DOM to force re-render
+    gif.style.backgroundImage = 'none';
+    // Force reflow
+    void gif.offsetWidth;
+    gif.style.backgroundImage = 'url(' + src + '?t=' + Date.now() + ')';
 
     try { lucide.createIcons(); } catch (_) {}
   }
