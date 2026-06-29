@@ -655,6 +655,15 @@
 
       try { lucide.createIcons(); } catch (_) { /* ignore */ }
 
+      // Safety card visibility
+      const safetyCard = document.getElementById('safetyCard');
+      if (safetyCard) {
+        if (mood === 'safe') {
+          safetyCard.classList.add('hidden');
+        }
+        // For warning/danger, showSafetyTip() will reveal it after the delay
+      }
+
       // GIF
       const gif = document.getElementById('kidGif');
       const ext = this.isIOS ? 'png' : 'gif';
@@ -713,10 +722,12 @@
 
     // ─── SHOW SAFETY TIP ───────────────────────────────────────
     showSafetyTip() {
-      const bubble = document.getElementById('bubble');
+      const card = document.getElementById('safetyCard');
+      const body = document.getElementById('safetyBody');
+      if (!card || !body) return;
       const tip = SAFETY_TIPS[Math.floor(Math.random() * SAFETY_TIPS.length)];
-      const tipHtml = '<br><br><span style="display:inline-flex;align-items:center;gap:4px;font-size:0.85em;opacity:0.85"><i data-lucide="shield" aria-hidden="true" style="width:14px;height:14px;flex-shrink:0"></i> ' + tip + '</span>';
-      bubble.innerHTML += tipHtml;
+      body.textContent = tip;
+      card.classList.remove('hidden');
       try { lucide.createIcons(); } catch (_) { /* ignore */ }
     }
 

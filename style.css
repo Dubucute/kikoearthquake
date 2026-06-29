@@ -525,3 +525,32 @@ body.danger {
 
 /* Lucide icon sizing */
 .icon-inline { display: inline-flex; align-items: center; vertical-align: middle; }
+
+/* SAFETY TIPS CARD */
+.safety-card {
+  background: rgba(255,255,255,.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin: 0 0 14px;
+  box-shadow: 0 2px 12px rgba(0,0,0,.08);
+  border: 1px solid rgba(0,0,0,.06);
+  animation: bounceIn .4s ease;
+}
+.safety-card.hidden { display: none; }
+.safety-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 8px;
+  color: #d97706;
+}
+.safety-header svg { width: 16px; height: 16px; flex-shrink: 0; }
+.safety-body {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #444;
+}
