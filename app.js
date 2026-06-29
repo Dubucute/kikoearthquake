@@ -12,8 +12,6 @@
   const OPENROUTER_MODELS = [
     'meta-llama/llama-3.2-3b-instruct:free',
     'meta-llama/llama-3.3-70b-instruct:free',
-    'google/gemma-4-26b-a4b-it:free',
-    'google/gemma-4-31b-it:free',
     'nvidia/nemotron-3-super-120b-a12b:free',
     'nvidia/nemotron-3-ultra-550b-a55b:free',
     'nvidia/nemotron-3-nano-30b-a3b:free',
@@ -31,7 +29,9 @@
     'cognitivecomputations/dolphin-mistral-24b-venice-edition:free',
     'poolside/laguna-xs.2:free',
     'poolside/laguna-m.1:free',
-    'cohere/north-mini-code:free'
+    'cohere/north-mini-code:free',
+    'google/gemma-4-26b-a4b-it:free',
+    'google/gemma-4-31b-it:free'
   ];
 
   const CONFIG = {
