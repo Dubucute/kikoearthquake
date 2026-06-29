@@ -433,11 +433,10 @@
       this.setupPagination();
       this.setupInstallPrompt();
 
-      // Set default Javi icon to safe2
+      // Set default Javi icon to the app icon
       const kidGif = document.getElementById('kidGif');
       if (kidGif) {
-        const ext = this.isIOS ? 'png' : 'gif';
-        kidGif.style.backgroundImage = "url('javi/safe2." + ext + "')";
+        kidGif.style.backgroundImage = "url('icons/javi-icon.png')";
       }
 
       // Lucide
