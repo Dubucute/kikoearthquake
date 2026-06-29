@@ -130,28 +130,16 @@
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     white-space: nowrap;
   }
-  #kidSvg { transition: all .4s; animation: breathe 3s ease-in-out infinite; }
-  .kid-wrap.shake #kidSvg { animation: shaking .25s infinite; }
-  
-  /* Eye animations */
-  #pupilL, #pupilR { animation: lookAround 4s ease-in-out infinite; }
-  
-  @keyframes breathe {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-3px); }
+  .kid-gif {
+    width: 90px;
+    height: 120px;
+    object-fit: contain;
+    display: block;
+  }
+  .kid-wrap.shake .kid-gif {
+    animation: shaking .25s infinite;
   }
   
-  @keyframes lookAround {
-    0%, 100% { transform: translate(0, 0); }
-    25% { transform: translate(1px, 0); }
-    50% { transform: translate(0, 1px); }
-    75% { transform: translate(-1px, 0); }
-  }
-  
-  @keyframes blink {
-    0%, 45%, 55%, 100% { ry: 0; }
-    50% { ry: 6; }
-  }
   @keyframes shaking {
     0%, 100% { transform: translateX(0) rotate(0deg); }
     25% { transform: translateX(-3px) rotate(-2deg); }
@@ -302,52 +290,7 @@
     </div>
     <div class="kid-wrap" id="kidWrap">
       <div class="char-name">Javi</div>
-      <svg id="kidSvg" width="90" height="120" viewBox="0 0 90 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <!-- Legs -->
-        <rect x="26" y="94" width="14" height="20" rx="7" fill="#1565C0"/>
-        <rect x="50" y="94" width="14" height="20" rx="7" fill="#1565C0"/>
-        <!-- Feet -->
-        <ellipse cx="33" cy="114" rx="9" ry="6" fill="#333"/>
-        <ellipse cx="57" cy="114" rx="9" ry="6" fill="#333"/>
-        <!-- Body -->
-        <rect x="24" y="62" width="42" height="36" rx="12" fill="#4FC3F7"/>
-        <!-- Arms -->
-        <rect id="armL" x="6" y="65" width="20" height="12" rx="6" fill="#4FC3F7"/>
-        <rect id="armR" x="64" y="65" width="20" height="12" rx="6" fill="#4FC3F7"/>
-        <!-- Collar -->
-        <path d="M34 62 L45 73 L56 62" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-        <!-- Neck -->
-        <rect x="37" y="54" width="16" height="10" rx="5" fill="#FFCC80"/>
-        <!-- Head -->
-        <circle cx="45" cy="38" r="26" fill="#FFCC80"/>
-        <!-- Hair -->
-        <ellipse cx="45" cy="14" rx="22" ry="11" fill="#4E342E"/>
-        <ellipse cx="22" cy="28" rx="9" ry="14" fill="#4E342E"/>
-        <ellipse cx="68" cy="28" rx="9" ry="14" fill="#4E342E"/>
-        <!-- Ears -->
-        <circle cx="19" cy="38" r="5" fill="#FFCC80"/>
-        <circle cx="71" cy="38" r="5" fill="#FFCC80"/>
-        <!-- Eyes white -->
-        <circle cx="35" cy="36" r="6" fill="white"/>
-        <circle cx="55" cy="36" r="6" fill="white"/>
-        <!-- Eyelids for blinking -->
-        <ellipse id="eyelidL" cx="35" cy="36" rx="6" ry="0" fill="#FFCC80" style="animation: blink 4s ease-in-out infinite;"/>
-        <ellipse id="eyelidR" cx="55" cy="36" rx="6" ry="0" fill="#FFCC80" style="animation: blink 4s ease-in-out infinite;"/>
-        <!-- Pupils -->
-        <circle id="pupilL" cx="36" cy="36" r="3.5" fill="#333"/>
-        <circle id="pupilR" cx="56" cy="36" r="3.5" fill="#333"/>
-        <!-- Eye shine -->
-        <circle cx="37" cy="34.5" r="1.2" fill="white"/>
-        <circle cx="57" cy="34.5" r="1.2" fill="white"/>
-        <!-- Eyebrows -->
-        <path id="browL" d="M30 28 Q35 26 40 28" stroke="#4E342E" stroke-width="2" fill="none" stroke-linecap="round"/>
-        <path id="browR" d="M50 28 Q55 26 60 28" stroke="#4E342E" stroke-width="2" fill="none" stroke-linecap="round"/>
-        <!-- Mouth -->
-        <path id="mouth" d="M37 48 Q45 55 53 48" stroke="#c0392b" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-        <!-- Cheeks -->
-        <circle cx="24" cy="43" r="6" fill="#FF8A80" opacity=".45"/>
-        <circle cx="66" cy="43" r="6" fill="#FF8A80" opacity=".45"/>
-      </svg>
+      <img id="kidGif" class="kid-gif" src="javi/safe1.gif" alt="Javi animation" aria-hidden="true">
     </div>
   </div>
 
@@ -785,23 +728,16 @@ class JaviAlertApp {
     document.body.className = level === 'safe' ? '' : level;
     const pill = document.getElementById('statusPill');
     const kid = document.getElementById('kidWrap');
-    const mouth = document.getElementById('mouth');
-    const browL = document.getElementById('browL');
-    const browR = document.getElementById('browR');
-    const pupilL = document.getElementById('pupilL');
-    const pupilR = document.getElementById('pupilR');
+    const gif = document.getElementById('kidGif');
 
     kid.className = 'kid-wrap' + (level === 'danger' ? ' shake' : '');
 
     // Update pill with Lucide icon
-    // Re-create the icon element since lucide.createIcons() replaces <i> with <svg>
     let pillIcon = pill.querySelector('[data-lucide]');
     if (!pillIcon) {
-      // First run: <i> element exists, set attribute and let createIcons replace it
       pillIcon = pill.querySelector('i');
     }
     if (!pillIcon) {
-      // Fallback: create a fresh <i> element
       pillIcon = document.createElement('i');
       pillIcon.setAttribute('aria-hidden', 'true');
       pill.insertBefore(pillIcon, pill.querySelector('span') || null);
@@ -812,28 +748,20 @@ class JaviAlertApp {
       pill.className = 'status-pill pill-safe';
       pillIcon.setAttribute('data-lucide', 'shield-check');
       if (pillText) pillText.textContent = 'All clear!';
-      mouth.setAttribute('d', 'M37 48 Q45 55 53 48');
-      browL.setAttribute('d', 'M30 28 Q35 26 40 28');
-      browR.setAttribute('d', 'M50 28 Q55 26 60 28');
-      pupilL.setAttribute('cy', '36'); pupilR.setAttribute('cy', '36');
-      pupilL.setAttribute('r', '3.5'); pupilR.setAttribute('r', '3.5');
+      const safeIdx = Math.floor(Math.random() * 3) + 1;
+      gif.src = 'javi/safe' + safeIdx + '.gif';
     } else if (level === 'warning') {
       pill.className = 'status-pill pill-warning';
       pillIcon.setAttribute('data-lucide', 'alert-triangle');
       if (pillText) pillText.textContent = 'Minor activity';
-      mouth.setAttribute('d', 'M37 51 Q45 49 53 51');
-      browL.setAttribute('d', 'M30 29 Q35 27 40 30');
-      browR.setAttribute('d', 'M50 30 Q55 27 60 29');
-      pupilL.setAttribute('cy', '37'); pupilR.setAttribute('cy', '37');
+      const warnIdx = Math.floor(Math.random() * 2) + 1;
+      gif.src = 'javi/warning' + warnIdx + '.gif';
     } else {
       pill.className = 'status-pill pill-danger';
       pillIcon.setAttribute('data-lucide', 'bell-ring');
       if (pillText) pillText.textContent = 'Earthquake alert!';
-      mouth.setAttribute('d', 'M37 53 Q45 48 53 53');
-      browL.setAttribute('d', 'M30 31 Q35 28 40 32');
-      browR.setAttribute('d', 'M50 32 Q55 28 60 31');
-      pupilL.setAttribute('cy', '38'); pupilR.setAttribute('cy', '38');
-      pupilL.setAttribute('r', '4.5'); pupilR.setAttribute('r', '4.5');
+      const dangerIdx = Math.floor(Math.random() * 2) + 1;
+      gif.src = 'javi/danger' + dangerIdx + '.gif';
     }
 
     try { lucide.createIcons(); } catch (_) {}

@@ -1,5 +1,5 @@
-const CACHE = 'quake-buddy-v1';
-const ASSETS = ['/', '/index.html', '/manifest.json'];
+const CACHE = 'quake-buddy-v2';
+const ASSETS = ['/', '/index.html', '/manifest.json', '/javi/safe1.gif', '/javi/safe2.gif', '/javi/safe3.gif'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
