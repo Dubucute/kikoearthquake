@@ -860,6 +860,11 @@
       if (safetyCard) {
         if (mood === 'safe') {
           safetyCard.classList.add('hidden');
+          // Stop tip rotation when hiding
+          if (this._tipInterval) {
+            clearInterval(this._tipInterval);
+            this._tipInterval = null;
+          }
         }
         // For warning/danger, showSafetyTip() will reveal it after the delay
       }
@@ -925,10 +930,23 @@
       const card = document.getElementById('safetyCard');
       const body = document.getElementById('safetyBody');
       if (!card || !body) return;
-      const tip = SAFETY_TIPS[Math.floor(Math.random() * SAFETY_TIPS.length)];
-      body.textContent = tip;
       card.classList.remove('hidden');
       try { lucide.createIcons(); } catch (_) { /* ignore */ }
+
+      // Clear any existing rotation
+      if (this._tipInterval) {
+        clearInterval(this._tipInterval);
+      }
+
+      // Show first tip immediately
+      let idx = Math.floor(Math.random() * SAFETY_TIPS.length);
+      body.textContent = SAFETY_TIPS[idx];
+
+      // Rotate tips every 3 seconds
+      this._tipInterval = setInterval(() => {
+        idx = (idx + 1) % SAFETY_TIPS.length;
+        body.textContent = SAFETY_TIPS[idx];
+      }, 3000);
     }
 
     // ─── LOAD DATA ─────────────────────────────────────────────
