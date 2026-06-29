@@ -83,6 +83,30 @@
     font-size: 12px; color: #333; margin-bottom: 12px;
   }
   .loc-bar i { width: 14px; height: 14px; color: #e74c3c; flex-shrink: 0; }
+  .loc-bar { position: relative; }
+  .loc-input {
+    flex: 1; border: none; background: transparent;
+    font-size: 12px; color: #333; outline: none;
+    font-family: inherit; min-width: 0;
+  }
+  .loc-input::placeholder { color: #999; }
+  .loc-dropdown {
+    position: absolute; top: 100%; left: 0; right: 0; z-index: 100;
+    background: white; border-radius: 12px; margin-top: 4px;
+    box-shadow: var(--shadow-lg); max-height: 200px; overflow-y: auto;
+    border: 1px solid rgba(0,0,0,.08);
+  }
+  .loc-dropdown.hidden { display: none; }
+  .loc-dropdown-item {
+    padding: 10px 14px; font-size: 12px; color: var(--text);
+    cursor: pointer; border-bottom: 1px solid rgba(0,0,0,.04);
+    transition: background .1s;
+  }
+  .loc-dropdown-item:last-child { border-bottom: none; }
+  .loc-dropdown-item:hover, .loc-dropdown-item.active { background: #f0f7ff; }
+  .loc-dropdown-item .ld-sub {
+    font-size: 11px; color: var(--muted); margin-top: 1px;
+  }
 
   /* CLOUDS */
   .clouds {
@@ -430,7 +454,8 @@
 
   <div class="loc-bar" role="region" aria-label="Your location">
     <i data-lucide="map-pin" aria-hidden="true"></i>
-    <span id="locText">Detecting location...</span>
+    <input type="text" id="locInput" class="loc-input" placeholder="Search your location..." autocomplete="off" spellcheck="false"/>
+    <div class="loc-dropdown hidden" id="locDropdown"></div>
   </div>
 
   <div class="clouds" aria-hidden="true">
@@ -545,6 +570,7 @@
 const API = {
   USGS: 'https://earthquake.usgs.gov/fdsnws/event/1/query',
   NOMINATIM: 'https://nominatim.openstreetmap.org/reverse',
+  NOMINATIM_SEARCH: 'https://nominatim.openstreetmap.org/search',
   OPENROUTER: 'https://openrouter.ai/api/v1/chat/completions'
 };
 const OPENROUTER_KEY = ['sk','or','v1','58f7dc74e2b5ffa6940c0241e8a2579f954bf7fe7eaaa7004dad7555e555294a'].join('-');
@@ -641,6 +667,7 @@ class JaviAlertApp {
     this.setupRefreshButton();
     this.setupInstallBanner();
     this.setupPagination();
+    this.setupLocationSearch();
     this.requestNotificationPermission();
     this.detectLocation();
     this.startAutoRefresh();
@@ -819,14 +846,14 @@ class JaviAlertApp {
   // ---------- Location Detection ----------
   async detectLocation() {
     if (!navigator.geolocation) {
-      this.setLocationText(DEFAULT_LOCATION.name);
+      this.setLocationInput(DEFAULT_LOCATION.name);
       this.loadData();
       return;
     }
 
     // Timeout fallback: if geolocation doesn't respond within 10s, use default
     const timeoutId = setTimeout(() => {
-      this.setLocationText(DEFAULT_LOCATION.name);
+      this.setLocationInput(DEFAULT_LOCATION.name);
       this.loadData();
     }, 10000);
 
@@ -837,20 +864,119 @@ class JaviAlertApp {
         this.userLon = pos.coords.longitude;
         const name = await this.fetchLocationName(this.userLat, this.userLon);
         this.cache.locationName = name;
-        this.setLocationText(name);
+        this.setLocationInput(name);
         this.loadData();
       },
       () => {
         clearTimeout(timeoutId);
-        this.setLocationText(DEFAULT_LOCATION.name);
+        this.setLocationInput(DEFAULT_LOCATION.name);
         this.loadData();
       },
       { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }
     );
   }
 
-  setLocationText(text) {
-    document.getElementById('locText').textContent = text;
+  setLocationInput(text) {
+    const input = document.getElementById('locInput');
+    if (input) input.value = text;
+  }
+
+  // ---------- Location Search with Autocomplete ----------
+  setupLocationSearch() {
+    const input = document.getElementById('locInput');
+    const dropdown = document.getElementById('locDropdown');
+    if (!input || !dropdown) return;
+
+    let debounceTimer = null;
+    let selectedIndex = -1;
+    let results = [];
+
+    // Close dropdown on outside click
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.loc-bar')) {
+        dropdown.classList.add('hidden');
+      }
+    });
+
+    input.addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      const q = input.value.trim();
+      if (q.length < 3) {
+        dropdown.classList.add('hidden');
+        return;
+      }
+      debounceTimer = setTimeout(async () => {
+        try {
+          const url = `${API.NOMINATIM_SEARCH}?format=json&q=${encodeURIComponent(q)}&limit=5&addressdetails=1`;
+          const res = await fetch(url);
+          const data = await res.json();
+          results = data || [];
+          selectedIndex = -1;
+          if (results.length === 0) {
+            dropdown.classList.add('hidden');
+          } else {
+            dropdown.innerHTML = results.map((r, i) => {
+              const display = r.display_name || r.name || '';
+              const cls = r.type || '';
+              return `<div class="loc-dropdown-item" data-index="${i}">
+                <div>${display}</div>
+                <div class="ld-sub">${cls} · ${r.lat ? parseFloat(r.lat).toFixed(4) : ''}, ${r.lon ? parseFloat(r.lon).toFixed(4) : ''}</div>
+              </div>`;
+            }).join('');
+            dropdown.classList.remove('hidden');
+
+            // Click handler for items
+            dropdown.querySelectorAll('.loc-dropdown-item').forEach((el) => {
+              el.addEventListener('click', () => {
+                const idx = parseInt(el.dataset.index);
+                this.selectLocation(result, idx);
+              });
+            });
+          }
+        } catch {
+          dropdown.classList.add('hidden');
+        }
+      }, 400);
+    });
+
+    // Keyboard navigation
+    input.addEventListener('keydown', (e) => {
+      const items = dropdown.querySelectorAll('.loc-dropdown-item');
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+        highlightItem(items, selectedIndex);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        selectedIndex = Math.max(selectedIndex - 1, -1);
+        highlightItem(items, selectedIndex);
+      } else if (e.key === 'Enter' && selectedIndex >= 0 && results[selectedIndex]) {
+        e.preventDefault();
+        this.selectLocation(results[selectedIndex], selectedIndex);
+      } else if (e.key === 'Escape') {
+        dropdown.classList.add('hidden');
+      }
+    });
+
+    const highlightItem = (items, idx) => {
+      items.forEach((el, i) => el.classList.toggle('active', i === idx));
+      if (idx >= 0 && items[idx]) {
+        items[idx].scrollIntoView({ block: 'nearest' });
+      }
+    };
+  }
+
+  selectLocation(result, index) {
+    const input = document.getElementById('locInput');
+    const dropdown = document.getElementById('locDropdown');
+    if (!result || !input || !dropdown) return;
+    const displayName = result.display_name || result.name || input.value;
+    this.userLat = parseFloat(result.lat);
+    this.userLon = parseFloat(result.lon);
+    this.cache.locationName = displayName;
+    input.value = displayName;
+    dropdown.classList.add('hidden');
+    this.loadData();
   }
 
   async fetchLocationName(lat, lon) {
