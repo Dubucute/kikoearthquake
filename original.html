@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<meta name="theme-color" content="#87CEEB"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="JaviAlert"/>
+<meta name="description" content="Earthquake safety buddy for your area"/>
+<link rel="manifest" href="manifest.json"/>
+<link rel="apple-touch-icon" href="icons/icon-192.png"/>
+<title>JaviAlert</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css"/>
+<style>
+  :root {
+    --safe-sky1: #4FC3F7;
+    --safe-sky2: #B3E5FC;
+    --warn-sky1: #FFB74D;
+    --warn-sky2: #FFE0B2;
+    --danger-sky1: #EF5350;
+    --danger-sky2: #FFCDD2;
+    --card-bg: rgba(255,255,255,0.92);
+    --text: #1a1a2e;
+    --muted: #666;
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; overflow-x: hidden; }
+
+  body {
+    background: linear-gradient(180deg, var(--safe-sky1) 0%, var(--safe-sky2) 100%);
+    transition: background 1s ease;
+    min-height: 100vh;
+  }
+  body.warning { background: linear-gradient(180deg, var(--warn-sky1) 0%, var(--warn-sky2) 100%); }
+  body.danger { background: linear-gradient(180deg, var(--danger-sky1) 0%, var(--danger-sky2) 100%); }
+
+  .app { max-width: 430px; margin: 0 auto; padding: 16px 16px 32px; }
+
+  /* TOP BAR */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 0 8px;
+  }
+  .app-name { font-size: 18px; font-weight: 700; color: white; text-shadow: 0 1px 4px rgba(0,0,0,.2); }
+  .refresh-ico {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: rgba(255,255,255,.3); border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; color: white; transition: background .2s;
+  }
+  .refresh-ico:active { background: rgba(255,255,255,.5); }
+
+  /* LOCATION BAR */
+  .loc-bar {
+    background: rgba(255,255,255,.75); backdrop-filter: blur(8px);
+    border-radius: 30px; padding: 7px 14px;
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; color: #333; margin-bottom: 12px;
+  }
+
+  /* CLOUDS */
+  .clouds { position: relative; height: 40px; margin-bottom: -10px; }
+  .cloud {
+    position: absolute; background: white; border-radius: 50px;
+    opacity: .75; animation: drift linear infinite;
+  }
+  .cloud::before, .cloud::after {
+    content: ''; position: absolute; background: white; border-radius: 50%;
+  }
+  .c1 { width: 70px; height: 22px; top: 5px; left: 10%; animation-duration: 18s; }
+  .c1::before { width: 30px; height: 30px; top: -14px; left: 10px; }
+  .c1::after  { width: 22px; height: 22px; top: -10px; left: 30px; }
+  .c2 { width: 50px; height: 16px; top: 14px; left: 50%; animation-duration: 24s; animation-delay: -8s; }
+  .c2::before { width: 22px; height: 22px; top: -10px; left: 8px; }
+  .c3 { width: 60px; height: 18px; top: 2px; right: 5%; animation-duration: 20s; animation-delay: -4s; }
+  .c3::before { width: 26px; height: 26px; top: -12px; left: 12px; }
+  @keyframes drift { 0% { transform: translateX(0); } 50% { transform: translateX(12px); } 100% { transform: translateX(0); } }
+
+  /* CHARACTER CARD */
+  .char-card {
+    background: var(--card-bg); backdrop-filter: blur(12px);
+    border-radius: 24px; padding: 16px;
+    display: flex; align-items: flex-end; gap: 12px;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,.1);
+    border: 1.5px solid rgba(255,255,255,.8);
+  }
+
+  /* SPEECH BUBBLE */
+  .bubble {
+    flex: 1; background: white; border-radius: 14px;
+    border: 2.5px solid #2c2c2c;
+    padding: 12px 14px; font-size: 14px; line-height: 1.5;
+    color: #1a1a1a; font-weight: 500; position: relative;
+    box-shadow: 3px 3px 0 #2c2c2c; min-height: 70px;
+    display: flex; align-items: center;
+  }
+  .bubble::after {
+    content: ''; position: absolute; right: -16px; bottom: 20px;
+    border: 8px solid transparent; border-left: 16px solid #2c2c2c;
+  }
+  .bubble::before {
+    content: ''; position: absolute; right: -11px; bottom: 21px;
+    border: 7px solid transparent; border-left: 14px solid white; z-index: 1;
+  }
+  .bubble.loading { color: #999; font-style: italic; }
+
+  /* KID SVG */
+  .kid-wrap { flex-shrink: 0; width: 90px; position: relative; }
+  .char-name {
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 14px;
+    font-weight: 700;
+    color: #4E342E;
+    background: white;
+    padding: 4px 12px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    white-space: nowrap;
+  }
+  #kidSvg { transition: all .4s; }
+  .kid-wrap.shake #kidSvg { animation: shaking .25s infinite; }
+  @keyframes shaking {
+    0%, 100% { transform: translateX(0) rotate(0deg); }
+    25% { transform: translateX(-3px) rotate(-2deg); }
+    75% { transform: translateX(3px) rotate(2deg); }
+  }
+
+  /* STATUS PILL */
+  .status-pill {
+    display: block; width: fit-content; margin: 0 auto 14px;
+    padding: 7px 18px; border-radius: 30px;
+    font-size: 14px; font-weight: 700; color: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,.2);
+    letter-spacing: .3px;
+  }
+  .pill-safe    { background: #2ecc71; }
+  .pill-warning { background: #e67e22; }
+  .pill-danger  { background: #e74c3c; animation: pulse-red 1s infinite; }
+  @keyframes pulse-red { 0%,100% { box-shadow: 0 0 0 0 rgba(231,76,60,.5); } 50% { box-shadow: 0 0 0 8px rgba(231,76,60,0); } }
+
+  /* STATS ROW */
+  .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .stat {
+    background: var(--card-bg); border-radius: var(--radius); padding: 14px;
+    text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,.08);
+    border: 1px solid rgba(255,255,255,.8);
+  }
+  .stat-num { font-size: 26px; font-weight: 800; color: var(--text); }
+  .stat-lbl  { font-size: 11px; color: var(--muted); margin-top: 3px; font-weight: 500; }
+
+  /* QUAKE LIST CARD */
+  .list-card {
+    background: var(--card-bg); border-radius: var(--radius);
+    box-shadow: 0 2px 10px rgba(0,0,0,.08);
+    border: 1px solid rgba(255,255,255,.8); overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .list-header {
+    padding: 12px 16px; font-size: 12px; font-weight: 700;
+    color: var(--muted); letter-spacing: .6px; text-transform: uppercase;
+    border-bottom: 1px solid rgba(0,0,0,.06);
+  }
+  .quake-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px; border-bottom: 1px solid rgba(0,0,0,.05);
+    transition: background .15s;
+  }
+  .quake-item:last-child { border-bottom: none; }
+  .quake-item:active { background: rgba(0,0,0,.03); }
+  .mag-badge {
+    width: 44px; height: 44px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 800; color: white; flex-shrink: 0;
+  }
+  .mag-low     { background: #2ecc71; }
+  .mag-minor   { background: #f39c12; }
+  .mag-moderate{ background: #e67e22; }
+  .mag-strong  { background: #e74c3c; }
+  .mag-major   { background: #8e44ad; }
+  .q-info { flex: 1; min-width: 0; }
+  .q-place { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .q-meta  { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .q-dist  { font-size: 13px; font-weight: 700; color: var(--muted); flex-shrink: 0; }
+
+  /* EMPTY */
+  .empty { padding: 28px; text-align: center; color: var(--muted); font-size: 14px; }
+
+  /* INSTALL BANNER */
+  .install-banner {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: var(--radius); padding: 14px 16px;
+    display: flex; align-items: center; gap: 12px;
+    color: white; margin-bottom: 12px; cursor: pointer;
+    box-shadow: 0 4px 12px rgba(102,126,234,.4);
+  }
+  .install-banner.hidden { display: none; }
+  .install-text { flex: 1; }
+  .install-text strong { display: block; font-size: 14px; }
+  .install-text span { font-size: 12px; opacity: .85; }
+
+  /* FOOTER */
+  .footer { text-align: center; font-size: 11px; color: rgba(255,255,255,.7); padding-top: 8px; }
+
+  /* LAST UPDATE */
+  .last-update { text-align: center; font-size: 11px; color: rgba(0,0,0,.4); padding: 4px 0 8px; }
+
+  /* SPIN */
+  .spin { animation: spin 1s linear infinite; display: inline-block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <div class="app-name">🌏 JaviAlert</div>
+    <button class="refresh-ico" id="refreshBtn" onclick="loadData()" title="Refresh">
+      <i class="ti ti-refresh" id="refreshIcon"></i>
+    </button>
+  </div>
+
+  <div class="loc-bar">
+    <i class="ti ti-map-pin" style="color:#e74c3c;font-size:14px"></i>
+    <span id="locText">Detecting location…</span>
+  </div>
+
+  <div class="clouds">
+    <div class="cloud c1"></div>
+    <div class="cloud c2"></div>
+    <div class="cloud c3"></div>
+  </div>
+
+  <!-- Character -->
+  <div class="char-card">
+    <div class="bubble loading" id="bubble">Checking for earthquakes near you… 🔍</div>
+    <div class="kid-wrap" id="kidWrap">
+      <div class="char-name">Javi</div>
+      <svg id="kidSvg" width="90" height="120" viewBox="0 0 90 120" xmlns="http://www.w3.org/2000/svg">
+        <!-- Legs -->
+        <rect x="26" y="94" width="14" height="20" rx="7" fill="#1565C0"/>
+        <rect x="50" y="94" width="14" height="20" rx="7" fill="#1565C0"/>
+        <!-- Feet -->
+        <ellipse cx="33" cy="114" rx="9" ry="6" fill="#333"/>
+        <ellipse cx="57" cy="114" rx="9" ry="6" fill="#333"/>
+        <!-- Body -->
+        <rect x="24" y="62" width="42" height="36" rx="12" fill="#4FC3F7"/>
+        <!-- Arms -->
+        <rect id="armL" x="6" y="65" width="20" height="12" rx="6" fill="#4FC3F7"/>
+        <rect id="armR" x="64" y="65" width="20" height="12" rx="6" fill="#4FC3F7"/>
+        <!-- Collar -->
+        <path d="M34 62 L45 73 L56 62" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <!-- Neck -->
+        <rect x="37" y="54" width="16" height="10" rx="5" fill="#FFCC80"/>
+        <!-- Head -->
+        <circle cx="45" cy="38" r="26" fill="#FFCC80"/>
+        <!-- Hair -->
+        <ellipse cx="45" cy="14" rx="22" ry="11" fill="#4E342E"/>
+        <ellipse cx="22" cy="28" rx="9" ry="14" fill="#4E342E"/>
+        <ellipse cx="68" cy="28" rx="9" ry="14" fill="#4E342E"/>
+        <!-- Ears -->
+        <circle cx="19" cy="38" r="5" fill="#FFCC80"/>
+        <circle cx="71" cy="38" r="5" fill="#FFCC80"/>
+        <!-- Eyes white -->
+        <circle cx="35" cy="36" r="6" fill="white"/>
+        <circle cx="55" cy="36" r="6" fill="white"/>
+        <!-- Pupils -->
+        <circle id="pupilL" cx="36" cy="36" r="3.5" fill="#333"/>
+        <circle id="pupilR" cx="56" cy="36" r="3.5" fill="#333"/>
+        <!-- Eye shine -->
+        <circle cx="37" cy="34.5" r="1.2" fill="white"/>
+        <circle cx="57" cy="34.5" r="1.2" fill="white"/>
+        <!-- Eyebrows -->
+        <path id="browL" d="M30 28 Q35 26 40 28" stroke="#4E342E" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <path id="browR" d="M50 28 Q55 26 60 28" stroke="#4E342E" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <!-- Mouth -->
+        <path id="mouth" d="M37 48 Q45 55 53 48" stroke="#c0392b" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <!-- Cheeks -->
+        <circle cx="24" cy="43" r="6" fill="#FF8A80" opacity=".45"/>
+        <circle cx="66" cy="43" r="6" fill="#FF8A80" opacity=".45"/>
+      </svg>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-bottom:14px">
+    <span class="status-pill pill-safe" id="statusPill">Checking…</span>
+  </div>
+
+  <!-- Install banner -->
+  <div class="install-banner hidden" id="installBanner" onclick="installApp()">
+    <i class="ti ti-download" style="font-size:24px"></i>
+    <div class="install-text">
+      <strong>Install Quake Buddy</strong>
+      <span>Add to home screen for instant alerts</span>
+    </div>
+    <i class="ti ti-chevron-right"></i>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat">
+      <div class="stat-num" id="statCount">—</div>
+      <div class="stat-lbl">Shakes today</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num" id="statMax">—</div>
+      <div class="stat-lbl">Nearest shake</div>
+    </div>
+  </div>
+
+  <!-- Quake list -->
+  <div class="list-card">
+    <div class="list-header">📍 Earthquakes near you</div>
+    <div id="quakeList">
+      <div class="empty"><i class="ti ti-loader-2 spin"></i> Loading earthquake data…</div>
+    </div>
+  </div>
+
+  <div class="last-update" id="lastUpdate"></div>
+  <div class="footer">Data from USGS · Updates every 5 min · Javi watches over you 🧡</div>
+</div>
+
+<script>
+let userLat = 10.3157, userLon = 123.8854;
+let deferredPrompt = null;
+
+// PWA install prompt
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('installBanner').classList.remove('hidden');
+});
+
+function installApp() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(() => {
+    document.getElementById('installBanner').classList.add('hidden');
+    deferredPrompt = null;
+  });
+}
+
+function magClass(m) {
+  if (m < 2) return 'mag-low';
+  if (m < 3) return 'mag-minor';
+  if (m < 5) return 'mag-moderate';
+  if (m < 6) return 'mag-strong';
+  return 'mag-major';
+}
+
+function timeSince(ms) {
+  const s = (Date.now() - ms) / 1000;
+  if (s < 60) return `${Math.round(s)}s ago`;
+  if (s < 3600) return `${Math.round(s/60)}m ago`;
+  if (s < 86400) return `${Math.round(s/3600)}h ago`;
+  return `${Math.round(s/86400)}d ago`;
+}
+
+function distKm(la1, lo1, la2, lo2) {
+  const R = 6371, d2r = Math.PI/180;
+  const dLa = (la2-la1)*d2r, dLo = (lo2-lo1)*d2r;
+  const a = Math.sin(dLa/2)**2 + Math.cos(la1*d2r)*Math.cos(la2*d2r)*Math.sin(dLo/2)**2;
+  return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+}
+
+function setMood(level) {
+  document.body.className = level === 'safe' ? '' : level;
+  const pill = document.getElementById('statusPill');
+  const kid  = document.getElementById('kidWrap');
+  const mouth = document.getElementById('mouth');
+  const browL = document.getElementById('browL');
+  const browR = document.getElementById('browR');
+  const pupilL = document.getElementById('pupilL');
+  const pupilR = document.getElementById('pupilR');
+
+  kid.className = 'kid-wrap' + (level === 'danger' ? ' shake' : '');
+
+  if (level === 'safe') {
+    pill.className = 'status-pill pill-safe';
+    pill.textContent = '✅ All clear!';
+    mouth.setAttribute('d','M37 48 Q45 55 53 48');
+    browL.setAttribute('d','M30 28 Q35 26 40 28');
+    browR.setAttribute('d','M50 28 Q55 26 60 28');
+    pupilL.setAttribute('cy','36'); pupilR.setAttribute('cy','36');
+    pupilL.setAttribute('r','3.5'); pupilR.setAttribute('r','3.5');
+  } else if (level === 'warning') {
+    pill.className = 'status-pill pill-warning';
+    pill.textContent = '⚠️ Minor activity';
+    mouth.setAttribute('d','M37 51 Q45 49 53 51');
+    browL.setAttribute('d','M30 29 Q35 27 40 30');
+    browR.setAttribute('d','M50 30 Q55 27 60 29');
+    pupilL.setAttribute('cy','37'); pupilR.setAttribute('cy','37');
+  } else {
+    pill.className = 'status-pill pill-danger';
+    pill.textContent = '🚨 Earthquake alert!';
+    mouth.setAttribute('d','M37 53 Q45 48 53 53');
+    browL.setAttribute('d','M30 31 Q35 28 40 32');
+    browR.setAttribute('d','M50 32 Q55 28 60 31');
+    pupilL.setAttribute('cy','38'); pupilR.setAttribute('cy','38');
+    pupilL.setAttribute('r','4.5'); pupilR.setAttribute('r','4.5');
+  }
+}
+
+async function getJaviMessage(level, mag, dist, place) {
+  const bubble = document.getElementById('bubble');
+  bubble.className = 'bubble loading';
+  bubble.textContent = 'Javi is thinking… 💭';
+
+  const msgs = {
+    safe: [
+      `You are a cheerful 8-year-old cartoon boy named Javi who watches over earthquake safety. The nearest earthquake was M${mag} and it's ${dist}km away. Say something short, happy and reassuring in 1-2 sentences. Be super cute and childlike. Use 1-2 emojis. Max 30 words.`,
+      `You are a happy 8-year-old cartoon boy named Javi. The ground is not shaking near you! The closest shake is M${mag} and ${dist}km away. Tell the child it's safe to play and have fun. Use 1-2 emojis. Max 25 words.`,
+      `You are Javi, a friendly 8-year-old cartoon boy. No earthquakes nearby! The closest one is M${mag} and ${dist}km far away. Say something cheerful about being safe. Use 1-2 emojis. Max 25 words.`
+    ],
+    warning: [
+      `You are a cautious but calm 8-year-old cartoon boy named Javi. There was a M${mag} earthquake ${dist}km away near ${place}. Give a short simple safety tip for kids in 1-2 sentences. Calm, not scary. Use 1 emoji. Max 30 words.`,
+      `You are Javi, a careful 8-year-old boy. A small earthquake M${mag} happened ${dist}km away. Give a simple safety tip for kids. Stay calm. Use 1 emoji. Max 25 words.`,
+      `You are a calm 8-year-old cartoon boy Javi. The ground shook a little M${mag} at ${dist}km away. Tell the child what to do simply. Use 1 emoji. Max 25 words.`
+    ],
+    danger: [
+      `You are a scared but brave 8-year-old cartoon boy named Javi. A big M${mag} earthquake just hit ${dist}km away near ${place}! Give a short urgent safety instruction — DROP COVER HOLD ON — in simple words a child understands. 1 emoji. Max 30 words.`,
+      `You are Javi, a brave 8-year-old boy. BIG earthquake M${mag} is ${dist}km away! Tell the child to DROP, COVER, HOLD ON right now! Use simple words. 1 emoji. Max 25 words.`,
+      `You are a worried but brave 8-year-old Javi. Strong shake M${mag} at ${dist}km! Tell child to get under table and hold tight! Use 1 emoji. Max 25 words.`
+    ]
+  };
+
+  const fallbacks = {
+    safe: [
+      "Yay! The nearest shake is far away! It's safe to play outside! 🌞",
+      "No earthquakes nearby! You can play and have fun today! 🎈",
+      "The ground is safe where you are! Time to play! 🌈",
+      "All clear! No shaking near you! Have a great day! ⭐"
+    ],
+    warning: [
+      "A little shaky shaky happened nearby, but don't worry! Stay inside and be safe okay? 😊",
+      "Small earthquake far away! Stay calm and stay inside! 🏠",
+      "The ground moved a little bit far away! You're safe here! 💙",
+      "Tiny shake far away! No need to be scared! Stay safe! 🌟"
+    ],
+    danger: [
+      "BIG earthquake close by! DROP down, get UNDER something, and HOLD ON! Do it now! 🆘",
+      "Strong shake! Get under your table and hold on tight! Right now! ⚠️",
+      "Earthquake! DROP, COVER, HOLD ON! Stay safe! 🚨",
+      "Big shake! Hide under something strong and hold on! Quick! 🆘"
+    ]
+  };
+
+  // Pick random message
+  const randomIndex = Math.floor(Math.random() * msgs[level].length);
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 80,
+        messages: [{ role: 'user', content: msgs[level][randomIndex] }]
+      })
+    });
+    const data = await res.json();
+    bubble.textContent = data.content?.[0]?.text || fallbacks[level][randomIndex];
+  } catch {
+    bubble.textContent = fallbacks[level][randomIndex];
+  }
+  bubble.className = 'bubble';
+}
+
+async function loadData() {
+  const btn = document.getElementById('refreshBtn');
+  const icon = document.getElementById('refreshIcon');
+  btn.disabled = true;
+  icon.className = 'ti ti-loader-2 spin';
+
+  try {
+    const degRadius = 500 / 111.2;
+    const url = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&latitude=${userLat}&longitude=${userLon}&maxradius=${degRadius}&minmagnitude=1&orderby=time&limit=25`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const quakes = (data.features || []).map(q => {
+      const [lo, la] = q.geometry.coordinates;
+      return { ...q, km: distKm(userLat, userLon, la, lo) };
+    }).sort((a,b) => a.km - b.km);
+
+    const today = quakes.filter(q => Date.now() - q.properties.time < 86400000);
+    const nearestQuake = quakes[0];
+    const nearestMag = nearestQuake?.properties?.mag || 0;
+    const nearestPlace = nearestQuake?.properties?.place || 'your area';
+    const nearestDist = nearestQuake?.km || 0;
+
+    document.getElementById('statCount').textContent = today.length;
+    document.getElementById('statMax').textContent = nearestMag > 0 ? `M${nearestMag.toFixed(1)}` : 'None';
+
+    let level = 'safe';
+    if (nearestMag >= 5.0) level = 'danger';
+    else if (nearestMag >= 3.0) level = 'warning';
+
+    setMood(level);
+    getJaviMessage(level, nearestMag.toFixed(1), nearestDist.toFixed(0), nearestPlace);
+
+    if (quakes.length === 0) {
+      document.getElementById('quakeList').innerHTML = '<div class="empty">🎉 No earthquakes nearby! Javi says relax!</div>';
+    } else {
+      document.getElementById('quakeList').innerHTML = quakes.slice(0,10).map(q => {
+        const mag = (q.properties.mag || 0).toFixed(1);
+        const place = q.properties.place || 'Unknown';
+        return `<div class="quake-item">
+          <div class="mag-badge ${magClass(parseFloat(mag))}">M${mag}</div>
+          <div class="q-info">
+            <div class="q-place">${place}</div>
+            <div class="q-meta">${timeSince(q.properties.time)} ago</div>
+          </div>
+          <div class="q-dist">${q.km}km away</div>
+        </div>`;
+      }).join('');
+    }
+
+    const now = new Date();
+    document.getElementById('lastUpdate').textContent = `Last updated: ${now.toLocaleTimeString()}`;
+
+    // Browser notification if danger
+    if (level === 'danger' && Notification.permission === 'granted') {
+      new Notification('🚨 Quake Buddy Alert!', {
+        body: `M${nearestMag.toFixed(1)} earthquake detected ${nearestDist.toFixed(0)}km away near ${nearestPlace}. DROP, COVER, HOLD ON!`,
+        icon: 'icons/icon-192.png'
+      });
+    }
+
+  } catch(e) {
+    document.getElementById('quakeList').innerHTML = '<div class="empty">⚠️ Could not load data. Check your connection.</div>';
+  }
+
+  btn.disabled = false;
+  icon.className = 'ti ti-refresh';
+}
+
+// Request notification permission
+if ('Notification' in window && Notification.permission === 'default') {
+  Notification.requestPermission();
+}
+
+// Reverse geocoding to get location name
+async function getLocationName(lat, lon) {
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+    const data = await res.json();
+    const city = data.address.city || data.address.town || data.address.village || data.address.county || '';
+    const country = data.address.country || '';
+    return city && country ? `${city}, ${country}` : country || 'Your location';
+  } catch {
+    return 'Your location';
+  }
+}
+
+// Geolocation
+if (navigator.geolocation) {
+  navigator.geolocation.getCurrentPosition(async pos => {
+    userLat = pos.coords.latitude;
+    userLon = pos.coords.longitude;
+    const locationName = await getLocationName(userLat, userLon);
+    document.getElementById('locText').textContent = `📍 ${locationName}`;
+    loadData();
+  }, () => {
+    document.getElementById('locText').textContent = '📍 Cebu City, Philippines';
+    loadData();
+  });
+} else {
+  document.getElementById('locText').textContent = '📍 Cebu City, Philippines';
+  loadData();
+}
+
+// Auto refresh every 5 minutes
+setInterval(loadData, 300000);
+
+// Service worker registration
+if("serviceWorker" in navigator){
+  navigator.serviceWorker.register("sw.js")
+}
+</script>
+</body>
+</html>

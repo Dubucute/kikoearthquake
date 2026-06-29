@@ -1,9 +1,12 @@
-const CACHE = 'quake-buddy-v3';
+const CACHE = 'quake-buddy-v4';
 const ASSETS = [
   '/', '/index.html', '/manifest.json',
   '/javi/safe1.gif', '/javi/safe2.gif', '/javi/safe3.gif',
   '/javi/warning1.gif', '/javi/warning2.gif',
-  '/javi/danger1.gif', '/javi/danger2.gif'
+  '/javi/danger1.gif', '/javi/danger2.gif',
+  '/javi/safe1.png', '/javi/safe2.png',
+  '/javi/warning1.png', '/javi/warning2.png',
+  '/javi/danger1.png', '/javi/danger2.png'
 ];
 
 self.addEventListener('install', e => {

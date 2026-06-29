@@ -778,7 +778,9 @@ class JaviAlertApp {
       pill.className = 'status-pill pill-safe';
       pillIcon.setAttribute('data-lucide', 'shield-check');
       if (pillText) pillText.textContent = 'All clear!';
-      const safeIdx = Math.floor(Math.random() * 3) + 1;
+      // Only safe1-2 have PNGs; safe3 is GIF-only
+      const safeMax = ext === '.png' ? 2 : 3;
+      const safeIdx = Math.floor(Math.random() * safeMax) + 1;
       src = 'javi/safe' + safeIdx + ext;
     } else if (level === 'warning') {
       pill.className = 'status-pill pill-warning';
