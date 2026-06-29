@@ -297,6 +297,7 @@
   .mag-strong  { background: #e74c3c; }
   .mag-major   { background: #8e44ad; }
   .q-info { flex: 1; min-width: 0; }
+  .q-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .q-place { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .q-meta  { font-size: 11px; color: var(--muted); margin-top: 2px; }
   .q-dist  { font-size: 13px; font-weight: 700; color: var(--muted); flex-shrink: 0; }
@@ -586,6 +587,23 @@ function distKm(la1, lo1, la2, lo2) {
   const dLa = (la2 - la1) * d2r, dLo = (lo2 - lo1) * d2r;
   const a = Math.sin(dLa / 2) ** 2 + Math.cos(la1 * d2r) * Math.cos(la2 * d2r) * Math.sin(dLo / 2) ** 2;
   return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+}
+
+/**
+ * Parse USGS place name like "20 km SSW of La Paz, Philippines"
+ * into { location: "La Paz, Philippines", distance: "20", direction: "SSW" }
+ */
+function parsePlaceName(raw) {
+  const match = raw ? raw.match(/^([\d.]+)\s*km\s+(\w+)\s+of\s+(.+)/i) : null;
+  if (match) {
+    return {
+      location: match[3],
+      distance: match[1],
+      direction: match[2].toUpperCase()
+    };
+  }
+  // Fallback: return raw as-is
+  return { location: raw || 'Unknown', distance: '', direction: '' };
 }
 
 function determineAlertLevel(recentMag) {
@@ -973,15 +991,18 @@ class JaviAlertApp {
 
       container.innerHTML = pageItems.map((q) => {
         const mag = (q.properties.mag || 0).toFixed(1);
-        // Use full USGS place name (e.g. "20 km SSW of La Paz, Philippines")
-        const place = q.properties.place || 'Unknown';
+        // Parse "20 km SSW of La Paz, Philippines" → { location, distance, direction }
+        const parsed = parsePlaceName(q.properties.place);
+        const dirText = parsed.direction ? `${parsed.distance}km ${parsed.direction}` : '';
         return `<div class="quake-item" role="listitem">
           <div class="mag-badge ${magClass(parseFloat(mag))}">M${mag}</div>
           <div class="q-info">
-            <div class="q-place">${place}</div>
-            <div class="q-meta">${timeSince(q.properties.time)}</div>
+            <div class="q-top">
+              <div class="q-place">${parsed.location}</div>
+              <div class="q-dist">${q.km}km away</div>
+            </div>
+            <div class="q-meta">${timeSince(q.properties.time)}${dirText ? ' · ' + dirText : ''}</div>
           </div>
-          <div class="q-dist">${q.km}km away</div>
         </div>`;
       }).join('');
 
