@@ -848,40 +848,40 @@ class JaviAlertApp {
 
     const msgs = {
       safe: [
-        `Ikaw si Javi, isang masayang cartoon boy na nagbabantay sa kaligtasan sa lindol. Ang pinakamalapit na lindol ay M${mag} at ${dist}km ang layo. Magsalita ng maikli, masaya at nakakapanatag sa 1-2 pangungusap. Maging sobrang cute at parang bata. Max 30 words. Tagalog.`,
-        `Ikaw si Javi, isang masayang cartoon boy. Walang lindol na malapit sa iyo! Ang pinakamalapit ay M${mag} at ${dist}km ang layo. Sabihin sa bata na ligtas maglaro at magsaya. Max 25 words. Tagalog.`,
-        `Ikaw si Javi, isang magiliw na cartoon boy. Walang lindol sa malapit! Ang pinakamalapit ay M${mag} at ${dist}km ang layo. Magsabi ng masaya tungkol sa kaligtasan. Max 25 words. Tagalog.`
+        `You are Javi, a cheerful Filipino cartoon boy. The nearest earthquake was M${mag} and ${dist}km away. Say something short, fun and reassuring in casual Taglish (Tagalog + English) like a cool kid. Max 25 words.`,
+        `You are Javi, a happy Filipino kid. No shaking near you! The closest quake is M${mag} and ${dist}km away. Tell the user it's all good in casual Taglish. Max 25 words.`,
+        `You are Javi, a friendly Filipino boy. All clear! Nearest quake is M${mag} and ${dist}km away. Say something chill and reassuring in casual Taglish. Max 25 words.`
       ],
       warning: [
-        `Ikaw si Javi, isang maingat ngunit kalmadong cartoon boy. May M${mag} na lindol ${dist}km ang layo malapit sa ${place}. Magbigay ng maikling safety tip para sa mga bata sa 1-2 pangungusap. Kalmado, hindi nakakatakot. Max 30 words. Tagalog.`,
-        `Ikaw si Javi, isang maingat na cartoon boy. Isang maliit na lindol M${mag} ang nangyari ${dist}km ang layo. Magbigay ng simpleng safety tip para sa mga bata. Manatiling kalmado. Max 25 words. Tagalog.`,
-        `Ikaw si Javi, isang kalmadong cartoon boy. Medyo gumalaw ang lupa M${mag} sa ${dist}km ang layo. Sabihin sa bata kung ano ang gagawin. Max 25 words. Tagalog.`
+        `You are Javi, a cool but careful Filipino kid. There was a M${mag} quake ${dist}km away near ${place}. Give a quick safety tip in casual Taglish. Don't be scary, just chill but提醒. Max 25 words.`,
+        `You are Javi, a smart Filipino boy. Small quake M${mag} happened ${dist}km away. Give a simple safety tip in casual Taglish. Stay cool. Max 25 words.`,
+        `You are Javi, a chill Filipino kid. Ground shook a bit M${mag} at ${dist}km away. Tell them what to do in casual Taglish. Max 25 words.`
       ],
       danger: [
-        `Ikaw si Javi, isang takot ngunit matapang na cartoon boy. Isang malaking M${mag} na lindol ang tumama ${dist}km ang layo malapit sa ${place}! Magbigay ng maikling urgent safety instruction -- DUMAPA, SUMILONG, KUMAPIT -- sa simpleng salita. Max 30 words. Tagalog.`,
-        `Ikaw si Javi, isang matapang na cartoon boy. MALAKING lindol M${mag} ay ${dist}km ang layo! Sabihin sa bata na DUMAPA, SUMILONG, KUMAPIT ngayon na! Max 25 words. Tagalog.`,
-        `Ikaw si Javi, isang nag-aalala ngunit matapang na cartoon boy. Malakas na pagyanig M${mag} sa ${dist}km! Sabihin sa bata na sumilong sa ilalim ng mesa at kumapit! Max 25 words. Tagalog.`
+        `You are Javi, a scared but brave Filipino kid. A big M${mag} quake just hit ${dist}km away near ${place}! Give a short urgent safety instruction in casual Taglish -- DAPA, SALIKSIK, KAPIT! Max 25 words.`,
+        `You are Javi, a brave Filipino boy. BIG quake M${mag} is ${dist}km away! Tell them to DAPA, SALIKSIK, KAPIT right now! Use casual Taglish. Max 25 words.`,
+        `You are Javi, a worried but brave Filipino kid. Strong shake M${mag} at ${dist}km! Tell them to get under a table and hold tight in casual Taglish. Max 25 words.`
       ]
     };
 
     const fallbacks = {
       safe: [
-        "Yay! Malayo ang pinakamalapit na lindol! Ligtas maglaro sa labas!",
-        "Walang lindol sa malapit! Pwede kang maglaro at magsaya ngayon!",
-        "Ligtas ang lupa kung nasaan ka! Oras na para maglaro!",
-        "All clear! Walang pagyanig sa iyo! Magandang araw!"
+        "Ayos lang! Walang lindol na malapit sa'yo. Laro na!",
+        "Safe ka dito! Walang pagyanig. G na G!",
+        "Okay lang! Malayo ang lindol sa'yo. Enjoy your day!",
+        "All good! Walang earthquake na malapit. Time to chill!"
       ],
       warning: [
-        "May konting yanig na malapit, pero huwag mag-alala! Manatili sa loob at mag-ingat okay?",
-        "Maliit na lindol malayo! Manatiling kalmado at nasa loob lang!",
-        "Medyo gumalaw ang lupa sa malayo! Ligtas ka dito!",
-        "Maliit na yanig malayo! Hindi kailangang matakot! Manatiling ligtas!"
+        "Uy may konting yanig malayo lang. Chill lang, stay inside muna okay?",
+        "Maliit na lindol 'yun, malayo naman. Relax lang, ingat lang tayo.",
+        "May naramdaman akong konting galaw sa malayo. Safe ka dito, don't worry!",
+        "Teka, may slight shake malayo. Okay lang 'yan, stay calm lang."
       ],
       danger: [
-        "MALAKING lindol malapit! DUMAPA, sumilong sa ILALIM ng something, at KUMAPIT! Gawin mo na ngayon!",
-        "Malakas na yanig! Sumilong sa ilalim ng mesa at kumapit nang mahigpit! Ngayon na!",
-        "Lindol! DUMAPA, SUMILONG, KUMAPIT! Manatiling ligtas!",
-        "Malakas na yanig! Magtago sa ilalim ng matibay na bagay at kumapit! Bilis!"
+        "LINDOLLLL! DAPA agad! Sumilong sa ilalim ng table! KAPIT! NOW NA!",
+        "Malakas na lindol! DAPA, SALIKSIK, KAPIT! Bilis!",
+        "Yanig malakas! Magtago sa ilalim ng matibay at kumapit! ASAP!",
+        "Lindol 'to! DUMAPA, SUMILONG, KUMAKAPIT! Gawin mo na agad!"
       ]
     };
 
