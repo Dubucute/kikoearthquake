@@ -272,13 +272,15 @@
     display: flex; align-items: center; gap: 12px;
     color: white; margin-bottom: 12px; cursor: pointer;
     box-shadow: 0 4px 12px rgba(102,126,234,.4);
+    transition: opacity .3s, transform .3s;
   }
   .install-banner.hidden { display: none; }
+  .install-banner:active { transform: scale(.97); }
   .install-banner i:first-child { width: 24px; height: 24px; }
   .install-banner i:last-child { width: 18px; height: 18px; }
   .install-text { flex: 1; }
-  .install-text strong { display: block; font-size: 14px; }
-  .install-text span { font-size: 12px; opacity: .85; }
+  .install-title { display: block; font-size: 14px; }
+  .install-desc { font-size: 12px; opacity: .85; }
 
   /* FOOTER */
   .footer { text-align: center; font-size: 11px; color: rgba(255,255,255,.7); padding-top: 8px; display: flex; align-items: center; justify-content: center; gap: 4px; }
@@ -343,8 +345,8 @@
   <div class="install-banner hidden" id="installBanner" role="button" tabindex="0" aria-label="Install app">
     <i data-lucide="download" aria-hidden="true"></i>
     <div class="install-text">
-      <strong>Install Quake Buddy</strong>
-      <span>Add to home screen for instant alerts</span>
+      <strong class="install-title">Install Quake Buddy</strong>
+      <span class="install-desc">Add to home screen for instant alerts</span>
     </div>
     <i data-lucide="chevron-right" aria-hidden="true"></i>
   </div>
@@ -495,6 +497,23 @@ class JaviAlertApp {
   }
 
   setupInstallPrompt() {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isStandalone = window.navigator.standalone === true;
+
+    // iOS: show banner with Safari instructions (beforeinstallprompt never fires on iOS)
+    if (isIOS && !isStandalone) {
+      const banner = document.getElementById('installBanner');
+      banner.querySelector('.install-title').textContent = 'Install on iOS';
+      banner.querySelector('.install-desc').textContent = 'Tap Share > Add to Home Screen';
+      banner.classList.remove('hidden');
+      // On iOS, clicking the banner opens a helpful guide
+      banner.addEventListener('click', () => {
+        alert('Open Safari, tap the Share button (square with arrow), then scroll down and tap "Add to Home Screen".');
+      });
+      return;
+    }
+
+    // Android/Chrome: listen for beforeinstallprompt
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       this.deferredPrompt = e;
