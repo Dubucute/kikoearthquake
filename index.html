@@ -5,11 +5,16 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
 <meta name="theme-color" content="#87CEEB"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="JaviAlert"/>
 <meta name="description" content="Earthquake safety buddy for your area"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="application-name" content="JaviAlert"/>
 <link rel="manifest" href="manifest.json"/>
 <link rel="apple-touch-icon" href="icons/icon-192.png"/>
+<link rel="apple-touch-startup-image" href="icons/icon-512.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)"/>
+<link rel="icon" sizes="192x192" href="icons/icon-192.png"/>
+<link rel="icon" sizes="512x512" href="icons/icon-512.png"/>
 <title>JaviAlert</title>
 <script src="https://cdn.jsdelivr.net/npm/lucide@0.468.0/dist/umd/lucide.min.js"></script>
 <style>
@@ -757,24 +762,40 @@ class JaviAlertApp {
     }
     const pillText = document.getElementById('pillText');
 
+    // Build GIF path with cache-busting to force animation restart on iOS
+    const ts = Date.now();
+    let src;
     if (level === 'safe') {
       pill.className = 'status-pill pill-safe';
       pillIcon.setAttribute('data-lucide', 'shield-check');
       if (pillText) pillText.textContent = 'All clear!';
       const safeIdx = Math.floor(Math.random() * 3) + 1;
-      gif.src = 'javi/safe' + safeIdx + '.gif';
+      src = 'javi/safe' + safeIdx + '.gif?t=' + ts;
     } else if (level === 'warning') {
       pill.className = 'status-pill pill-warning';
       pillIcon.setAttribute('data-lucide', 'alert-triangle');
       if (pillText) pillText.textContent = 'Minor activity';
       const warnIdx = Math.floor(Math.random() * 2) + 1;
-      gif.src = 'javi/warning' + warnIdx + '.gif';
+      src = 'javi/warning' + warnIdx + '.gif?t=' + ts;
     } else {
       pill.className = 'status-pill pill-danger';
       pillIcon.setAttribute('data-lucide', 'bell-ring');
       if (pillText) pillText.textContent = 'Earthquake alert!';
       const dangerIdx = Math.floor(Math.random() * 2) + 1;
-      gif.src = 'javi/danger' + dangerIdx + '.gif';
+      src = 'javi/danger' + dangerIdx + '.gif?t=' + ts;
+    }
+
+    // iOS Safari fix: remove img, force reflow, then set src and re-append
+    const parent = gif.parentNode;
+    const nextSibling = gif.nextSibling;
+    parent.removeChild(gif);
+    gif.src = src;
+    // Force reflow
+    void gif.offsetWidth;
+    if (nextSibling) {
+      parent.insertBefore(gif, nextSibling);
+    } else {
+      parent.appendChild(gif);
     }
 
     try { lucide.createIcons(); } catch (_) {}
