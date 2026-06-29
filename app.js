@@ -601,11 +601,6 @@
     setMood(mood) {
       this.currentMood = mood;
 
-      // Play alert sound
-      if (mood === 'warning' || mood === 'danger') {
-        this._playAlertSound(mood);
-      }
-
       // Body class
       document.body.classList.remove('safe', 'warning', 'danger');
       if (mood === 'danger') document.body.classList.add('danger');
@@ -769,10 +764,19 @@
     }
 
     _alertNewQuakes(newQuakes) {
+      // Determine alert level from biggest quake
+      const biggest = newQuakes.reduce((a, b) => a.mag > b.mag ? a : b);
+      const alertType = biggest.mag >= CONFIG.DANGER_THRESHOLD ? 'danger' :
+                        biggest.mag >= CONFIG.WARNING_THRESHOLD ? 'warning' : null;
+
+      // Play alert sound
+      if (alertType) {
+        this._playAlertSound(alertType);
+      }
+
       // Show browser notification
       if ('Notification' in window && Notification.permission === 'granted') {
         const count = newQuakes.length;
-        const biggest = newQuakes.reduce((a, b) => a.mag > b.mag ? a : b);
         const title = count === 1 ? 'New earthquake detected!' : count + ' new earthquakes detected!';
         const body = biggest.mag.toFixed(1) + ' mag at ' + biggest.place + ' (' + biggest.dist + ' km away)';
         try {
@@ -783,7 +787,6 @@
       // Update bubble message
       const bubble = document.getElementById('bubble');
       const count = newQuakes.length;
-      const biggest = newQuakes.reduce((a, b) => a.mag > b.mag ? a : b);
       const msg = count === 1
         ? 'May bago akong na-detect na lindol! ' + biggest.mag.toFixed(1) + ' mag sa ' + biggest.place
         : count + ' na bagong lindol ang na-detect ko! Pinakamalakas: ' + biggest.mag.toFixed(1) + ' mag';
