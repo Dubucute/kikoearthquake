@@ -544,6 +544,7 @@
 const API = {
   EARTHQUAKE: 'https://earthquake.usgs.gov/fdsnws/event/1/query',
   NOMINATIM: 'https://nominatim.openstreetmap.org/reverse',
+  BIGDATACLOUD: 'https://api.bigdatacloud.net/data/reverse-geocode-client',
   OPENROUTER: 'https://openrouter.ai/api/v1/chat/completions'
 };
 const OPENROUTER_KEY = ['sk','or','v1','58f7dc74e2b5ffa6940c0241e8a2579f954bf7fe7eaaa7004dad7555e555294a'].join('-');
@@ -862,8 +863,8 @@ class JaviAlertApp {
   }
 
   /**
-   * Reverse geocode a quake's coordinates to get the full place name hierarchy.
-   * Merges with the USGS stripped name for best results.
+   * Reverse geocode a quake's coordinates using BigDataCloud (free, no API key).
+   * Falls back to USGS stripped name if the API fails or only returns country.
    * Caches results by "lat,lon" key to avoid redundant API calls.
    * @param {number} lat - Latitude
    * @param {number} lon - Longitude
@@ -875,46 +876,35 @@ class JaviAlertApp {
       return this.cache.quakePlaces[key];
     }
     try {
-      const url = `${API.NOMINATIM}?format=json&lat=${lat}&lon=${lon}`;
+      const url = `${API.BIGDATACLOUD}?latitude=${lat}&longitude=${lon}&localityLanguage=en`;
       const res = await fetch(url);
       const data = await res.json();
-      const addr = data.address || {};
-      // Build full hierarchy: suburb/neighbourhood, city, state, country
-      // Philippines addresses often use 'suburb' for districts/barangays
-      const suburb = addr.suburb || addr.neighbourhood || '';
-      const city = addr.city || addr.town || addr.village || addr.municipality || addr.county || '';
-      const state = addr.state || addr.region || '';
-      const country = addr.country || '';
-      // Use Nominatim's display_name if it has rich hierarchy (comma-separated parts > 2)
-      // e.g. "Lapuz, Iloilo City, Western Visayas, 5000, Philippines"
-      if (data.display_name) {
-        const displayParts = data.display_name.split(',').map(s => s.trim()).filter(Boolean);
-        // If display_name has at least 3 parts (e.g. town, state, country), use it
-        if (displayParts.length >= 3) {
-          // Remove postcode if present (looks like a number)
-          const filtered = displayParts.filter(p => !/^\d{4}$/.test(p));
-          const placeName = filtered.join(', ');
-          if (!this.cache.quakePlaces) this.cache.quakePlaces = {};
-          this.cache.quakePlaces[key] = placeName;
-          return placeName;
+      // BigDataCloud returns: city, locality, principalSubdivision, countryName
+      const city = data.city || '';
+      const locality = data.locality || '';
+      const region = data.principalSubdivision || '';
+      const country = (data.countryName || '').replace(/ \(the\)$/, ''); // Remove " (the)" suffix
+      // Build hierarchy: locality, city, region, country
+      // Prefer locality (most specific: barangay/district) over city
+      const specific = locality !== city ? locality : '';
+      const parts = [specific, city, region, country].filter(Boolean);
+      if (parts.length >= 2) {
+        // Remove duplicates (e.g. city == locality)
+        const unique = [];
+        for (const p of parts) {
+          if (!unique.includes(p)) unique.push(p);
         }
-      }
-      // Build from address components
-      const locality = suburb || city;
-      if (locality || state) {
-        const parts = [locality, state, country].filter(Boolean);
-        const placeName = parts.join(', ');
+        const placeName = unique.join(', ');
         if (!this.cache.quakePlaces) this.cache.quakePlaces = {};
         this.cache.quakePlaces[key] = placeName;
         return placeName;
       }
-      // Nominatim only returned country (epicenter offshore) — use USGS name instead
+      // Only got country (offshore epicenter) — use USGS name instead
       if (usgsName) {
         if (!this.cache.quakePlaces) this.cache.quakePlaces = {};
         this.cache.quakePlaces[key] = usgsName;
         return usgsName;
       }
-      // Last resort
       const placeName = country || 'Unknown';
       if (!this.cache.quakePlaces) this.cache.quakePlaces = {};
       this.cache.quakePlaces[key] = placeName;
