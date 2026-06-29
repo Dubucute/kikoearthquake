@@ -419,6 +419,7 @@
 </div>
 </main>
 
+<script src="config.js"></script>
 <script>
 // ============================================================
 // Constants
@@ -426,8 +427,9 @@
 const API = {
   EARTHQUAKE: 'https://earthquake.usgs.gov/fdsnws/event/1/query',
   NOMINATIM: 'https://nominatim.openstreetmap.org/reverse',
-  ANTHROPIC: 'https://api.anthropic.com/v1/messages'
+  OPENROUTER: 'https://openrouter.ai/api/v1/chat/completions'
 };
+const OPENROUTER_MODEL = 'cognitivecomputations/dolphin-llama-3-8b';
 
 const CONFIG = {
   SEARCH_RADIUS_KM: 200,
@@ -846,19 +848,19 @@ class JaviAlertApp {
 
     const msgs = {
       safe: [
-        `You are a cheerful 8-year-old cartoon boy named Javi who watches over earthquake safety. The nearest earthquake was M${mag} and it's ${dist}km away. Say something short, happy and reassuring in 1-2 sentences. Be super cute and childlike. Max 30 words.`,
-        `You are a happy 8-year-old cartoon boy named Javi. The ground is not shaking near you! The closest shake is M${mag} and ${dist}km away. Tell the child it's safe to play and have fun. Max 25 words.`,
-        `You are Javi, a friendly 8-year-old cartoon boy. No earthquakes nearby! The closest one is M${mag} and ${dist}km far away. Say something cheerful about being safe. Max 25 words.`
+        `You are Javi, a cheerful cartoon boy who watches over earthquake safety. The nearest earthquake was M${mag} and it's ${dist}km away. Say something short, happy and reassuring in 1-2 sentences. Be super cute and childlike. Max 30 words.`,
+        `You are Javi, a happy cartoon boy. The ground is not shaking near you! The closest shake is M${mag} and ${dist}km away. Tell the child it's safe to play and have fun. Max 25 words.`,
+        `You are Javi, a friendly cartoon boy. No earthquakes nearby! The closest one is M${mag} and ${dist}km far away. Say something cheerful about being safe. Max 25 words.`
       ],
       warning: [
-        `You are a cautious but calm 8-year-old cartoon boy named Javi. There was a M${mag} earthquake ${dist}km away near ${place}. Give a short simple safety tip for kids in 1-2 sentences. Calm, not scary. Max 30 words.`,
-        `You are Javi, a careful 8-year-old boy. A small earthquake M${mag} happened ${dist}km away. Give a simple safety tip for kids. Stay calm. Max 25 words.`,
-        `You are a calm 8-year-old cartoon boy Javi. The ground shook a little M${mag} at ${dist}km away. Tell the child what to do simply. Max 25 words.`
+        `You are Javi, a cautious but calm cartoon boy. There was a M${mag} earthquake ${dist}km away near ${place}. Give a short simple safety tip for kids in 1-2 sentences. Calm, not scary. Max 30 words.`,
+        `You are Javi, a careful cartoon boy. A small earthquake M${mag} happened ${dist}km away. Give a simple safety tip for kids. Stay calm. Max 25 words.`,
+        `You are Javi, a calm cartoon boy. The ground shook a little M${mag} at ${dist}km away. Tell the child what to do simply. Max 25 words.`
       ],
       danger: [
-        `You are a scared but brave 8-year-old cartoon boy named Javi. A big M${mag} earthquake just hit ${dist}km away near ${place}! Give a short urgent safety instruction -- DROP COVER HOLD ON -- in simple words a child understands. Max 30 words.`,
-        `You are Javi, a brave 8-year-old boy. BIG earthquake M${mag} is ${dist}km away! Tell the child to DROP, COVER, HOLD ON right now! Use simple words. Max 25 words.`,
-        `You are a worried but brave 8-year-old Javi. Strong shake M${mag} at ${dist}km! Tell child to get under table and hold tight! Max 25 words.`
+        `You are Javi, a scared but brave cartoon boy. A big M${mag} earthquake just hit ${dist}km away near ${place}! Give a short urgent safety instruction -- DROP COVER HOLD ON -- in simple words a child understands. Max 30 words.`,
+        `You are Javi, a brave cartoon boy. BIG earthquake M${mag} is ${dist}km away! Tell the child to DROP, COVER, HOLD ON right now! Use simple words. Max 25 words.`,
+        `You are Javi, a worried but brave cartoon boy. Strong shake M${mag} at ${dist}km! Tell child to get under table and hold tight! Max 25 words.`
       ]
     };
 
@@ -886,17 +888,20 @@ class JaviAlertApp {
     const randomIndex = Math.floor(Math.random() * msgs[level].length);
 
     try {
-      const res = await fetch(API.ANTHROPIC, {
+      const res = await fetch(API.OPENROUTER, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${OPENROUTER_KEY}`
+        },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-6',
+          model: OPENROUTER_MODEL,
           max_tokens: 80,
           messages: [{ role: 'user', content: msgs[level][randomIndex] }]
         })
       });
       const data = await res.json();
-      bubble.textContent = data.content?.[0]?.text || fallbacks[level][randomIndex];
+      bubble.textContent = data.choices?.[0]?.message?.content || fallbacks[level][randomIndex];
     } catch {
       bubble.textContent = fallbacks[level][randomIndex];
     }

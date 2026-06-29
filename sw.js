@@ -14,7 +14,7 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  if (e.request.url.includes('earthquake.usgs.gov') || e.request.url.includes('anthropic.com')) {
+  if (e.request.url.includes('earthquake.usgs.gov') || e.request.url.includes('openrouter.ai') || e.request.url.includes('config.js')) {
     return; // always fetch live data
   }
   e.respondWith(
