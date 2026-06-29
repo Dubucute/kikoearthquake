@@ -702,12 +702,15 @@ class JaviAlertApp {
       container.innerHTML = `<div class="empty"><i data-lucide="smile" aria-hidden="true"></i> No earthquakes nearby! Javi says relax!</div>`;
     } else {
       const mag = (quake.properties.mag || 0).toFixed(1);
-      const place = quake.properties.place || 'Unknown';
+      // Strip USGS distance prefix like "20 km SSW of " from place name
+      // to avoid showing two different distances (USGS ref + our calculation)
+      const rawPlace = quake.properties.place || 'Unknown';
+      const place = rawPlace.replace(/^[\d.]+\s*km\s+\w+\s+of\s+/i, '');
       container.innerHTML = `<div class="quake-item featured" role="listitem">
         <div class="mag-badge ${magClass(parseFloat(mag))}">M${mag}</div>
         <div class="q-info">
           <div class="q-place">${place}</div>
-          <div class="q-meta">${timeSince(quake.properties.time)} ago</div>
+          <div class="q-meta">${timeSince(quake.properties.time)}</div>
         </div>
         <div class="q-dist">${quake.km}km away</div>
       </div>`;
