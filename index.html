@@ -85,22 +85,78 @@
   .loc-bar i { width: 14px; height: 14px; color: #e74c3c; flex-shrink: 0; }
 
   /* CLOUDS */
-  .clouds { position: relative; height: 40px; margin-bottom: -10px; }
+  .clouds {
+    position: relative; height: 60px;
+    margin-bottom: -16px; overflow: hidden;
+    pointer-events: none;
+  }
   .cloud {
-    position: absolute; background: white; border-radius: 50px;
-    opacity: .75; animation: drift linear infinite;
+    position: absolute;
+    background: rgba(255,255,255,.85);
+    border-radius: 50px;
+    animation: drift linear infinite;
+    will-change: transform;
   }
   .cloud::before, .cloud::after {
-    content: ''; position: absolute; background: white; border-radius: 50%;
+    content: ''; position: absolute;
+    background: inherit; border-radius: 50%;
   }
-  .c1 { width: 70px; height: 22px; top: 5px; left: 10%; animation-duration: 18s; }
-  .c1::before { width: 30px; height: 30px; top: -14px; left: 10px; }
-  .c1::after  { width: 22px; height: 22px; top: -10px; left: 30px; }
-  .c2 { width: 50px; height: 16px; top: 14px; left: 50%; animation-duration: 24s; animation-delay: -8s; }
+  /* Cloud 1 — large, close, fast */
+  .c1 {
+    width: 90px; height: 26px;
+    top: 8px; left: 5%;
+    opacity: .9;
+    animation-duration: 22s;
+  }
+  .c1::before { width: 38px; height: 38px; top: -18px; left: 12px; }
+  .c1::after  { width: 28px; height: 28px; top: -12px; left: 38px; }
+  /* Cloud 2 — small, far, slow */
+  .c2 {
+    width: 50px; height: 16px;
+    top: 22px; left: 40%;
+    opacity: .5;
+    animation-duration: 35s;
+    animation-delay: -10s;
+  }
   .c2::before { width: 22px; height: 22px; top: -10px; left: 8px; }
-  .c3 { width: 60px; height: 18px; top: 2px; right: 5%; animation-duration: 20s; animation-delay: -4s; }
-  .c3::before { width: 26px; height: 26px; top: -12px; left: 12px; }
-  @keyframes drift { 0% { transform: translateX(0); } 50% { transform: translateX(12px); } 100% { transform: translateX(0); } }
+  .c2::after  { width: 16px; height: 16px; top: -6px; left: 22px; }
+  /* Cloud 3 — medium, mid */
+  .c3 {
+    width: 70px; height: 20px;
+    top: 4px; right: 8%;
+    opacity: .8;
+    animation-duration: 26s;
+    animation-delay: -6s;
+  }
+  .c3::before { width: 30px; height: 30px; top: -14px; left: 10px; }
+  .c3::after  { width: 22px; height: 22px; top: -10px; left: 30px; }
+  /* Cloud 4 — tiny accent */
+  .c4 {
+    width: 40px; height: 12px;
+    top: 30px; left: 18%;
+    opacity: .4;
+    animation-duration: 40s;
+    animation-delay: -18s;
+  }
+  .c4::before { width: 18px; height: 18px; top: -8px; left: 6px; }
+  .c4::after  { width: 12px; height: 12px; top: -5px; left: 18px; }
+  /* Cloud 5 — large accent on right */
+  .c5 {
+    width: 80px; height: 24px;
+    top: 14px; right: 25%;
+    opacity: .6;
+    animation-duration: 30s;
+    animation-delay: -14s;
+  }
+  .c5::before { width: 34px; height: 34px; top: -16px; left: 10px; }
+  .c5::after  { width: 24px; height: 24px; top: -10px; left: 34px; }
+  @keyframes drift {
+    0%   { transform: translateX(0); }
+    25%  { transform: translateX(10px) translateY(-2px); }
+    50%  { transform: translateX(16px) translateY(0); }
+    75%  { transform: translateX(8px) translateY(2px); }
+    100% { transform: translateX(0); }
+  }
 
   /* CHARACTER CARD */
   .char-card {
@@ -380,6 +436,8 @@
     <div class="cloud c1"></div>
     <div class="cloud c2"></div>
     <div class="cloud c3"></div>
+    <div class="cloud c4"></div>
+    <div class="cloud c5"></div>
   </div>
 
   <!-- Character -->
