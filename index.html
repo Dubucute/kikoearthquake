@@ -391,21 +391,21 @@ function setMood(level) {
   }
 }
 
-async function getKikoMessage(level, maxMag, count, place) {
+async function getKikoMessage(level, mag, dist, place) {
   const bubble = document.getElementById('bubble');
   bubble.className = 'bubble loading';
   bubble.textContent = 'Kiko is thinking… 💭';
 
   const msgs = {
-    safe: `You are a cheerful 8-year-old cartoon boy named Kiko who watches over earthquake safety. There are ${count} tiny tremors today, the biggest was only M${maxMag}. Say something short, happy and reassuring in 1-2 sentences. Be super cute and childlike. Use 1-2 emojis. Max 30 words.`,
-    warning: `You are a cautious but calm 8-year-old cartoon boy named Kiko. There was a M${maxMag} earthquake near ${place}. Give a short simple safety tip for kids in 1-2 sentences. Calm, not scary. Use 1 emoji. Max 30 words.`,
-    danger: `You are a scared but brave 8-year-old cartoon boy named Kiko. A big M${maxMag} earthquake just hit near ${place}! Give a short urgent safety instruction — DROP COVER HOLD ON — in simple words a child understands. 1 emoji. Max 30 words.` 
+    safe: `You are a cheerful 8-year-old cartoon boy named Kiko who watches over earthquake safety. The nearest earthquake was M${mag} and it's ${dist}km away. Say something short, happy and reassuring in 1-2 sentences. Be super cute and childlike. Use 1-2 emojis. Max 30 words.`,
+    warning: `You are a cautious but calm 8-year-old cartoon boy named Kiko. There was a M${mag} earthquake ${dist}km away near ${place}. Give a short simple safety tip for kids in 1-2 sentences. Calm, not scary. Use 1 emoji. Max 30 words.`,
+    danger: `You are a scared but brave 8-year-old cartoon boy named Kiko. A big M${mag} earthquake just hit ${dist}km away near ${place}! Give a short urgent safety instruction — DROP COVER HOLD ON — in simple words a child understands. 1 emoji. Max 30 words.` 
   };
 
   const fallbacks = {
-    safe: "Yay! No scary shakes today! It's safe to play outside! 🌞",
+    safe: "Yay! The nearest shake is far away! It's safe to play outside! 🌞",
     warning: "A little shaky shaky happened nearby, but don't worry! Stay inside and be safe okay? 😊",
-    danger: "BIG earthquake! DROP down, get UNDER something, and HOLD ON! Do it now! 🆘"
+    danger: "BIG earthquake close by! DROP down, get UNDER something, and HOLD ON! Do it now! 🆘"
   };
 
   try {
@@ -443,19 +443,20 @@ async function loadData() {
     }).sort((a,b) => a.km - b.km);
 
     const today = quakes.filter(q => Date.now() - q.properties.time < 86400000);
-    const mags = quakes.map(q => q.properties.mag || 0);
-    const maxMag = mags.length ? Math.max(...mags) : 0;
-    const nearestPlace = quakes[0]?.properties?.place || 'your area';
+    const nearestQuake = quakes[0];
+    const nearestMag = nearestQuake?.properties?.mag || 0;
+    const nearestPlace = nearestQuake?.properties?.place || 'your area';
+    const nearestDist = nearestQuake?.km || 0;
 
     document.getElementById('statCount').textContent = today.length;
-    document.getElementById('statMax').textContent = maxMag > 0 ? `M${maxMag.toFixed(1)}` : 'None';
+    document.getElementById('statMax').textContent = nearestMag > 0 ? `M${nearestMag.toFixed(1)}` : 'None';
 
     let level = 'safe';
-    if (maxMag >= 5.0) level = 'danger';
-    else if (maxMag >= 3.0) level = 'warning';
+    if (nearestMag >= 5.0) level = 'danger';
+    else if (nearestMag >= 3.0) level = 'warning';
 
     setMood(level);
-    getKikoMessage(level, maxMag.toFixed(1), today.length, nearestPlace);
+    getKikoMessage(level, nearestMag.toFixed(1), nearestDist.toFixed(0), nearestPlace);
 
     if (quakes.length === 0) {
       document.getElementById('quakeList').innerHTML = '<div class="empty">🎉 No earthquakes nearby! Kiko says relax!</div>';
@@ -481,7 +482,7 @@ async function loadData() {
     // Browser notification if danger
     if (level === 'danger' && Notification.permission === 'granted') {
       new Notification('🚨 Quake Buddy Alert!', {
-        body: `M${maxMag.toFixed(1)} earthquake detected near ${nearestPlace}. DROP, COVER, HOLD ON!`,
+        body: `M${nearestMag.toFixed(1)} earthquake detected ${nearestDist.toFixed(0)}km away near ${nearestPlace}. DROP, COVER, HOLD ON!`,
         icon: 'icons/icon-192.png'
       });
     }
