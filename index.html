@@ -219,6 +219,22 @@
   .q-meta  { font-size: 11px; color: var(--muted); margin-top: 2px; }
   .q-dist  { font-size: 13px; font-weight: 700; color: var(--muted); flex-shrink: 0; }
 
+  /* PAGINATION */
+  .pagination {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 10px 16px 14px; border-top: 1px solid rgba(0,0,0,.06);
+  }
+  .page-btn {
+    width: 32px; height: 32px; border-radius: 8px; border: none;
+    background: rgba(0,0,0,.06); color: var(--text); font-size: 13px; font-weight: 600;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: background .15s;
+  }
+  .page-btn:active { background: rgba(0,0,0,.12); }
+  .page-btn:disabled { opacity: .3; cursor: default; }
+  .page-btn.active { background: var(--safe-sky1); color: white; }
+  .page-info { font-size: 12px; color: var(--muted); font-weight: 500; min-width: 60px; text-align: center; }
+
   /* EMPTY */
   .empty { padding: 28px; text-align: center; color: var(--muted); font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 6px; }
   .empty i { width: 18px; height: 18px; }
@@ -380,6 +396,15 @@
         Loading earthquake data...
       </div>
     </div>
+    <div class="pagination hidden" id="pagination">
+      <button class="page-btn" id="pagePrev" aria-label="Previous page">
+        <i data-lucide="chevron-left" aria-hidden="true"></i>
+      </button>
+      <span class="page-info" id="pageInfo">1 / 1</span>
+      <button class="page-btn" id="pageNext" aria-label="Next page">
+        <i data-lucide="chevron-right" aria-hidden="true"></i>
+      </button>
+    </div>
   </div>
 
   <div class="last-update" id="lastUpdate" aria-live="polite"></div>
@@ -462,6 +487,8 @@ class JaviAlertApp {
     this.userLat = DEFAULT_LOCATION.lat;
     this.userLon = DEFAULT_LOCATION.lon;
     this.deferredPrompt = null;
+    this.currentPage = 1;
+    this.allQuakes = [];
 
     this.cache = {
       quakes: [],
@@ -476,6 +503,7 @@ class JaviAlertApp {
     this.setupInstallPrompt();
     this.setupRefreshButton();
     this.setupInstallBanner();
+    this.setupPagination();
     this.requestNotificationPermission();
     this.detectLocation();
     this.startAutoRefresh();
@@ -507,6 +535,22 @@ class JaviAlertApp {
     if ('Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission();
     }
+  }
+
+  setupPagination() {
+    document.getElementById('pagePrev').addEventListener('click', () => {
+      if (this.currentPage > 1) {
+        this.currentPage--;
+        this.renderQuakeList(this.allQuakes);
+      }
+    });
+    document.getElementById('pageNext').addEventListener('click', () => {
+      const totalPages = Math.ceil(this.allQuakes.length / CONFIG.DISPLAY_COUNT);
+      if (this.currentPage < totalPages) {
+        this.currentPage++;
+        this.renderQuakeList(this.allQuakes);
+      }
+    });
   }
 
   startAutoRefresh() {
@@ -669,8 +713,10 @@ class JaviAlertApp {
       : (nearestRecentQuake?.properties?.place || 'your area');
     this.getJaviMessage(level, messageMag.toFixed(1), messageDist.toFixed(0), messagePlace);
 
-    // Quake list - show nearest quakes sorted by distance
-    this.renderQuakeList(quakes);
+    // Store quakes sorted by distance for pagination, reset to page 1
+    this.allQuakes = [...quakes].sort((a, b) => a.km - b.km);
+    this.currentPage = 1;
+    this.renderQuakeList(this.allQuakes);
 
     // Last update time
     document.getElementById('lastUpdate').textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
@@ -686,13 +732,23 @@ class JaviAlertApp {
 
   renderQuakeList(quakes) {
     const container = document.getElementById('quakeList');
+    const pagination = document.getElementById('pagination');
+    const pageInfo = document.getElementById('pageInfo');
+    const pagePrev = document.getElementById('pagePrev');
+    const pageNext = document.getElementById('pageNext');
 
     if (!quakes || quakes.length === 0) {
       container.innerHTML = `<div class="empty"><i data-lucide="smile" aria-hidden="true"></i> No earthquakes nearby! Javi says relax!</div>`;
+      pagination.classList.add('hidden');
     } else {
-      // Sort by distance (nearest first) and limit to DISPLAY_COUNT
-      const sorted = [...quakes].sort((a, b) => a.km - b.km).slice(0, CONFIG.DISPLAY_COUNT);
-      container.innerHTML = sorted.map((q) => {
+      const perPage = CONFIG.DISPLAY_COUNT;
+      const totalPages = Math.ceil(quakes.length / perPage);
+      // Clamp current page
+      if (this.currentPage > totalPages) this.currentPage = totalPages;
+      const start = (this.currentPage - 1) * perPage;
+      const pageItems = quakes.slice(start, start + perPage);
+
+      container.innerHTML = pageItems.map((q) => {
         const mag = (q.properties.mag || 0).toFixed(1);
         // Strip USGS distance prefix like "20 km SSW of " from place name
         const rawPlace = q.properties.place || 'Unknown';
@@ -706,6 +762,16 @@ class JaviAlertApp {
           <div class="q-dist">${q.km}km away</div>
         </div>`;
       }).join('');
+
+      // Show/hide pagination
+      if (totalPages > 1) {
+        pagination.classList.remove('hidden');
+        pageInfo.textContent = `${this.currentPage} / ${totalPages}`;
+        pagePrev.disabled = this.currentPage <= 1;
+        pageNext.disabled = this.currentPage >= totalPages;
+      } else {
+        pagination.classList.add('hidden');
+      }
     }
 
     // Re-initialize Lucide icons for any new icons in the rendered HTML
@@ -861,6 +927,8 @@ class JaviAlertApp {
           '<div class="empty"><i data-lucide="alert-triangle" aria-hidden="true"></i> Could not load data. Check your connection.</div>';
         try { lucide.createIcons(); } catch (_) {}
       }
+      const pagination = document.getElementById('pagination');
+      if (pagination) pagination.classList.add('hidden');
     }
 
     btn.disabled = false;
