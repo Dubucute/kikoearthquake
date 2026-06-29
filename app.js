@@ -9,7 +9,29 @@
     OPENROUTER: 'https://openrouter.ai/api/v1/chat/completions'
   };
   const OPENROUTER_KEY = ['sk','or','v1','58f7dc74e2b5ffa6940c0241e8a2579f954bf7fe7eaaa7004dad7555e555294a'].join('-');
-  const OPENROUTER_MODEL = 'meta-llama/llama-3.2-3b-instruct:free';
+  const OPENROUTER_MODELS = [
+    'meta-llama/llama-3.2-3b-instruct:free',
+    'meta-llama/llama-3.3-70b-instruct:free',
+    'google/gemma-4-26b-a4b:free',
+    'google/gemma-4-31b:free',
+    'nvidia/nemotron-3-super:free',
+    'nvidia/nemotron-3-nano-30b-a3b:free',
+    'nvidia/nemotron-nano-12b-2-vl:free',
+    'nvidia/nemotron-nano-9b-v2:free',
+    'nvidia/nemotron-3-nano-omni:free',
+    'nvidia/llama-nemotron-embed-vl-1b-v2:free',
+    'qwen/qwen3-next-80b-a3b-instruct:free',
+    'qwen/qwen3-coder-480b-a35b:free',
+    'openai/gpt-oss-120b:free',
+    'openai/gpt-oss-20b:free',
+    'liquidai/lfm2.5-1.2b-thinking:free',
+    'liquidai/lfm2.5-1.2b-instruct:free',
+    'nousresearch/hermes-3-405b-instruct:free',
+    'venice/uncensored:free',
+    'poolside/laguna-xs.2:free',
+    'poolside/laguna-m.1:free',
+    'openrouter/owl-alpha:free'
+  ];
 
   const CONFIG = {
     QUAKE_LIMIT: 25,
@@ -657,47 +679,55 @@
       bubble.innerHTML = '<i data-lucide="search" aria-hidden="true"></i> Thinking...';
       try { lucide.createIcons(); } catch (_) { /* ignore */ }
 
-      // Try OpenRouter AI
-      try {
-        const prompts = MOOD_PROMPTS[mood] || MOOD_PROMPTS.safe;
-        const prompt = prompts[Math.floor(Math.random() * prompts.length)];
+      // Try OpenRouter AI with model fallback chain
+      const prompts = MOOD_PROMPTS[mood] || MOOD_PROMPTS.safe;
+      const prompt = prompts[Math.floor(Math.random() * prompts.length)];
 
-        const res = await fetch(API.OPENROUTER, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + OPENROUTER_KEY,
-            'HTTP-Referer': window.location.origin,
-            'X-Title': 'JaviAlert'
-          },
-          body: JSON.stringify({
-            model: OPENROUTER_MODEL,
-            messages: [
-              {
-                role: 'system',
-                content: 'You are Javi, a friendly earthquake safety buddy for the JaviAlert app. You help users stay informed about earthquakes near them. Always respond in casual Tagalog (Tagalog + English mix) in 1 short sentence. Use first person ("ako", "ko", "akin"). Do not use emojis. Be concise and natural.'
-              },
-              { role: 'user', content: prompt }
-            ],
-            max_tokens: 60,
-            temperature: 0.8
-          })
-        });
+      for (const model of OPENROUTER_MODELS) {
+        try {
+          const res = await fetch(API.OPENROUTER, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + OPENROUTER_KEY,
+              'HTTP-Referer': window.location.origin,
+              'X-Title': 'JaviAlert'
+            },
+            body: JSON.stringify({
+              model: model,
+              messages: [
+                {
+                  role: 'system',
+                  content: 'You are Javi, a friendly earthquake safety buddy for the JaviAlert app. You help users stay informed about earthquakes near them. Always respond in casual Tagalog (Tagalog + English mix) in 1 short sentence. Use first person ("ako", "ko", "akin"). Do not use emojis. Be concise and natural.'
+                },
+                { role: 'user', content: prompt }
+              ],
+              max_tokens: 60,
+              temperature: 0.8
+            })
+          });
 
-        if (!res.ok) throw new Error('AI returned ' + res.status);
+          if (!res.ok) {
+            // 429 = rate limited, try next model; other errors also fall through
+            throw new Error('AI returned ' + res.status + ' for ' + model);
+          }
 
-        const data = await res.json();
-        const text = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
+          const data = await res.json();
+          const text = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
 
-        if (text && text.length < 200) {
-          bubble.className = 'bubble';
-          bubble.innerHTML = text;
-          try { lucide.createIcons(); } catch (_) { /* ignore */ }
-          return;
+          if (text && text.length < 200) {
+            bubble.className = 'bubble';
+            bubble.innerHTML = text;
+            try { lucide.createIcons(); } catch (_) { /* ignore */ }
+            return;
+          }
+        } catch (_) {
+          // Try next model in the fallback chain
+          continue;
         }
-      } catch (_) { /* fall through to fallback */ }
+      }
 
-      // Fallback
+      // Fallback (all models failed)
       const msgs = FALLBACK_MESSAGES[mood] || FALLBACK_MESSAGES.safe;
       const msg = msgs[Math.floor(Math.random() * msgs.length)];
       bubble.className = 'bubble';
