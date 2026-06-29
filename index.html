@@ -551,7 +551,7 @@ const OPENROUTER_KEY = ['sk','or','v1','58f7dc74e2b5ffa6940c0241e8a2579f954bf7fe
 const OPENROUTER_MODEL = 'meta-llama/llama-3.2-3b-instruct:free';
 
 const CONFIG = {
-  SEARCH_RADIUS_KM: 200,
+  SEARCH_RADIUS_KM: 700,
   QUAKE_LIMIT: 25,
   MIN_MAGNITUDE: 1,
   DISPLAY_COUNT: 10,
@@ -938,11 +938,14 @@ class JaviAlertApp {
       return { ...q, km: distKm(this.userLat, this.userLon, la, lo) };
     });
 
+    // Filter to only quakes within search radius
+    const withinRadius = withDist.filter((q) => q.km <= CONFIG.SEARCH_RADIUS_KM);
+
     // Sort by time (latest first) for display
-    const quakesByTime = [...withDist].sort((a, b) => b.properties.time - a.properties.time);
+    const quakesByTime = [...withinRadius].sort((a, b) => b.properties.time - a.properties.time);
 
     // Sort by distance for alert calculations
-    const quakesByDist = [...withDist].sort((a, b) => a.km - b.km);
+    const quakesByDist = [...withinRadius].sort((a, b) => a.km - b.km);
 
     const now = Date.now();
     const today = quakesByTime.filter((q) => now - q.properties.time < CONFIG.TODAY_WINDOW_MS);
