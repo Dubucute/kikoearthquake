@@ -511,20 +511,28 @@ async function loadData() {
     }).sort((a,b) => a.km - b.km);
 
     const today = quakes.filter(q => Date.now() - q.properties.time < 86400000);
+    const recent = quakes.filter(q => Date.now() - q.properties.time < 172800000); // Last 48 hours
     const nearestQuake = quakes[0];
+    const nearestRecentQuake = recent[0];
     const nearestMag = nearestQuake?.properties?.mag || 0;
+    const recentMag = nearestRecentQuake?.properties?.mag || 0;
     const nearestPlace = nearestQuake?.properties?.place || 'your area';
     const nearestDist = nearestQuake?.km || 0;
 
     document.getElementById('statCount').textContent = today.length;
-    document.getElementById('statMax').textContent = nearestMag > 0 ? `M${nearestMag.toFixed(1)}` : 'None';
+    document.getElementById('statMax').textContent = recentMag > 0 ? `M${recentMag.toFixed(1)}` : 'None';
 
     let level = 'safe';
-    if (nearestMag >= 5.0) level = 'danger';
-    else if (nearestMag >= 3.0) level = 'warning';
+    // Only warn about recent earthquakes (within 48 hours)
+    if (recentMag >= 5.0) level = 'danger';
+    else if (recentMag >= 3.0) level = 'warning';
 
     setMood(level);
-    getJaviMessage(level, nearestMag.toFixed(1), nearestDist.toFixed(0), nearestPlace);
+    // Use recent quake data for warnings, nearest for safe messages
+    const messageMag = level === 'safe' ? nearestMag : recentMag;
+    const messageDist = level === 'safe' ? nearestDist : (nearestRecentQuake?.km || 0);
+    const messagePlace = level === 'safe' ? nearestPlace : (nearestRecentQuake?.properties?.place || 'your area');
+    getJaviMessage(level, messageMag.toFixed(1), messageDist.toFixed(0), messagePlace);
 
     if (quakes.length === 0) {
       document.getElementById('quakeList').innerHTML = '<div class="empty">🎉 No earthquakes nearby! Javi says relax!</div>';
@@ -548,8 +556,8 @@ async function loadData() {
 
     // Browser notification if danger
     if (level === 'danger' && Notification.permission === 'granted') {
-      new Notification('🚨 Quake Buddy Alert!', {
-        body: `M${nearestMag.toFixed(1)} earthquake detected ${nearestDist.toFixed(0)}km away near ${nearestPlace}. DROP, COVER, HOLD ON!`,
+      new Notification('🚨 JaviAlert!', {
+        body: `M${recentMag.toFixed(1)} earthquake detected ${messageDist.toFixed(0)}km away near ${messagePlace}. DROP, COVER, HOLD ON!`,
         icon: 'icons/icon-192.png'
       });
     }
