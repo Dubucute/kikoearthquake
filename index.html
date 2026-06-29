@@ -589,6 +589,29 @@ function distKm(la1, lo1, la2, lo2) {
   return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
 }
 
+/**
+ * Normalize an EMSC feature to match USGS GeoJSON structure.
+ * EMSC uses flynn_region for place name and properties.lat/lon for coordinates.
+ */
+function normalizeEmscFeature(f) {
+  const props = f.properties || {};
+  const coords = f.geometry && f.geometry.coordinates
+    ? f.geometry.coordinates
+    : [props.lon || 0, props.lat || 0, props.depth || 0];
+  const time = props.time ? new Date(props.time).getTime() : Date.now();
+  return {
+    type: 'Feature',
+    geometry: { type: 'Point', coordinates: coords },
+    id: f.id || props.unid || '',
+    properties: {
+      mag: props.mag,
+      place: props.flynn_region || 'Unknown',
+      time: time,
+      depth: props.depth || coords[2] || 0
+    }
+  };
+}
+
 function determineAlertLevel(recentMag) {
   if (recentMag >= CONFIG.DANGER_THRESHOLD) return 'danger';
   if (recentMag >= CONFIG.WARNING_THRESHOLD) return 'warning';
@@ -869,8 +892,8 @@ class JaviAlertApp {
     const [usgsResult, emscResult] = await Promise.allSettled([
       fetch(`${API.USGS}?format=geojson&${phBounds}&minmagnitude=${CONFIG.MIN_MAGNITUDE}&orderby=time&limit=25&starttime=${startTime}`)
         .then(r => r.json()).then(d => d.features || []),
-      fetch(`${API.EMSC}?format=geojson&${phBounds}&minmagnitude=${CONFIG.MIN_MAGNITUDE}&orderby=time&limit=25&starttime=${startTime}`)
-        .then(r => r.json()).then(d => d.features || [])
+      fetch(`${API.EMSC}?format=json&${phBounds}&minmagnitude=${CONFIG.MIN_MAGNITUDE}&orderby=time&limit=25&starttime=${startTime}`)
+        .then(r => r.json()).then(d => (d.features || []).map(normalizeEmscFeature))
     ]);
 
     const usgs = usgsResult.status === 'fulfilled' ? usgsResult.value : [];

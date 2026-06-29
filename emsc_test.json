@@ -1,0 +1,10 @@
+Error 400: Request was not properly specified: unknown format requested
+
+Request:
+http://ws2/query?format=geojson&minlatitude=4.5&maxlatitude=21.5&minlongitude=116&maxlongitude=127&minmagnitude=1&orderby=time&limit=5&starttime=2026-06-22
+
+Request Submitted:
+2026-06-29T15:02:16.640
+
+Service version: v 2.2
+fdsnws-event: v 1.2.1
