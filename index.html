@@ -1015,9 +1015,8 @@ class JaviAlertApp {
 
       container.innerHTML = pageItems.map((q) => {
         const mag = (q.properties.mag || 0).toFixed(1);
-        // Strip USGS distance prefix e.g. "20 km SSW of La Paz" → "La Paz"
-        const rawPlace = q.properties.place || 'Unknown';
-        const place = rawPlace.replace(/^[\d.]+\s*km\s+\w+\s+of\s+/i, '');
+        // Use full USGS place name (e.g. "20 km SSW of La Paz, Philippines")
+        const place = q.properties.place || 'Unknown';
         return `<div class="quake-item" role="listitem">
           <div class="mag-badge ${magClass(parseFloat(mag))}">M${mag}</div>
           <div class="q-info">
