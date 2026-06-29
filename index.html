@@ -746,7 +746,6 @@ class JaviAlertApp {
     document.body.className = level === 'safe' ? '' : level;
     const pill = document.getElementById('statusPill');
     const kid = document.getElementById('kidWrap');
-    const gif = document.getElementById('kidGif');
 
     kid.className = 'kid-wrap' + (level === 'danger' ? ' shake' : '');
 
@@ -762,41 +761,40 @@ class JaviAlertApp {
     }
     const pillText = document.getElementById('pillText');
 
-    // Build GIF path with cache-busting to force animation restart on iOS
-    const ts = Date.now();
+    // Determine GIF path
     let src;
     if (level === 'safe') {
       pill.className = 'status-pill pill-safe';
       pillIcon.setAttribute('data-lucide', 'shield-check');
       if (pillText) pillText.textContent = 'All clear!';
       const safeIdx = Math.floor(Math.random() * 3) + 1;
-      src = 'javi/safe' + safeIdx + '.gif?t=' + ts;
+      src = 'javi/safe' + safeIdx + '.gif';
     } else if (level === 'warning') {
       pill.className = 'status-pill pill-warning';
       pillIcon.setAttribute('data-lucide', 'alert-triangle');
       if (pillText) pillText.textContent = 'Minor activity';
       const warnIdx = Math.floor(Math.random() * 2) + 1;
-      src = 'javi/warning' + warnIdx + '.gif?t=' + ts;
+      src = 'javi/warning' + warnIdx + '.gif';
     } else {
       pill.className = 'status-pill pill-danger';
       pillIcon.setAttribute('data-lucide', 'bell-ring');
       if (pillText) pillText.textContent = 'Earthquake alert!';
       const dangerIdx = Math.floor(Math.random() * 2) + 1;
-      src = 'javi/danger' + dangerIdx + '.gif?t=' + ts;
+      src = 'javi/danger' + dangerIdx + '.gif';
     }
 
-    // iOS Safari fix: remove img, force reflow, then set src and re-append
-    const parent = gif.parentNode;
-    const nextSibling = gif.nextSibling;
-    parent.removeChild(gif);
-    gif.src = src;
-    // Force reflow
-    void gif.offsetWidth;
-    if (nextSibling) {
-      parent.insertBefore(gif, nextSibling);
-    } else {
-      parent.appendChild(gif);
-    }
+    // iOS Safari GIF fix: create a completely new <img> element each time
+    // iOS caches decoded GIF frames on existing elements, so re-using the
+    // same <img> and changing src will NOT restart animation.
+    const oldGif = document.getElementById('kidGif');
+    const newGif = document.createElement('img');
+    newGif.id = 'kidGif';
+    newGif.className = 'kid-gif';
+    newGif.alt = 'Javi animation';
+    newGif.setAttribute('aria-hidden', 'true');
+    // Use cache-busting query param to force fresh decode
+    newGif.src = src + '?t=' + Date.now();
+    oldGif.parentNode.replaceChild(newGif, oldGif);
 
     try { lucide.createIcons(); } catch (_) {}
   }
