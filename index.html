@@ -114,11 +114,17 @@
   .bubble.loading { color: #999; font-style: italic; }
   .bubble i { width: 16px; height: 16px; flex-shrink: 0; }
 
-  /* KID SVG */
-  .kid-wrap { flex-shrink: 0; width: 90px; position: relative; }
+  /* KID GIF */
+  .kid-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    padding-top: 30px;
+  }
   .char-name {
     position: absolute;
-    top: -25px;
+    top: 0;
     left: 50%;
     transform: translateX(-50%);
     font-size: 14px;
@@ -129,6 +135,7 @@
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     white-space: nowrap;
+    z-index: 1;
   }
   .kid-gif {
     width: 140px;
