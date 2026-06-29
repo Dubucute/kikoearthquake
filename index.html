@@ -543,7 +543,6 @@
 // ============================================================
 const API = {
   USGS: 'https://earthquake.usgs.gov/fdsnws/event/1/query',
-  EMSC: 'https://www.seismicportal.eu/fdsnws/event/1/query',
   NOMINATIM: 'https://nominatim.openstreetmap.org/reverse',
   OPENROUTER: 'https://openrouter.ai/api/v1/chat/completions'
 };
@@ -587,29 +586,6 @@ function distKm(la1, lo1, la2, lo2) {
   const dLa = (la2 - la1) * d2r, dLo = (lo2 - lo1) * d2r;
   const a = Math.sin(dLa / 2) ** 2 + Math.cos(la1 * d2r) * Math.cos(la2 * d2r) * Math.sin(dLo / 2) ** 2;
   return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
-}
-
-/**
- * Normalize an EMSC feature to match USGS GeoJSON structure.
- * EMSC uses flynn_region for place name and properties.lat/lon for coordinates.
- */
-function normalizeEmscFeature(f) {
-  const props = f.properties || {};
-  const coords = f.geometry && f.geometry.coordinates
-    ? f.geometry.coordinates
-    : [props.lon || 0, props.lat || 0, props.depth || 0];
-  const time = props.time ? new Date(props.time).getTime() : Date.now();
-  return {
-    type: 'Feature',
-    geometry: { type: 'Point', coordinates: coords },
-    id: f.id || props.unid || '',
-    properties: {
-      mag: props.mag,
-      place: props.flynn_region || 'Unknown',
-      time: time,
-      depth: props.depth || coords[2] || 0
-    }
-  };
 }
 
 function determineAlertLevel(recentMag) {
@@ -886,31 +862,13 @@ class JaviAlertApp {
 
   // ---------- Earthquake Data Fetching ----------
   async fetchEarthquakeData() {
-    const radiusKm = 1000;
-    const startTime = new Date(Date.now() - 7 * 86400000).toISOString();
-
-    // Use radius-based search centered on user's location for nearest-first results
-    const [usgsResult, emscResult] = await Promise.allSettled([
-      fetch(`${API.USGS}?format=geojson&latitude=${this.userLat}&longitude=${this.userLon}&maxradiuskm=${radiusKm}&minmagnitude=${CONFIG.MIN_MAGNITUDE}&orderby=time&limit=100&starttime=${startTime}`)
-        .then(r => r.json()).then(d => d.features || []),
-      fetch(`${API.EMSC}?format=json&lat=${this.userLat}&lon=${this.userLon}&radius=${radiusKm}&minmag=${CONFIG.MIN_MAGNITUDE}&limit=100`)
-        .then(r => r.json()).then(d => (d.features || []).map(normalizeEmscFeature))
-    ]);
-
-    const usgs = usgsResult.status === 'fulfilled' ? usgsResult.value : [];
-    const emsc = emscResult.status === 'fulfilled' ? emscResult.value : [];
-
-    // Merge and deduplicate by time proximity (same event = within 60s + 0.3 mag diff)
-    const combined = [...usgs];
-    for (const eq of emsc) {
-      const isDuplicate = combined.some(u =>
-        Math.abs(u.properties.time - eq.properties.time) < 60000 &&
-        Math.abs((u.properties.mag || 0) - (eq.properties.mag || 0)) < 0.3
-      );
-      if (!isDuplicate) combined.push(eq);
-    }
-
-    return combined.sort((a, b) => b.properties.time - a.properties.time);
+    // Match original approach: USGS-only, degree-based radius (~500km), no starttime filter
+    const degRadius = 500 / 111.2;
+    const url = `${API.USGS}?format=geojson&latitude=${this.userLat}&longitude=${this.userLon}&maxradius=${degRadius}&minmagnitude=${CONFIG.MIN_MAGNITUDE}&orderby=time&limit=25`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`USGS returned ${res.status}`);
+    const data = await res.json();
+    return data.features || [];
   }
 
   // ---------- Data Processing ----------
