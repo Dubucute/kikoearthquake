@@ -764,17 +764,17 @@ class JaviAlertApp {
   }
 
   setupPagination() {
-    document.getElementById('pagePrev').addEventListener('click', () => {
+    document.getElementById('pagePrev').addEventListener('click', async () => {
       if (this.currentPage > 1) {
         this.currentPage--;
-        this.renderQuakeList(this.allQuakes);
+        await this.renderQuakeList(this.allQuakes);
       }
     });
-    document.getElementById('pageNext').addEventListener('click', () => {
+    document.getElementById('pageNext').addEventListener('click', async () => {
       const totalPages = Math.ceil(this.allQuakes.length / CONFIG.DISPLAY_COUNT);
       if (this.currentPage < totalPages) {
         this.currentPage++;
-        this.renderQuakeList(this.allQuakes);
+        await this.renderQuakeList(this.allQuakes);
       }
     });
   }
@@ -861,6 +861,35 @@ class JaviAlertApp {
     }
   }
 
+  /**
+   * Reverse geocode a quake's coordinates to get the full place name hierarchy.
+   * Caches results by "lat,lon" key to avoid redundant API calls.
+   */
+  async fetchQuakePlaceName(lat, lon) {
+    const key = `${lat.toFixed(2)},${lon.toFixed(2)}`;
+    if (this.cache.quakePlaces && this.cache.quakePlaces[key]) {
+      return this.cache.quakePlaces[key];
+    }
+    try {
+      const url = `${API.NOMINATIM}?format=json&lat=${lat}&lon=${lon}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      const addr = data.address || {};
+      // Build full hierarchy: village/town/city, state, country
+      const village = addr.village || addr.town || addr.city || addr.municipality || '';
+      const state = addr.state || '';
+      const country = addr.country || '';
+      const parts = [village, state, country].filter(Boolean);
+      const placeName = parts.length > 0 ? parts.join(', ') : (data.display_name || 'Unknown');
+      // Cache it
+      if (!this.cache.quakePlaces) this.cache.quakePlaces = {};
+      this.cache.quakePlaces[key] = placeName;
+      return placeName;
+    } catch {
+      return null; // null means fall back to USGS place name
+    }
+  }
+
   // ---------- Earthquake Data Fetching ----------
   async fetchEarthquakeData() {
     const degRadius = CONFIG.SEARCH_RADIUS_KM / 111.2;
@@ -916,7 +945,7 @@ class JaviAlertApp {
   }
 
   // ---------- UI Rendering ----------
-  updateUI(stats) {
+  async updateUI(stats) {
     const {
       quakes, today, level,
       nearestMag, latestMag, recentMag,
@@ -942,7 +971,7 @@ class JaviAlertApp {
     // Store quakes sorted by distance for pagination, reset to page 1
     this.allQuakes = [...quakes].sort((a, b) => a.km - b.km);
     this.currentPage = 1;
-    this.renderQuakeList(this.allQuakes);
+    await this.renderQuakeList(this.allQuakes);
 
     // Last update time
     document.getElementById('lastUpdate').textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
@@ -956,7 +985,7 @@ class JaviAlertApp {
     }
   }
 
-  renderQuakeList(quakes) {
+  async renderQuakeList(quakes) {
     const container = document.getElementById('quakeList');
     const pagination = document.getElementById('pagination');
     const pageInfo = document.getElementById('pageInfo');
@@ -974,15 +1003,25 @@ class JaviAlertApp {
       const start = (this.currentPage - 1) * perPage;
       const pageItems = quakes.slice(start, start + perPage);
 
-      container.innerHTML = pageItems.map((q) => {
+      // Enrich place names for displayed items via reverse geocoding
+      const enriched = await Promise.all(pageItems.map(async (q) => {
         const mag = (q.properties.mag || 0).toFixed(1);
-        // Strip USGS distance prefix like "20 km SSW of " from place name
+        // Strip USGS distance prefix (e.g. "20 km SSW of La Paz, Philippines" -> "La Paz, Philippines")
         const rawPlace = q.properties.place || 'Unknown';
-        const place = rawPlace.replace(/^[\d.]+\s*km\s+\w+\s+of\s+/i, '');
+        const stripped = rawPlace.replace(/^[\d.]+\s*km\s+\w+\s+of\s+/i, '');
+        // Try to get full hierarchy via reverse geocoding
+        const [lo, la] = q.geometry.coordinates;
+        const fullPlace = await this.fetchQuakePlaceName(la, lo);
+        // Use enriched name if available, otherwise use stripped USGS name
+        const place = fullPlace || stripped;
+        return { ...q, _place: place, _mag: mag };
+      }));
+
+      container.innerHTML = enriched.map((q) => {
         return `<div class="quake-item" role="listitem">
-          <div class="mag-badge ${magClass(parseFloat(mag))}">M${mag}</div>
+          <div class="mag-badge ${magClass(parseFloat(q._mag))}">M${q._mag}</div>
           <div class="q-info">
-            <div class="q-place">${place}</div>
+            <div class="q-place">${q._place}</div>
             <div class="q-meta">${timeSince(q.properties.time)}</div>
           </div>
           <div class="q-dist">${q.km}km away</div>
@@ -1168,7 +1207,7 @@ class JaviAlertApp {
     try {
       const features = await this.fetchEarthquakeData();
       const stats = this.processQuakeData(features);
-      this.updateUI(stats);
+      await this.updateUI(stats);
     } catch (e) {
       console.error('JaviAlert loadData error:', e);
       const container = document.getElementById('quakeList');
