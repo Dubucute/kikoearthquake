@@ -71,7 +71,7 @@ body.danger {
   letter-spacing: .5px;
 }
 .app-name i { width: 22px; height: 22px; }
-.app-name .app-icon { width: 24px; height: 24px; border-radius: 6px; object-fit: cover; }
+.app-name .app-icon { width: 32px; height: 32px; border-radius: 8px; object-fit: cover; }
 .refresh-ico {
   width: 40px; height: 40px; border-radius: 50%;
   background: rgba(255,255,255,.35);
