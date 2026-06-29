@@ -290,10 +290,20 @@ body.danger {
   75% { transform: translateX(3px) rotate(2deg); }
 }
 
+/* PILL ROW (Safe | What to do | Who to call) */
+.pill-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
 /* STATUS PILL */
 .status-pill {
   display: inline-flex; align-items: center; gap: 6px;
-  width: fit-content; margin: 0 auto 14px;
+  width: fit-content;
   padding: 8px 20px; border-radius: 30px;
   font-size: 15px; font-weight: 700; color: white;
   box-shadow: 4px 4px 0px rgba(0,0,0,.15);
@@ -307,13 +317,7 @@ body.danger {
 .pill-danger  { background: #e17055; animation: pulse-red 1s infinite; }
 @keyframes pulse-red { 0%,100% { box-shadow: 4px 4px 0px rgba(0,0,0,.15); } 50% { box-shadow: 4px 4px 0px rgba(0,0,0,.15), 0 0 0 8px rgba(225,112,85,0.3); } }
 
-/* ACTION ROW (What to do / Who to call) */
-.action-row {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-  margin-bottom: 14px;
-}
+/* ACTION BUTTONS (What to do / Who to call) */
 .action-btn {
   display: inline-flex;
   align-items: center;
@@ -329,6 +333,7 @@ body.danger {
   box-shadow: 3px 3px 0px #2d3436;
   transition: transform .1s, box-shadow .1s;
   font-family: inherit;
+  white-space: nowrap;
 }
 .action-btn:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0px #2d3436; }
 .action-btn:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0px #2d3436; }
