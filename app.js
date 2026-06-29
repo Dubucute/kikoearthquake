@@ -148,6 +148,7 @@
       this.isAndroid = /Android/.test(navigator.userAgent);
       this.deferredPrompt = null;
       this.refreshTimer = null;
+      this.knownQuakeIds = this._loadKnownQuakeIds();
 
       // Bind
       this.init = this.init.bind(this);
@@ -174,6 +175,13 @@
       if ('serviceWorker' in navigator) {
         try {
           await navigator.serviceWorker.register('sw.js');
+        } catch (_) { /* ignore */ }
+      }
+
+      // Request notification permission
+      if ('Notification' in window && Notification.permission === 'default') {
+        try {
+          Notification.requestPermission();
         } catch (_) { /* ignore */ }
       }
 
@@ -668,6 +676,16 @@
       try {
         const features = await this.fetchEarthquakeData();
         const data = this.processQuakeData(features);
+
+        // Detect new earthquakes
+        const newQuakes = this._detectNewQuakes(data.quakes);
+        if (newQuakes.length > 0) {
+          this._alertNewQuakes(newQuakes);
+        }
+
+        // Update known IDs
+        this._saveKnownQuakeIds(data.quakes);
+
         await this.updateUI(data);
       } catch (err) {
         bubble.className = 'bubble';
@@ -676,6 +694,54 @@
         ico.classList.remove('spin');
         console.error('loadData error:', err);
       }
+    }
+
+    // ─── NEW QUAKE DETECTION ───────────────────────────────────
+    _loadKnownQuakeIds() {
+      try {
+        const stored = localStorage.getItem('javiKnownQuakeIds');
+        return stored ? new Set(JSON.parse(stored)) : new Set();
+      } catch (_) {
+        return new Set();
+      }
+    }
+
+    _saveKnownQuakeIds(quakes) {
+      const ids = new Set(quakes.map((q) => q.id));
+      try {
+        localStorage.setItem('javiKnownQuakeIds', JSON.stringify([...ids]));
+      } catch (_) { /* ignore */ }
+      this.knownQuakeIds = ids;
+    }
+
+    _detectNewQuakes(quakes) {
+      // On first load, knownQuakeIds is empty — treat all as known, no alerts
+      if (this.knownQuakeIds.size === 0) return [];
+      return quakes.filter((q) => !this.knownQuakeIds.has(q.id));
+    }
+
+    _alertNewQuakes(newQuakes) {
+      // Show browser notification
+      if ('Notification' in window && Notification.permission === 'granted') {
+        const count = newQuakes.length;
+        const biggest = newQuakes.reduce((a, b) => a.mag > b.mag ? a : b);
+        const title = count === 1 ? 'New earthquake detected!' : count + ' new earthquakes detected!';
+        const body = biggest.mag.toFixed(1) + ' mag at ' + biggest.place + ' (' + biggest.dist + ' km away)';
+        try {
+          new Notification(title, { body, icon: 'icons/icon-192.png' });
+        } catch (_) { /* ignore */ }
+      }
+
+      // Update bubble message
+      const bubble = document.getElementById('bubble');
+      const count = newQuakes.length;
+      const biggest = newQuakes.reduce((a, b) => a.mag > b.mag ? a : b);
+      const msg = count === 1
+        ? 'May bago akong na-detect na lindol! ' + biggest.mag.toFixed(1) + ' mag sa ' + biggest.place
+        : count + ' na bagong lindol ang na-detect ko! Pinakamalakas: ' + biggest.mag.toFixed(1) + ' mag';
+      bubble.className = 'bubble';
+      bubble.innerHTML = '<i data-lucide="bell" aria-hidden="true"></i> ' + msg;
+      try { lucide.createIcons(); } catch (_) { /* ignore */ }
     }
 
     // ─── INSTALL PROMPT ────────────────────────────────────────
