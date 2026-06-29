@@ -80,6 +80,7 @@ body.danger {
 }
 .refresh-ico:active { background: rgba(255,255,255,.6); transform: scale(.92); }
 .refresh-ico:disabled { opacity: .5; }
+.refresh-ico svg { pointer-events: none; }
 
 /* LOCATION BAR */
 .loc-bar {
@@ -349,6 +350,7 @@ body.danger {
   box-shadow: 2px 2px 0px #2d3436;
 }
 .sort-btn:active { background: #ffeaa7; transform: scale(.92); }
+.sort-btn svg { pointer-events: none; }
 .sort-btn i { width: 14px; height: 14px; }
 .sort-dropdown {
   position: absolute; top: 100%; right: 0; z-index: 100;
@@ -410,6 +412,7 @@ body.danger {
 .page-btn:active { background: #ffeaa7; transform: scale(.9); }
 .page-btn:disabled { opacity: .35; cursor: default; box-shadow: none; transform: none; }
 .page-btn.active { background: var(--safe-sky1); color: white; }
+.page-btn svg { pointer-events: none; }
 .page-info { font-size: 13px; color: var(--muted); font-weight: 600; min-width: 60px; text-align: center; }
 
 /* EMPTY */
