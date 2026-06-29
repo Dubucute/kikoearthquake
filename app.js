@@ -22,7 +22,11 @@
     'poolside/laguna-m.1:free',
     'cohere/north-mini-code:free',
     'liquid/lfm-2.5-1.2b-instruct:free',
+    'liquid/lfm-2.5-1.2b-thinking:free',
     'nvidia/nemotron-3-nano-30b-a3b:free',
+    'nvidia/nemotron-3-super-120b-a12b:free',
+    'nvidia/nemotron-3-ultra-550b-a55b:free',
+    'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
     'nvidia/nemotron-nano-12b-v2-vl:free',
     'nvidia/nemotron-nano-9b-v2:free',
     'nvidia/nemotron-3.5-content-safety:free',
@@ -692,6 +696,10 @@
             },
             body: JSON.stringify({
               model: model,
+              // reasoning: { enabled: true } tells OpenRouter to separate
+              // chain-of-thought into reasoning_details instead of content,
+              // so reasoning models work the same as standard models
+              reasoning: { enabled: true },
               messages: [
                 {
                   role: 'system',
@@ -713,9 +721,8 @@
           const msg = data.choices && data.choices[0] && data.choices[0].message;
           const text = (msg && msg.content) || '';
 
-          // Skip if response is empty, too long, or contains meta-instructions (reasoning models)
+          // Skip empty or too-long responses
           if (!text || text.length >= 200) continue;
-          if (/we need to|must respond|should say|as (an? )?(AI|assistant)/i.test(text)) continue;
 
           bubble.className = 'bubble';
           bubble.innerHTML = text;
