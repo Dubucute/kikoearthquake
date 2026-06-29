@@ -680,7 +680,7 @@
       bubble.innerHTML = '<i data-lucide="search" aria-hidden="true"></i> Thinking...';
       try { lucide.createIcons(); } catch (_) { /* ignore */ }
 
-      // Try OpenRouter AI with model fallback chain
+      // Try OpenRouter AI with model fallback chain (streaming)
       const prompts = MOOD_PROMPTS[mood] || MOOD_PROMPTS.safe;
       const prompt = prompts[Math.floor(Math.random() * prompts.length)];
 
@@ -696,9 +696,7 @@
             },
             body: JSON.stringify({
               model: model,
-              // reasoning: { enabled: true } tells OpenRouter to separate
-              // chain-of-thought into reasoning_details instead of content,
-              // so reasoning models work the same as standard models
+              stream: true,
               reasoning: { enabled: true },
               messages: [
                 {
@@ -713,19 +711,48 @@
           });
 
           if (!res.ok) {
-            // 429 = rate limited, try next model; other errors also fall through
             throw new Error('AI returned ' + res.status + ' for ' + model);
           }
 
-          const data = await res.json();
-          const msg = data.choices && data.choices[0] && data.choices[0].message;
-          const text = (msg && msg.content) || '';
-
-          // Skip empty or too-long responses
-          if (!text || text.length >= 200) continue;
-
+          // Stream the response for a typing effect
           bubble.className = 'bubble';
-          bubble.innerHTML = text;
+          bubble.innerHTML = '';
+          try { lucide.createIcons(); } catch (_) { /* ignore */ }
+
+          const reader = res.body.getReader();
+          const decoder = new TextDecoder();
+          let fullText = '';
+          let buffer = '';
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (!trimmed || !trimmed.startsWith('data: ')) continue;
+              const data = trimmed.slice(6);
+              if (data === '[DONE]') break;
+
+              try {
+                const chunk = JSON.parse(data);
+                const delta = chunk.choices && chunk.choices[0] && chunk.choices[0].delta;
+                const content = delta && delta.content;
+                if (content) {
+                  fullText += content;
+                  bubble.innerHTML = fullText;
+                }
+              } catch (_) { /* skip malformed chunk */ }
+            }
+          }
+
+          // Final check: skip empty or too-long responses
+          if (!fullText || fullText.length >= 200) continue;
+
           try { lucide.createIcons(); } catch (_) { /* ignore */ }
           return;
         } catch (_) {
@@ -734,11 +761,18 @@
         }
       }
 
-      // Fallback (all models failed)
+      // Fallback (all models failed) — type out a local message
       const msgs = FALLBACK_MESSAGES[mood] || FALLBACK_MESSAGES.safe;
       const msg = msgs[Math.floor(Math.random() * msgs.length)];
       bubble.className = 'bubble';
-      bubble.innerHTML = msg;
+      bubble.innerHTML = '';
+      try { lucide.createIcons(); } catch (_) { /* ignore */ }
+
+      // Type out the fallback message character by character
+      for (let i = 0; i < msg.length; i++) {
+        bubble.innerHTML = msg.slice(0, i + 1);
+        await new Promise(r => setTimeout(r, 30));
+      }
       try { lucide.createIcons(); } catch (_) { /* ignore */ }
     }
 
