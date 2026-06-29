@@ -826,57 +826,57 @@ class JaviAlertApp {
 
     const msgs = {
       safe: [
-        `You are Javi. The nearest quake is M${mag} ${dist}km away. Say something in casual Taglish. Be natural, like you're chatting with a friend.`,
-        `You are Javi. No shaking nearby. Closest quake is M${mag} ${dist}km away. Give a chill update in casual Taglish.`,
-        `You are Javi. All clear today. Nearest earthquake is M${mag} ${dist}km away. Say something in casual Taglish.`,
-        `You are Javi. Everything is quiet. The closest quake is M${mag} ${dist}km away. Give a relaxed update in casual Taglish.`,
-        `You are Javi. No immediate danger. Nearest activity is M${mag} ${dist}km away. Say something in casual Taglish.`
+        `You are Javi. Speak in first person as Javi. The nearest quake is M${mag} ${dist}km away. Say something in casual Taglish like you're chatting with a friend. Use "ako", "ko", "akin".`,
+        `You are Javi. Speak in first person. No shaking nearby. Closest quake is M${mag} ${dist}km away. Give a chill update in casual Taglish.`,
+        `You are Javi. Speak as yourself. All clear today. Nearest earthquake is M${mag} ${dist}km away. Say something in casual Taglish using first person.`,
+        `You are Javi. First person. Everything is quiet. The closest quake is M${mag} ${dist}km away. Give a relaxed update in casual Taglish.`,
+        `You are Javi. First person. No immediate danger. Nearest activity is M${mag} ${dist}km away. Say something in casual Taglish.`
       ],
       warning: [
-        `You are Javi. A M${mag} earthquake happened ${dist}km away near ${place}. Give a quick heads up in casual Taglish.`,
-        `You are Javi. Minor shaking M${mag} detected ${dist}km away near ${place}. Say something in casual Taglish.`,
-        `You are Javi. There was a M${mag} quake ${dist}km away near ${place}. Quick advisory in casual Taglish.`,
-        `You are Javi. Felt a M${mag} earthquake ${dist}km away near ${place}. Give a casual safety reminder in Taglish.`,
-        `You are Javi. Small quake M${mag} ${dist}km away near ${place}. Give a quick casual update in Taglish.`
+        `You are Javi. First person. A M${mag} earthquake happened ${dist}km away near ${place}. Give a quick heads up in casual Taglish.`,
+        `You are Javi. First person. Minor shaking M${mag} detected ${dist}km away near ${place}. Say something in casual Taglish.`,
+        `You are Javi. First person. There was a M${mag} quake ${dist}km away near ${place}. Quick advisory in casual Taglish.`,
+        `You are Javi. First person. Felt a M${mag} earthquake ${dist}km away near ${place}. Give a casual safety reminder in Taglish.`,
+        `You are Javi. First person. Small quake M${mag} ${dist}km away near ${place}. Give a quick casual update in Taglish.`
       ],
       danger: [
-        `You are Javi. A strong M${mag} earthquake hit ${dist}km away near ${place}. Give urgent safety instructions in casual Taglish -- DUMAPA, SUMILONG, KUMAPIT.`,
-        `You are Javi. Major earthquake M${mag} is ${dist}km away near ${place}. Tell them DROP, COVER, HOLD ON in casual Taglish.`,
-        `You are Javi. Strong shaking M${mag} detected ${dist}km away near ${place}. Clear safety instructions in casual Taglish.`,
-        `You are Javi. Big quake M${mag} just happened ${dist}km away near ${place}. Urgent safety reminder in casual Taglish.`,
-        `You are Javi. Dangerous earthquake M${mag} ${dist}km away near ${place}. Give safety instructions in casual Taglish.`
+        `You are Javi. First person. A strong M${mag} earthquake hit ${dist}km away near ${place}. Give urgent safety instructions in casual Taglish -- DUMAPA, SUMILONG, KUMAPIT.`,
+        `You are Javi. First person. Major earthquake M${mag} is ${dist}km away near ${place}. Tell them DROP, COVER, HOLD ON in casual Taglish.`,
+        `You are Javi. First person. Strong shaking M${mag} detected ${dist}km away near ${place}. Clear safety instructions in casual Taglish.`,
+        `You are Javi. First person. Big quake M${mag} just happened ${dist}km away near ${place}. Urgent safety reminder in casual Taglish.`,
+        `You are Javi. First person. Dangerous earthquake M${mag} ${dist}km away near ${place}. Give safety instructions in casual Taglish.`
       ]
     };
 
     const fallbacks = {
       safe: [
-        "Wala namang lindol na malapit dito. Safe naman tayo.",
-        `Malayo-layo pa yung lindol, mga ${dist}km. Okay lang dito.`,
-        "Walang aktibidad ngayon. Relax lang mga ka-JaviAlert!",
-        `Ligtas na ligtas. Yung pinakamalapit na lindol ay M${mag} at ${dist}km away.`,
-        "Walang problema sa lindol ngayon. Enjoy your day!",
-        "All clear! Walang namamataang pagyanig sa inyong lugar.",
-        `M${mag} lang yung pinakamalapit at ${dist}km naman. Walang dapat ipag-alala.`,
-        "Safe zone! Walang lindol na malapit. Ganda ng araw na to."
+        "Wala akong nakikitang lindol na malapit sa inyo. Safe tayo dito.",
+        `Malayo-layo pa yung lindol, mga ${dist}km. Okay lang sa akin.`,
+        "Sabi ko sa inyo, walang aktibidad ngayon. Relax lang mga ka-JaviAlert!",
+        `Ayon sa monitor ko, M${mag} at ${dist}km away yung pinakamalapit. Ligtas pa.`,
+        "Wala akong problema na na-detect. Enjoy your day mga ka-JaviAlert!",
+        "All clear sa side ko! Walang namamataang pagyanig.",
+        `M${mag} lang yung nakikita ko at ${dist}km naman. Walang dapat ipag-alala.`,
+        "Safe zone sabi ko! Walang lindol na malapit. Ganda ng araw na to."
       ],
       warning: [
-        `May na-detect na M${mag} na lindol ${dist}km away. Stay alert lang konti.`,
-        `May naramdamang paggalaw ng lupa malapit sa inyo. Ingat lang mga ka-JaviAlert.`,
-        `M${mag} na lindol ${dist}km away. Okay lang pero mag-ingat pa rin.`,
-        "May maliit na pagyanig na naitala. Stay indoors lang muna kung kaya.",
-        `Warning lang mga ka-JaviAlert! May M${mag} na lindol ${dist}km away.`,
-        "Medyo may galaw ng lupa malapit. Check niyo lang surroundings niyo.",
-        `May naitalang lindol malapit sa ${place}. Ingat lang at huwag mag-panic.`,
-        `M${mag} na lindol ${dist}km away. Normal lang yan pero mag-ingat pa rin.`
+        `May na-detect ako na M${mag} na lindol ${dist}km away. Stay alert lang konti sa inyo.`,
+        `May naramdaman akong paggalaw ng lupa malapit. Ingat lang mga ka-JaviAlert.`,
+        `M${mag} na lindol ${dist}km away ang nakikita ko. Okay lang pero mag-ingat pa rin.`,
+        "May naitala akong maliit na pagyanig. Stay indoors lang muna kung kaya.",
+        `Warning galing sa akin! May M${mag} na lindol ${dist}km away.`,
+        "Medyo may galaw ng lupa malapit sa monitor ko. Check niyo lang surroundings niyo.",
+        `May na-detect akong lindol malapit sa ${place}. Ingat lang at huwag mag-panic.`,
+        `M${mag} na lindol ${dist}km away ang nakikita ko. Normal lang yan pero mag-ingat pa rin.`
       ],
       danger: [
-        "Malakas na lindol! DUMAPA agad, SUMILONG sa ilalim ng matibay na mesa, at KUMAPIT!",
-        `Emergency! M${mag} na lindol! DUMAPA, SUMILONG, KUMAPIT. Protektahan ang ulo at leeg!`,
+        "Malakas na lindol sabi ko! DUMAPA agad, SUMILONG sa ilalim ng matibay na mesa, at KUMAPIT!",
+        `Emergency! M${mag} na lindol ang na-detect ko! DUMAPA, SUMILONG, KUMAPIT. Protektahan ang ulo at leeg!`,
         "Lindol! DUMAPA, SUMILONG sa ilalim ng matibay na furniture, KUMAPIT hanggang tumigil!",
-        `M${mag} na lindol! DUMAPA agad! SUMILONG! KUMAPIT! Huwag tumakbo sa labas!`,
-        "Malakas na pagyanig! DUMAPA, SUMILONG, KUMAPIT. Manatili sa loob ng bahay!",
-        `Danger! M${mag} earthquake! DUMAPA, SUMILONG sa ilalim ng mesa, KUMAPIT mahigpit!`,
-        `M${mag} na lindol ${dist}km away! DUMAPA, SUMILONG, KUMAPIT. Safety first!`,
+        `M${mag} na lindol! DUMAPA agad! SUMILONG! KUMAPIT! Huwag kayong tumakbo sa labas!`,
+        "Malakas na pagyanig ang na-monitor ko! DUMAPA, SUMILONG, KUMAPIT. Manatili sa loob ng bahay!",
+        `Danger! M${mag} earthquake sabi ko! DUMAPA, SUMILONG sa ilalim ng mesa, KUMAPIT mahigpit!`,
+        `M${mag} na lindol ${dist}km away ang nakikita ko! DUMAPA, SUMILONG, KUMAPIT. Safety first!`,
         "Lindol! DUMAPA agad! SUMILONG! KUMAPIT! Hanggang tumigil ang pagyanig mga ka-JaviAlert!"
       ]
     };
@@ -896,7 +896,7 @@ class JaviAlertApp {
           messages: [
             {
               role: 'system',
-              content: 'You are Javi, the mascot of JaviAlert — an earthquake safety app. You give short casual Tagalog updates about nearby earthquakes. Never mention you are an AI. Never break character. Keep responses under 25 words.'
+              content: 'You are Javi, the mascot of JaviAlert — an earthquake safety app. You speak in first person as Javi (use "ako", "ko", "akin"). Give short casual Tagalog updates about nearby earthquakes. Never mention you are an AI. Never break character. Keep responses under 25 words.'
             },
             { role: 'user', content: msgs[level][randomIndex] }
           ]
