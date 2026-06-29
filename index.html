@@ -219,17 +219,6 @@
   .q-meta  { font-size: 11px; color: var(--muted); margin-top: 2px; }
   .q-dist  { font-size: 13px; font-weight: 700; color: var(--muted); flex-shrink: 0; }
 
-  /* FEATURED QUAKE (single nearest) */
-  .quake-item.featured {
-    background: linear-gradient(135deg, rgba(255,255,255,.6), rgba(255,255,255,.9));
-    border: 2px solid rgba(255,255,255,.8);
-    padding: 16px;
-  }
-  .quake-item.featured .mag-badge { font-size: 18px; padding: 8px 14px; }
-  .quake-item.featured .q-place { font-size: 15px; }
-  .quake-item.featured .q-dist { font-size: 16px; }
-  .quake-item.featured .q-meta { font-size: 13px; }
-
   /* EMPTY */
   .empty { padding: 28px; text-align: center; color: var(--muted); font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 6px; }
   .empty i { width: 18px; height: 18px; }
@@ -383,9 +372,9 @@
   <div class="list-card">
     <div class="list-header">
       <i data-lucide="target" aria-hidden="true"></i>
-      Nearest Earthquake
+      Nearest Earthquakes
     </div>
-    <div id="quakeList" role="list" aria-label="Nearest earthquake">
+    <div id="quakeList" role="list" aria-label="Nearest earthquakes">
       <div class="empty">
         <i data-lucide="loader-2" class="spin" aria-hidden="true"></i>
         Loading earthquake data...
@@ -419,7 +408,7 @@ const CONFIG = {
   SEARCH_RADIUS_KM: 200,
   QUAKE_LIMIT: 25,
   MIN_MAGNITUDE: 1,
-  DISPLAY_COUNT: 1,
+  DISPLAY_COUNT: 10,
   AUTO_REFRESH_MS: 300000, // 5 minutes
   DANGER_THRESHOLD: 5.0,
   WARNING_THRESHOLD: 3.0,
@@ -680,8 +669,8 @@ class JaviAlertApp {
       : (nearestRecentQuake?.properties?.place || 'your area');
     this.getJaviMessage(level, messageMag.toFixed(1), messageDist.toFixed(0), messagePlace);
 
-    // Quake list - show the single nearest quake
-    this.renderQuakeList(nearestQuake);
+    // Quake list - show nearest quakes sorted by distance
+    this.renderQuakeList(quakes);
 
     // Last update time
     document.getElementById('lastUpdate').textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
@@ -695,25 +684,28 @@ class JaviAlertApp {
     }
   }
 
-  renderQuakeList(quake) {
+  renderQuakeList(quakes) {
     const container = document.getElementById('quakeList');
 
-    if (!quake) {
+    if (!quakes || quakes.length === 0) {
       container.innerHTML = `<div class="empty"><i data-lucide="smile" aria-hidden="true"></i> No earthquakes nearby! Javi says relax!</div>`;
     } else {
-      const mag = (quake.properties.mag || 0).toFixed(1);
-      // Strip USGS distance prefix like "20 km SSW of " from place name
-      // to avoid showing two different distances (USGS ref + our calculation)
-      const rawPlace = quake.properties.place || 'Unknown';
-      const place = rawPlace.replace(/^[\d.]+\s*km\s+\w+\s+of\s+/i, '');
-      container.innerHTML = `<div class="quake-item featured" role="listitem">
-        <div class="mag-badge ${magClass(parseFloat(mag))}">M${mag}</div>
-        <div class="q-info">
-          <div class="q-place">${place}</div>
-          <div class="q-meta">${timeSince(quake.properties.time)}</div>
-        </div>
-        <div class="q-dist">${quake.km}km away</div>
-      </div>`;
+      // Sort by distance (nearest first) and limit to DISPLAY_COUNT
+      const sorted = [...quakes].sort((a, b) => a.km - b.km).slice(0, CONFIG.DISPLAY_COUNT);
+      container.innerHTML = sorted.map((q) => {
+        const mag = (q.properties.mag || 0).toFixed(1);
+        // Strip USGS distance prefix like "20 km SSW of " from place name
+        const rawPlace = q.properties.place || 'Unknown';
+        const place = rawPlace.replace(/^[\d.]+\s*km\s+\w+\s+of\s+/i, '');
+        return `<div class="quake-item" role="listitem">
+          <div class="mag-badge ${magClass(parseFloat(mag))}">M${mag}</div>
+          <div class="q-info">
+            <div class="q-place">${place}</div>
+            <div class="q-meta">${timeSince(q.properties.time)}</div>
+          </div>
+          <div class="q-dist">${q.km}km away</div>
+        </div>`;
+      }).join('');
     }
 
     // Re-initialize Lucide icons for any new icons in the rendered HTML
