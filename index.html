@@ -768,35 +768,34 @@ class JaviAlertApp {
     }
     const pillText = document.getElementById('pillText');
 
-    // Determine GIF path
+    // iOS uses static PNG (GIFs don't animate on iOS WebKit)
+    // Other devices use animated GIF
+    const ext = /iPad|iPhone|iPod/.test(navigator.userAgent) ? '.png' : '.gif';
+
+    // Determine image path
     let src;
     if (level === 'safe') {
       pill.className = 'status-pill pill-safe';
       pillIcon.setAttribute('data-lucide', 'shield-check');
       if (pillText) pillText.textContent = 'All clear!';
       const safeIdx = Math.floor(Math.random() * 3) + 1;
-      src = 'javi/safe' + safeIdx + '.gif';
+      src = 'javi/safe' + safeIdx + ext;
     } else if (level === 'warning') {
       pill.className = 'status-pill pill-warning';
       pillIcon.setAttribute('data-lucide', 'alert-triangle');
       if (pillText) pillText.textContent = 'Minor activity';
       const warnIdx = Math.floor(Math.random() * 2) + 1;
-      src = 'javi/warning' + warnIdx + '.gif';
+      src = 'javi/warning' + warnIdx + ext;
     } else {
       pill.className = 'status-pill pill-danger';
       pillIcon.setAttribute('data-lucide', 'bell-ring');
       if (pillText) pillText.textContent = 'Earthquake alert!';
       const dangerIdx = Math.floor(Math.random() * 2) + 1;
-      src = 'javi/danger' + dangerIdx + '.gif';
+      src = 'javi/danger' + dangerIdx + ext;
     }
 
-    // iOS Safari GIF fix: use CSS background-image on a div instead of <img> src
-    // iOS WebKit does not animate GIFs loaded via JS src assignment on <img> elements.
-    // Using background-image forces WebKit's image decoder to treat it as an animated image.
     const gif = document.getElementById('kidGif');
-    // Reset by removing and re-adding to DOM to force re-render
     gif.style.backgroundImage = 'none';
-    // Force reflow
     void gif.offsetWidth;
     gif.style.backgroundImage = 'url(' + src + '?t=' + Date.now() + ')';
 
