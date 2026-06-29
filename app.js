@@ -380,6 +380,7 @@
           opt.classList.add('active');
           this.sortMode = opt.dataset.sort;
           dd.classList.add('hidden');
+          this.currentPage = 1;
           this.applySortAndRender();
         });
       });
@@ -399,7 +400,6 @@
       } else if (this.sortMode === 'strongest') {
         sorted.sort((a, b) => b.mag - a.mag);
       }
-      this.currentPage = 1;
       this.renderQuakeList(sorted);
     }
 
@@ -479,6 +479,7 @@
     async updateUI(data) {
       const { quakes, todayCount, latestTime, nearestDist } = data;
       this.allQuakes = quakes;
+      this.currentPage = 1;
 
       // Stats
       document.getElementById('statCount').textContent = todayCount;
