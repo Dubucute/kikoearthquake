@@ -941,11 +941,22 @@ class JaviAlertApp {
     // Filter to only quakes within search radius
     const withinRadius = withDist.filter((q) => q.km <= CONFIG.SEARCH_RADIUS_KM);
 
+    // Deduplicate by place name — keep only the strongest quake per location
+    const seen = new Map();
+    for (const q of withinRadius) {
+      const place = q.properties.place || 'Unknown';
+      const existing = seen.get(place);
+      if (!existing || (q.properties.mag || 0) > (existing.properties.mag || 0)) {
+        seen.set(place, q);
+      }
+    }
+    const deduped = [...seen.values()];
+
     // Sort by time (latest first) for display
-    const quakesByTime = [...withinRadius].sort((a, b) => b.properties.time - a.properties.time);
+    const quakesByTime = [...deduped].sort((a, b) => b.properties.time - a.properties.time);
 
     // Sort by distance for alert calculations
-    const quakesByDist = [...withinRadius].sort((a, b) => a.km - b.km);
+    const quakesByDist = [...deduped].sort((a, b) => a.km - b.km);
 
     const now = Date.now();
     const today = quakesByTime.filter((q) => now - q.properties.time < CONFIG.TODAY_WINDOW_MS);
