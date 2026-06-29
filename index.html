@@ -897,7 +897,13 @@ class JaviAlertApp {
         body: JSON.stringify({
           model: OPENROUTER_MODEL,
           max_tokens: 80,
-          messages: [{ role: 'user', content: msgs[level][randomIndex] }]
+          messages: [
+            {
+              role: 'system',
+              content: 'You are Javi, the mascot of JaviAlert — an earthquake safety app. You give short casual Tagalog updates about nearby earthquakes. Never mention you are an AI. Never break character. Keep responses under 25 words.'
+            },
+            { role: 'user', content: msgs[level][randomIndex] }
+          ]
         })
       });
       const data = await res.json();
