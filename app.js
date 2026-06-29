@@ -433,6 +433,13 @@
       this.setupPagination();
       this.setupInstallPrompt();
 
+      // Set default Javi icon to safe2
+      const kidGif = document.getElementById('kidGif');
+      if (kidGif) {
+        const ext = this.isIOS ? 'png' : 'gif';
+        kidGif.style.backgroundImage = "url('javi/safe2." + ext + "')";
+      }
+
       // Lucide
       try { lucide.createIcons(); } catch (_) { /* ignore */ }
 
@@ -892,6 +899,9 @@
         shakeWrap.classList.add('shake');
       }
 
+      // Show safety tips on every refresh (rotates every 3 sec)
+      this.showSafetyTip();
+
       // Bubble message
       this.getJaviMessage(mood);
     }
@@ -918,11 +928,6 @@
       }
       try { lucide.createIcons(); } catch (_) { /* ignore */ }
 
-      // Show a safety tip after the message if warning or danger
-      if (mood === 'warning' || mood === 'danger') {
-        await new Promise(r => setTimeout(r, 3000));
-        this.showSafetyTip();
-      }
     }
 
     // ─── SHOW SAFETY TIP ───────────────────────────────────────
