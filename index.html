@@ -529,12 +529,26 @@ if ('Notification' in window && Notification.permission === 'default') {
   Notification.requestPermission();
 }
 
+// Reverse geocoding to get location name
+async function getLocationName(lat, lon) {
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+    const data = await res.json();
+    const city = data.address.city || data.address.town || data.address.village || data.address.county || '';
+    const country = data.address.country || '';
+    return city && country ? `${city}, ${country}` : country || 'Your location';
+  } catch {
+    return 'Your location';
+  }
+}
+
 // Geolocation
 if (navigator.geolocation) {
-  navigator.geolocation.getCurrentPosition(pos => {
+  navigator.geolocation.getCurrentPosition(async pos => {
     userLat = pos.coords.latitude;
     userLon = pos.coords.longitude;
-    document.getElementById('locText').textContent = `📍 Your location found!`;
+    const locationName = await getLocationName(userLat, userLon);
+    document.getElementById('locText').textContent = `📍 ${locationName}`;
     loadData();
   }, () => {
     document.getElementById('locText').textContent = '📍 Cebu City, Philippines';
