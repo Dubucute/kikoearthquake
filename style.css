@@ -99,6 +99,17 @@ body.danger {
   font-family: inherit; min-width: 0;
 }
 .loc-input::placeholder { color: #999; }
+.loc-btn {
+  flex-shrink: 0; padding: 6px 12px; border-radius: 20px;
+  border: 2.5px solid #2d3436; background: white;
+  font-size: 12px; font-weight: 700; cursor: pointer;
+  font-family: inherit; white-space: nowrap;
+  box-shadow: 2px 2px 0px #2d3436;
+  transition: background .15s, transform .1s;
+}
+.loc-btn:active { transform: scale(.95); background: #ffeaa7; }
+.loc-btn.hidden { display: none; }
+.loc-btn:disabled { opacity: .5; pointer-events: none; }
 .loc-dropdown {
   position: absolute; top: 100%; left: 0; right: 0; z-index: 100;
   background: white; border-radius: 14px; margin-top: 4px;
@@ -847,6 +858,7 @@ body.dark-mode .bubble::after { border-left-color: #333350; }
 body.dark-mode .bubble::before { border-left-color: #555; }
 body.dark-mode .loc-bar { background: rgba(40,40,60,.85); }
 body.dark-mode .loc-input { color: #e0e0e0; }
+body.dark-mode .loc-btn { background: #333350; color: #e0e0e0; border-color: #555; }
 body.dark-mode .loc-dropdown { background: #2a2a3e; border-color: #555; }
 body.dark-mode .loc-dropdown-item { color: #e0e0e0; }
 body.dark-mode .loc-dropdown-item:hover { background: #3a3a5e; }

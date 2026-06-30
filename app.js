@@ -450,6 +450,9 @@
         }
       });
 
+      // Use my location button
+      document.getElementById('useLocationBtn').addEventListener('click', () => this._requestGeolocation());
+
       this.setupLocationSearch();
       this.setupSortDropdown();
       this.setupPagination();
@@ -503,43 +506,154 @@
       this.refreshTimer = setInterval(() => this.loadData(), CONFIG.AUTO_REFRESH_MS);
     }
 
-    // ─── LOCATION DETECTION ────────────────────────────────────
+    // ─── LOCATION DETECTION (improved) ─────────────────────────
     async detectLocation() {
-      // Try stored location first
-      const stored = localStorage.getItem('javiUserLocation');
+      const LOCATION_TTL_MS = 24 * 60 * 60 * 1000; // re-check once a day
+
+      // 1) Try cached location, but only trust it if still fresh
+      const stored = this._readStoredLocation();
       if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          this.userLat = parsed.lat;
-          this.userLon = parsed.lon;
-          this.userPlace = parsed.place || '';
-          if (this.userPlace) {
-            document.getElementById('locInput').value = this.userPlace;
-          }
-          return;
-        } catch (_) { /* ignore */ }
+        this.userLat = stored.lat;
+        this.userLon = stored.lon;
+        this.userPlace = stored.place || '';
+        if (this.userPlace) document.getElementById('locInput').value = this.userPlace;
+
+        const isFresh = Date.now() - (stored.cachedAt || 0) < LOCATION_TTL_MS;
+        if (isFresh) return;
+        // stale: fall through and try to silently refresh in the background
+        // (only if permission is already granted — never prompt unprompted)
       }
 
-      // Geolocation API with timeout
+      // 2) No geolocation support at all (older browsers, some in-app webviews)
+      if (!('geolocation' in navigator)) {
+        this._useFallbackLocation('Hindi supported ng browser mo ang location. I-search na lang sa taas.');
+        return;
+      }
+
+      // 3) Geolocation requires a secure context (https or localhost).
+      //    On plain http it will silently fail or never prompt.
+      const isSecure = window.isSecureContext ||
+        location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+      if (!isSecure) {
+        this._useFallbackLocation('Kailangan ng HTTPS para sa auto-location. I-search na lang ang lugar mo.');
+        return;
+      }
+
+      // 4) Check current permission state where supported (Chrome/Android/desktop;
+      //    Safari/iOS doesn't implement the Permissions API for geolocation reliably,
+      //    so treat 'unsupported' the same as 'prompt').
+      let permState = 'prompt';
+      try {
+        if (navigator.permissions && navigator.permissions.query) {
+          const status = await navigator.permissions.query({ name: 'geolocation' });
+          permState = status.state; // 'granted' | 'denied' | 'prompt'
+        }
+      } catch (_) { /* Permissions API not supported (e.g. iOS Safari) — fall through */ }
+
+      if (permState === 'denied') {
+        // Don't bother calling getCurrentPosition — it'll just hang/fail again,
+        // and on iOS the prompt never reappears once denied.
+        this._useFallbackLocation('Naka-block ang location access. Paki-allow sa Settings, o i-search ang lugar mo sa taas.');
+        return;
+      }
+
+      // 5) If permission isn't already granted, don't auto-prompt on page load —
+      //    that's the #1 reason iOS users bounce off geolocation requests.
+      //    Show a tappable "Use my location" affordance instead and let
+      //    the actual getCurrentPosition call happen from that tap.
+      if (permState === 'prompt') {
+        this._showLocationPrompt();
+        if (!stored) {
+          // still give them *something* to look at while they decide
+          this._useFallbackLocation(null, { silent: true });
+        }
+        return;
+      }
+
+      // 6) permState === 'granted' → safe to fetch silently (covers the
+      //    "stale cache, but already allowed" refresh case too)
+      await this._requestGeolocation();
+    }
+
+    // Called directly from a user tap (e.g. a "📍 Use my location" button)
+    async _requestGeolocation() {
+      const btn = document.getElementById('useLocationBtn');
+      if (btn) { btn.disabled = true; btn.textContent = 'Locating…'; }
+
       try {
         const pos = await new Promise((resolve, reject) => {
-          const timeoutId = setTimeout(() => reject(new Error('timeout')), 10000);
-          navigator.geolocation.getCurrentPosition(
-            (p) => { clearTimeout(timeoutId); resolve(p); },
-            (e) => { clearTimeout(timeoutId); reject(e); },
-            { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }
-          );
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: false, // faster, lower battery cost; fine for this use case
+            timeout: 12000,            // iOS can be slow on first fix, give it more room
+            maximumAge: 300000
+          });
         });
         this.userLat = pos.coords.latitude;
         this.userLon = pos.coords.longitude;
-      } catch (_) {
-        // Fallback: Manila
+        await this.fetchLocationName();
+        this._hideLocationPrompt();
+        // Re-load data with new location
+        await this.loadData();
+      } catch (err) {
+        this._handleGeoError(err);
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = '📍 Use my location'; }
+      }
+    }
+
+    _handleGeoError(err) {
+      let msg;
+      switch (err && err.code) {
+        case 1: // PERMISSION_DENIED
+          msg = 'Hindi pinayagan ang location access. I-search na lang ang lugar mo.';
+          break;
+        case 2: // POSITION_UNAVAILABLE
+          msg = 'Hindi makuha ang location mo ngayon. Subukan ulit o i-search ang lugar.';
+          break;
+        case 3: // TIMEOUT
+          msg = 'Matagal mag-respond ang GPS. Subukan ulit o i-search ang lugar.';
+          break;
+        default:
+          msg = 'Hindi makuha ang location mo. I-search na lang ang lugar mo sa taas.';
+      }
+      this._useFallbackLocation(msg);
+    }
+
+    // Falls back to last-known/Manila so the app is still usable,
+    // and optionally surfaces a reason to the user via the bubble.
+    _useFallbackLocation(reasonMsg, opts = {}) {
+      if (!this.userLat) {
         this.userLat = 14.5995;
         this.userLon = 120.9842;
+        this.userPlace = 'Manila, Philippines';
+        document.getElementById('locInput').value = this.userPlace;
       }
+      if (reasonMsg && !opts.silent) {
+        const bubble = document.getElementById('bubble');
+        if (bubble) {
+          bubble.className = 'bubble';
+          bubble.innerHTML = '<i data-lucide="map-pin-off" aria-hidden="true"></i> ' + reasonMsg;
+          try { lucide.createIcons(); } catch (_) {}
+        }
+      }
+    }
 
-      // Reverse geocode
-      await this.fetchLocationName();
+    _showLocationPrompt() {
+      const el = document.getElementById('useLocationBtn');
+      if (el) el.classList.remove('hidden');
+    }
+    _hideLocationPrompt() {
+      const el = document.getElementById('useLocationBtn');
+      if (el) el.classList.add('hidden');
+    }
+
+    _readStoredLocation() {
+      try {
+        const stored = localStorage.getItem('javiUserLocation');
+        return stored ? JSON.parse(stored) : null;
+      } catch (_) {
+        return null;
+      }
     }
 
     async fetchLocationName() {
@@ -560,11 +674,17 @@
         this.userPlace = parts.join(', ') || data.display_name || '';
         document.getElementById('locInput').value = this.userPlace;
         localStorage.setItem('javiUserLocation', JSON.stringify({
-          lat: this.userLat, lon: this.userLon, place: this.userPlace
+          lat: this.userLat, lon: this.userLon, place: this.userPlace, cachedAt: Date.now()
         }));
       } catch (_) {
         this.userPlace = this.userLat.toFixed(2) + ', ' + this.userLon.toFixed(2);
         document.getElementById('locInput').value = this.userPlace;
+        // still cache coords even if reverse geocoding failed, so we don't re-prompt every load
+        try {
+          localStorage.setItem('javiUserLocation', JSON.stringify({
+            lat: this.userLat, lon: this.userLon, place: this.userPlace, cachedAt: Date.now()
+          }));
+        } catch (_) {}
       }
     }
 
