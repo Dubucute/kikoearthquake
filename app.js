@@ -438,6 +438,18 @@
         if (e.target === e.currentTarget) e.currentTarget.classList.add('hidden');
       });
 
+      // Quake detail modal close
+      document.getElementById('detailModalClose').addEventListener('click', () => {
+        document.getElementById('quakeDetailModal').classList.add('hidden');
+        document.getElementById('detailMap').src = 'about:blank';
+      });
+      document.getElementById('quakeDetailModal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) {
+          e.currentTarget.classList.add('hidden');
+          document.getElementById('detailMap').src = 'about:blank';
+        }
+      });
+
       this.setupLocationSearch();
       this.setupSortDropdown();
       this.setupPagination();
@@ -824,7 +836,7 @@
 
         const mapsUrl = 'https://www.google.com/maps?q=' + q.lat + ',' + q.lon;
 
-        html += '<div class="quake-item">' +
+        html += '<div class="quake-item" data-id="' + q.id + '">' +
           '<div class="mag-badge ' + cls + '">' + mag + '</div>' +
           '<div class="q-info">' +
             '<div class="q-top">' +
@@ -845,6 +857,17 @@
       });
       container.innerHTML = html;
       try { lucide.createIcons(); } catch (_) { /* ignore */ }
+
+      // Quake item click — open detail modal
+      container.querySelectorAll('.quake-item').forEach((item) => {
+        item.addEventListener('click', (e) => {
+          // Don't open if clicking a button or link inside
+          if (e.target.closest('.q-share') || e.target.closest('.q-map')) return;
+          const id = item.getAttribute('data-id');
+          const q = quakes.find(q => q.id === id);
+          if (q) this._showQuakeDetail(q);
+        });
+      });
 
       // Share button click handlers
       container.querySelectorAll('.q-share').forEach((btn) => {
@@ -1333,6 +1356,64 @@
       } else {
         el.textContent = Math.floor(hrs / 24) + 'd ago';
       }
+    }
+
+    // ─── SHOW QUAKE DETAIL MODAL ──────────────────────────────
+    _showQuakeDetail(q) {
+      const modal = document.getElementById('quakeDetailModal');
+      const mapFrame = document.getElementById('detailMap');
+      const body = document.getElementById('detailBody');
+      const viewBtn = document.getElementById('detailViewMap');
+      const shareBtn = document.getElementById('detailShare');
+
+      const mag = q.mag.toFixed(1);
+      const cls = magClass(q.mag);
+      const timeStr = timeSince(q.time);
+      const mapsUrl = 'https://www.google.com/maps?q=' + q.lat + ',' + q.lon;
+      const embedUrl = 'https://maps.google.com/maps?q=' + q.lat + ',' + q.lon +
+        '&z=10&output=embed&maptype=satellite';
+
+      // Set map iframe
+      mapFrame.src = embedUrl;
+
+      // Build info body
+      body.innerHTML =
+        '<div class="detail-mag-row">' +
+          '<div class="detail-mag-badge ' + cls + '">' + mag + '</div>' +
+          '<div class="detail-mag-label">' +
+            'Magnitude<strong>' + cls.charAt(0).toUpperCase() + cls.slice(1) + '</strong>' +
+          '</div>' +
+        '</div>' +
+        '<div class="detail-place">' + q.place + '</div>' +
+        '<div class="detail-raw-place">' + q.rawPlace + '</div>' +
+        '<div class="detail-info-grid">' +
+          '<div class="detail-info-item">' +
+            '<div class="label">Distance</div>' +
+            '<div class="value">' + q.dist + ' km ' + q.dir + '</div>' +
+          '</div>' +
+          '<div class="detail-info-item">' +
+            '<div class="label">Coordinates</div>' +
+            '<div class="value">' + q.lat.toFixed(2) + ', ' + q.lon.toFixed(2) + '</div>' +
+          '</div>' +
+          '<div class="detail-info-item">' +
+            '<div class="label">Time</div>' +
+            '<div class="value">' + timeStr + '</div>' +
+          '</div>' +
+          '<div class="detail-info-item">' +
+            '<div class="label">Depth</div>' +
+            '<div class="value">--</div>' +
+          '</div>' +
+        '</div>';
+
+      // Store current quake for share button
+      this._detailQuake = q;
+
+      // Button actions
+      viewBtn.onclick = () => window.open(mapsUrl, '_blank', 'noopener');
+      shareBtn.onclick = () => this._shareQuake(q);
+
+      // Show modal
+      modal.classList.remove('hidden');
     }
 
     // ─── SHARE QUAKE ──────────────────────────────────────────

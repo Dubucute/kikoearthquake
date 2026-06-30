@@ -196,6 +196,25 @@
     </div>
   </div>
 
+  <!-- Quake detail modal -->
+  <div class="modal-overlay hidden" id="quakeDetailModal" role="dialog" aria-modal="true" aria-label="Earthquake details">
+    <div class="modal-card detail-modal-card">
+      <button class="modal-close" id="detailModalClose" aria-label="Close">&times;</button>
+      <div class="detail-map-wrap" id="detailMapWrap">
+        <iframe class="detail-map" id="detailMap" loading="lazy" allowfullscreen
+          title="Google Maps showing earthquake epicenter"
+          src="about:blank"></iframe>
+      </div>
+      <div class="detail-body" id="detailBody">
+        <!-- Injected by JS -->
+      </div>
+      <div class="modal-footer">
+        <button class="modal-btn" id="detailViewMap">Open in Google Maps</button>
+        <button class="modal-btn modal-btn-secondary" id="detailShare">Share</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Quake list -->
   <div class="list-card">
     <div class="list-header">
