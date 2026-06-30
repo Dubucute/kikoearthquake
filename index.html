@@ -27,14 +27,28 @@
 <main>
 <div class="app">
 
+  <!-- Offline banner -->
+  <div class="offline-banner hidden" id="offlineBanner">
+    <i data-lucide="wifi-off" aria-hidden="true"></i>
+    No connection — showing last data
+  </div>
+
   <div class="topbar">
     <div class="app-name">
       <img src="icons/javi-icon.png" alt="" class="app-icon" aria-hidden="true">
       JaviAlert
     </div>
-    <button class="refresh-ico" id="refreshBtn" aria-label="Refresh earthquake data">
-      <i data-lucide="refresh-cw" id="refreshIcon" aria-hidden="true"></i>
-    </button>
+    <div class="topbar-actions">
+      <button class="topbar-btn" id="darkModeBtn" aria-label="Toggle dark mode">
+        <i data-lucide="moon" id="darkModeIcon" aria-hidden="true"></i>
+      </button>
+      <button class="topbar-btn" id="soundToggleBtn" aria-label="Toggle sound">
+        <i data-lucide="volume-2" id="soundToggleIcon" aria-hidden="true"></i>
+      </button>
+      <button class="refresh-ico" id="refreshBtn" aria-label="Refresh earthquake data">
+        <i data-lucide="refresh-cw" id="refreshIcon" aria-hidden="true"></i>
+      </button>
+    </div>
   </div>
 
   <div class="loc-bar" role="region" aria-label="Your location">
@@ -119,7 +133,25 @@
       <div class="stat-num" id="statNearest">&mdash;</div>
       <div class="stat-lbl">Nearest shake</div>
     </div>
+    <div class="stat">
+      <div class="stat-num" id="statLastSignificant">&mdash;</div>
+      <div class="stat-lbl">Since last big shake</div>
+    </div>
   </section>
+
+  <!-- Mood history -->
+  <div class="mood-history hidden" id="moodHistory">
+    <div class="mood-history-dots" id="moodDots"></div>
+    <div class="mood-history-lbl">24h mood history</div>
+  </div>
+
+  <!-- Magnitude filter -->
+  <div class="mag-filter" id="magFilter">
+    <button class="mag-filter-btn active" data-min="0">All</button>
+    <button class="mag-filter-btn" data-min="3">≥ 3.0</button>
+    <button class="mag-filter-btn" data-min="4">≥ 4.0</button>
+    <button class="mag-filter-btn" data-min="5">≥ 5.0</button>
+  </div>
 
   <!-- Safety tips -->
   <div class="safety-card hidden" id="safetyCard" role="alert">

@@ -355,6 +355,10 @@
       this.deferredPrompt = null;
       this.refreshTimer = null;
       this.knownQuakeIds = this._loadKnownQuakeIds();
+      this.isDarkMode = localStorage.getItem('javiDarkMode') === 'true';
+      this.soundEnabled = localStorage.getItem('javiSoundEnabled') !== 'false';
+      this.moodHistory = this._loadMoodHistory();
+      this.magFilter = 0;
 
       // Bind
       this.init = this.init.bind(this);
@@ -373,6 +377,12 @@
       this.setupPagination = this.setupPagination.bind(this);
       this.showInstallTutorial = this.showInstallTutorial.bind(this);
       this.setupInstallPrompt = this.setupInstallPrompt.bind(this);
+      this.toggleDarkMode = this.toggleDarkMode.bind(this);
+      this.toggleSound = this.toggleSound.bind(this);
+      this.setMagFilter = this.setMagFilter.bind(this);
+      this._recordMood = this._recordMood.bind(this);
+      this._renderMoodHistory = this._renderMoodHistory.bind(this);
+      this._updateLastSignificant = this._updateLastSignificant.bind(this);
     }
 
     // ─── INIT ──────────────────────────────────────────────────
@@ -432,6 +442,37 @@
       this.setupSortDropdown();
       this.setupPagination();
       this.setupInstallPrompt();
+
+      // Dark mode
+      if (this.isDarkMode) {
+        document.body.classList.add('dark-mode');
+        const icon = document.getElementById('darkModeIcon');
+        if (icon) icon.setAttribute('data-lucide', 'sun');
+      }
+      document.getElementById('darkModeBtn').addEventListener('click', this.toggleDarkMode);
+
+      // Sound toggle
+      this._updateSoundIcon();
+      document.getElementById('soundToggleBtn').addEventListener('click', this.toggleSound);
+
+      // Magnitude filter
+      document.getElementById('magFilter').addEventListener('click', (e) => {
+        const btn = e.target.closest('.mag-filter-btn');
+        if (!btn) return;
+        this.setMagFilter(parseFloat(btn.dataset.min));
+      });
+
+      // Offline detection
+      window.addEventListener('online', () => {
+        document.getElementById('offlineBanner').classList.add('hidden');
+        this.loadData();
+      });
+      window.addEventListener('offline', () => {
+        document.getElementById('offlineBanner').classList.remove('hidden');
+      });
+      if (!navigator.onLine) {
+        document.getElementById('offlineBanner').classList.remove('hidden');
+      }
 
       // Set default Javi icon to the app icon
       const kidGif = document.getElementById('kidGif');
@@ -563,7 +604,7 @@
         this.userLat = parseFloat(item.dataset.lat);
         this.userLon = parseFloat(item.dataset.lon);
         this.userPlace = item.dataset.display;
-        input.value = this.userPlace.split(',')[0] || this.userPlace;
+        input.value = this.userPlace;
         dropdown.classList.add('hidden');
         localStorage.setItem('javiUserLocation', JSON.stringify({
           lat: this.userLat, lon: this.userLon, place: this.userPlace
@@ -724,6 +765,7 @@
       document.getElementById('statCount').textContent = todayCount;
       document.getElementById('statLatest').textContent = latestTime ? timeSince(latestTime) : '--';
       document.getElementById('statNearest').textContent = nearestDist ? nearestDist + ' km' : '--';
+      this._updateLastSignificant(quakes);
 
       // Determine mood
       let mood = 'safe';
@@ -753,6 +795,12 @@
     // ─── RENDER QUAKE LIST ─────────────────────────────────────
     renderQuakeList(quakes) {
       const container = document.getElementById('quakeList');
+
+      // Apply magnitude filter
+      if (this.magFilter > 0) {
+        quakes = quakes.filter(q => q.mag >= this.magFilter);
+      }
+
       const totalPages = Math.max(1, Math.ceil(quakes.length / CONFIG.DISPLAY_COUNT));
       const start = (this.currentPage - 1) * CONFIG.DISPLAY_COUNT;
       const pageItems = quakes.slice(start, start + CONFIG.DISPLAY_COUNT);
@@ -783,10 +831,23 @@
             '</div>' +
             '<div class="q-meta">' + timeStr + ' &middot; ' + dirStr + '</div>' +
           '</div>' +
+          '<button class="q-share" data-id="' + q.id + '" aria-label="Share this earthquake">' +
+            '<i data-lucide="share-2" aria-hidden="true"></i>' +
+          '</button>' +
         '</div>';
       });
       container.innerHTML = html;
       try { lucide.createIcons(); } catch (_) { /* ignore */ }
+
+      // Share button click handlers
+      container.querySelectorAll('.q-share').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const id = btn.getAttribute('data-id');
+          const q = quakes.find(q => q.id === id);
+          if (q) this._shareQuake(q);
+        });
+      });
 
       // Pagination info
       document.getElementById('pageInfo').textContent = 'Page ' + this.currentPage + ' of ' + totalPages;
@@ -796,6 +857,7 @@
 
     // ─── ALERT SOUND (Web Audio API) ───────────────────────────
     _playAlertSound(type) {
+      if (!this.soundEnabled) return;
       try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
         const now = ctx.currentTime;
@@ -861,18 +923,11 @@
 
       try { lucide.createIcons(); } catch (_) { /* ignore */ }
 
-      // Safety card visibility
-      const safetyCard = document.getElementById('safetyCard');
-      if (safetyCard) {
-        if (mood === 'safe') {
-          safetyCard.classList.add('hidden');
-          // Stop tip rotation when hiding
-          if (this._tipInterval) {
-            clearInterval(this._tipInterval);
-            this._tipInterval = null;
-          }
-        }
-        // For warning/danger, showSafetyTip() will reveal it after the delay
+      // Safety card visibility — always shown via showSafetyTip() below
+      // Just stop rotation when safe so it doesn't keep cycling
+      if (mood === 'safe' && this._tipInterval) {
+        clearInterval(this._tipInterval);
+        this._tipInterval = null;
       }
 
       // GIF
@@ -897,6 +952,9 @@
         pillText.textContent = 'DANGER';
         shakeWrap.classList.add('shake');
       }
+
+      // Record mood for history
+      this._recordMood(mood);
 
       // Show safety tips on every refresh (rotates every 3 sec)
       this.showSafetyTip();
@@ -1028,7 +1086,7 @@
         const title = count === 1 ? 'New earthquake detected!' : count + ' new earthquakes detected!';
         const body = biggest.mag.toFixed(1) + ' mag at ' + biggest.place + ' (' + biggest.dist + ' km away)';
         try {
-          new Notification(title, { body, icon: 'icons/icon-192.png' });
+          new Notification(title, { body, icon: 'icons/javi-icon.png' });
         } catch (_) { /* ignore */ }
       }
 
@@ -1065,13 +1123,31 @@
     // ─── JAVI TAP INTERACTION ─────────────────────────────────
     onJaviTap() {
       const bubble = document.getElementById('bubble');
-      const msg = JAVI_REACTIONS[Math.floor(Math.random() * JAVI_REACTIONS.length)];
+      const wrap = document.getElementById('kidWrap');
 
-      // Cancel any ongoing typing by clearing the bubble
+      // Brief shake animation on tap
+      wrap.classList.remove('shake');
+      void wrap.offsetWidth;
+      wrap.classList.add('shake');
+      setTimeout(() => wrap.classList.remove('shake'), 500);
+
+      // If warning or danger, show a safety tip instead of jokes
+      if (this.currentMood === 'warning' || this.currentMood === 'danger') {
+        const tip = SAFETY_TIPS[Math.floor(Math.random() * SAFETY_TIPS.length)];
+        const prefix = this.currentMood === 'danger'
+          ? '🚨 DANGER! '
+          : '⚠️ Warning! ';
+        bubble.className = 'bubble';
+        bubble.innerHTML = prefix + tip;
+        try { lucide.createIcons(); } catch (_) { /* ignore */ }
+        return;
+      }
+
+      // Safe mood — show random reaction
+      const msg = JAVI_REACTIONS[Math.floor(Math.random() * JAVI_REACTIONS.length)];
       bubble.className = 'bubble';
       bubble.innerHTML = '';
 
-      // Type out the reaction
       let i = 0;
       const type = () => {
         if (i < msg.length) {
@@ -1082,14 +1158,6 @@
       };
       type();
       try { lucide.createIcons(); } catch (_) { /* ignore */ }
-
-      // Brief shake animation on tap
-      const wrap = document.getElementById('kidWrap');
-      wrap.classList.remove('shake');
-      // Force reflow to restart animation
-      void wrap.offsetWidth;
-      wrap.classList.add('shake');
-      setTimeout(() => wrap.classList.remove('shake'), 500);
     }
 
     // ─── TIPS MODAL (What to do) ──────────────────────────────
@@ -1159,6 +1227,116 @@
       }
 
       try { lucide.createIcons(); } catch (_) { /* ignore */ }
+    }
+
+    // ─── TOGGLE DARK MODE ─────────────────────────────────────
+    toggleDarkMode() {
+      this.isDarkMode = !this.isDarkMode;
+      document.body.classList.toggle('dark-mode', this.isDarkMode);
+      localStorage.setItem('javiDarkMode', this.isDarkMode);
+      const icon = document.getElementById('darkModeIcon');
+      if (icon) {
+        icon.setAttribute('data-lucide', this.isDarkMode ? 'sun' : 'moon');
+        try { lucide.createIcons(); } catch (_) { /* ignore */ }
+      }
+    }
+
+    // ─── TOGGLE SOUND ─────────────────────────────────────────
+    toggleSound() {
+      this.soundEnabled = !this.soundEnabled;
+      localStorage.setItem('javiSoundEnabled', this.soundEnabled);
+      this._updateSoundIcon();
+    }
+    _updateSoundIcon() {
+      const icon = document.getElementById('soundToggleIcon');
+      if (icon) {
+        icon.setAttribute('data-lucide', this.soundEnabled ? 'volume-2' : 'volume-x');
+        try { lucide.createIcons(); } catch (_) { /* ignore */ }
+      }
+    }
+
+    // ─── MAGNITUDE FILTER ─────────────────────────────────────
+    setMagFilter(min) {
+      this.magFilter = min;
+      document.querySelectorAll('.mag-filter-btn').forEach((btn) => {
+        btn.classList.toggle('active', parseFloat(btn.dataset.min) === min);
+      });
+      this.currentPage = 1;
+      this.applySortAndRender();
+    }
+
+    // ─── MOOD HISTORY ─────────────────────────────────────────
+    _loadMoodHistory() {
+      try {
+        const stored = localStorage.getItem('javiMoodHistory');
+        return stored ? JSON.parse(stored) : [];
+      } catch (_) {
+        return [];
+      }
+    }
+    _recordMood(mood) {
+      const now = Date.now();
+      this.moodHistory.push({ mood, time: now });
+      // Keep only last 24 hours
+      const cutoff = now - 86400000;
+      this.moodHistory = this.moodHistory.filter((e) => e.time > cutoff);
+      // Keep max 96 entries (one per 15 min)
+      if (this.moodHistory.length > 96) {
+        this.moodHistory = this.moodHistory.slice(-96);
+      }
+      try {
+        localStorage.setItem('javiMoodHistory', JSON.stringify(this.moodHistory));
+      } catch (_) { /* ignore */ }
+      this._renderMoodHistory();
+    }
+    _renderMoodHistory() {
+      const container = document.getElementById('moodDots');
+      const wrapper = document.getElementById('moodHistory');
+      if (!container || !wrapper) return;
+      if (!this.moodHistory.length) {
+        wrapper.classList.add('hidden');
+        return;
+      }
+      wrapper.classList.remove('hidden');
+      container.innerHTML = this.moodHistory.map((e) =>
+        '<div class="mood-dot ' + e.mood + '" title="' + new Date(e.time).toLocaleTimeString() + '"></div>'
+      ).join('');
+    }
+
+    // ─── LAST SIGNIFICANT QUAKE ───────────────────────────────
+    _updateLastSignificant(quakes) {
+      const el = document.getElementById('statLastSignificant');
+      if (!el) return;
+      // Find the most recent quake >= WARNING_THRESHOLD
+      const significant = quakes
+        .filter((q) => q.mag >= CONFIG.WARNING_THRESHOLD)
+        .sort((a, b) => b.time - a.time);
+      if (!significant.length) {
+        el.textContent = '--';
+        return;
+      }
+      const latest = significant[0];
+      const diff = Date.now() - new Date(latest.time).getTime();
+      const hrs = Math.floor(diff / 3600000);
+      if (hrs < 1) {
+        const mins = Math.floor(diff / 60000);
+        el.textContent = mins + 'm ago';
+      } else if (hrs < 24) {
+        el.textContent = hrs + 'h ago';
+      } else {
+        el.textContent = Math.floor(hrs / 24) + 'd ago';
+      }
+    }
+
+    // ─── SHARE QUAKE ──────────────────────────────────────────
+    _shareQuake(q) {
+      const text = 'Magnitude ' + q.mag.toFixed(1) + ' earthquake ' + q.dist + ' km ' + q.dir + ' of ' + q.place + ' (' + timeSince(q.time) + ')';
+      if (navigator.share) {
+        navigator.share({ title: 'Earthquake Alert', text }).catch(() => {});
+      } else {
+        // Fallback: copy to clipboard
+        navigator.clipboard.writeText(text).catch(() => {});
+      }
     }
   }
 
