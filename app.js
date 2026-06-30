@@ -1413,7 +1413,7 @@
       }
     }
 
-    // ─── PULL-TO-REFRESH ────────────────────────────────────────
+    // ─── PULL-TO-REFRSH ────────────────────────────────────────
     _setupPullToRefresh() {
       const indicator = document.getElementById('pullIndicator');
       const pullText = document.getElementById('pullText');
@@ -1421,8 +1421,10 @@
 
       let startY = 0;
       let pulling = false;
+      let indicatorShown = false;
       let suppressClick = false;
       const THRESHOLD = 80; // px to trigger refresh
+      const SHOW_AFTER = 10; // px of pull before indicator appears
 
       // Find the list card top position to know the boundary
       const getListCardTop = () => {
@@ -1438,26 +1440,36 @@
         if (touchY >= getListCardTop()) return;
         startY = touchY;
         pulling = true;
+        indicatorShown = false;
         suppressClick = false;
-        indicator.classList.add('visible');
-        indicator.classList.remove('pull-ready');
-        pullText.textContent = 'Pull to refresh';
       };
 
       const onTouchMove = (e) => {
         if (!pulling) return;
         const deltaY = e.touches[0].clientY - startY;
         if (deltaY <= 0) {
-          indicator.classList.remove('visible', 'pull-ready');
+          if (indicatorShown) {
+            indicator.classList.remove('visible', 'pull-ready');
+            indicatorShown = false;
+          }
           pulling = false;
           return;
         }
-        if (deltaY >= THRESHOLD) {
-          indicator.classList.add('pull-ready');
-          pullText.textContent = 'Release to refresh';
-        } else {
+        // Only show indicator after a minimum pull distance
+        if (!indicatorShown && deltaY >= SHOW_AFTER) {
+          indicatorShown = true;
+          indicator.classList.add('visible');
           indicator.classList.remove('pull-ready');
           pullText.textContent = 'Pull to refresh';
+        }
+        if (indicatorShown) {
+          if (deltaY >= THRESHOLD) {
+            indicator.classList.add('pull-ready');
+            pullText.textContent = 'Release to refresh';
+          } else {
+            indicator.classList.remove('pull-ready');
+            pullText.textContent = 'Pull to refresh';
+          }
         }
       };
 
@@ -1465,7 +1477,10 @@
         if (!pulling) return;
         pulling = false;
         const deltaY = e.changedTouches[0].clientY - startY;
-        indicator.classList.remove('visible', 'pull-ready');
+        if (indicatorShown) {
+          indicator.classList.remove('visible', 'pull-ready');
+          indicatorShown = false;
+        }
         if (deltaY >= THRESHOLD) {
           suppressClick = true;
           pullText.textContent = 'Refreshing…';
