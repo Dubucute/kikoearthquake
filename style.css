@@ -735,6 +735,21 @@ body.danger {
   box-shadow: 2px 2px 0px rgba(0,0,0,.3);
 }
 
+/* ACTION BUTTONS ON QUAKE ITEM */
+.q-actions {
+  display: flex; align-items: center; gap: 4px;
+  flex-shrink: 0; margin-left: auto;
+}
+.q-map {
+  width: 28px; height: 28px; border-radius: 8px;
+  border: 2px solid #2d3436; background: white;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: background .15s, transform .1s;
+  box-shadow: 2px 2px 0px #2d3436; text-decoration: none;
+}
+.q-map:active { background: #dfe6e9; transform: scale(.9); }
+.q-map i { width: 14px; height: 14px; color: #e17055; pointer-events: none; }
+
 /* SHARE BUTTON ON QUAKE ITEM */
 .q-share {
   width: 28px; height: 28px; border-radius: 8px;
@@ -793,5 +808,7 @@ body.dark-mode .modal-step-text strong { color: #aaa; }
 body.dark-mode .modal-close { background: #333350; color: #aaa; border-color: #555; }
 body.dark-mode .char-name { background: #3a3a5e; color: #e0e0e0; border-color: #555; }
 body.dark-mode .mood-history { background: rgba(40,40,60,.85); }
+body.dark-mode .q-map { background: #333350; border-color: #555; }
+body.dark-mode .q-map i { color: #e17055; }
 body.dark-mode .q-share { background: #333350; border-color: #555; }
 body.dark-mode .q-share i { color: #aaa; }

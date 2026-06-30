@@ -822,6 +822,8 @@
         const distKm = q.dist + ' km';
         const dirStr = q.dir;
 
+        const mapsUrl = 'https://www.google.com/maps?q=' + q.lat + ',' + q.lon;
+
         html += '<div class="quake-item">' +
           '<div class="mag-badge ' + cls + '">' + mag + '</div>' +
           '<div class="q-info">' +
@@ -831,9 +833,14 @@
             '</div>' +
             '<div class="q-meta">' + timeStr + ' &middot; ' + dirStr + '</div>' +
           '</div>' +
-          '<button class="q-share" data-id="' + q.id + '" aria-label="Share this earthquake">' +
-            '<i data-lucide="share-2" aria-hidden="true"></i>' +
-          '</button>' +
+          '<div class="q-actions">' +
+            '<a class="q-map" href="' + mapsUrl + '" target="_blank" rel="noopener" aria-label="View on Google Maps">' +
+              '<i data-lucide="map-pin" aria-hidden="true"></i>' +
+            '</a>' +
+            '<button class="q-share" data-id="' + q.id + '" aria-label="Share this earthquake">' +
+              '<i data-lucide="share-2" aria-hidden="true"></i>' +
+            '</button>' +
+          '</div>' +
         '</div>';
       });
       container.innerHTML = html;
@@ -1330,9 +1337,13 @@
 
     // ─── SHARE QUAKE ──────────────────────────────────────────
     _shareQuake(q) {
-      const text = 'Magnitude ' + q.mag.toFixed(1) + ' earthquake ' + q.dist + ' km ' + q.dir + ' of ' + q.place + ' (' + timeSince(q.time) + ')';
+      const mapsUrl = 'https://www.google.com/maps?q=' + q.lat + ',' + q.lon;
+      const text = '🌍 Magnitude ' + q.mag.toFixed(1) + ' earthquake\n' +
+        '📍 ' + q.dist + ' km ' + q.dir + ' of ' + q.place + '\n' +
+        '🕐 ' + timeSince(q.time) + '\n' +
+        '🗺️ View on Google Maps: ' + mapsUrl;
       if (navigator.share) {
-        navigator.share({ title: 'Earthquake Alert', text }).catch(() => {});
+        navigator.share({ title: 'Earthquake Alert — Mag ' + q.mag.toFixed(1), text, url: mapsUrl }).catch(() => {});
       } else {
         // Fallback: copy to clipboard
         navigator.clipboard.writeText(text).catch(() => {});
