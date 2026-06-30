@@ -884,21 +884,21 @@
             osc.stop(now + i * 0.15 + 0.15);
           });
         } else if (type === 'danger') {
-          // Urgent rapid siren: alternating 440Hz-880Hz, 3 cycles
-          for (let c = 0; c < 3; c++) {
-            [440, 880].forEach((freq, i) => {
-              const osc = ctx.createOscillator();
-              const gain = ctx.createGain();
-              osc.type = 'square';
-              osc.frequency.value = freq;
-              const t = now + c * 0.3 + i * 0.15;
-              gain.gain.setValueAtTime(0.4, t);
-              gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
-              osc.connect(gain);
-              gain.connect(ctx.destination);
-              osc.start(t);
-              osc.stop(t + 0.15);
-            });
+          // Urgent descending siren: 880Hz → 440Hz sweep, 4 cycles, sawtooth for harshness
+          for (let c = 0; c < 4; c++) {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sawtooth';
+            const t = now + c * 0.35;
+            // Sweep from 880Hz down to 440Hz over 0.3s
+            osc.frequency.setValueAtTime(880, t);
+            osc.frequency.exponentialRampToValueAtTime(440, t + 0.3);
+            gain.gain.setValueAtTime(0.35, t);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(t);
+            osc.stop(t + 0.3);
           }
         }
       } catch (_) { /* audio not supported */ }
