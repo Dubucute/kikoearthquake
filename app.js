@@ -489,6 +489,9 @@
         document.getElementById('offlineBanner').classList.remove('hidden');
       }
 
+      // Pull-to-refresh (mobile)
+      this._setupPullToRefresh();
+
       // Set default Javi icon to the app icon
       const kidGif = document.getElementById('kidGif');
       if (kidGif) {
@@ -860,6 +863,7 @@
         const dist = getDistance(this.userLat, this.userLon, lat, lon);
         const dir = getCompassDir(this.userLat, this.userLon, lat, lon);
         const parsed = parsePlaceName(props.place || 'Unknown');
+        const depth = coords[2] !== undefined ? Math.round(coords[2]) : null;
         return {
           id: f.id || props.net + props.code,
           mag: props.mag || 0,
@@ -868,6 +872,7 @@
           time: new Date(props.time),
           lat,
           lon,
+          depth,
           dist: Math.round(dist),
           dir,
           parsedDist: parsed.distance,
@@ -953,17 +958,20 @@
         const timeStr = timeSince(q.time);
         const distKm = q.dist + ' km';
         const dirStr = q.dir;
+        const isTsunamiRisk = q.mag >= 6.5 && q.depth !== null && q.depth < 70;
 
         const mapsUrl = 'https://www.google.com/maps?q=' + q.lat + ',' + q.lon;
 
-        html += '<div class="quake-item" data-id="' + q.id + '">' +
+        html += '<div class="quake-item' + (isTsunamiRisk ? ' tsunami-risk' : '') + '" data-id="' + q.id + '">' +
           '<div class="mag-badge ' + cls + '">' + mag + '</div>' +
           '<div class="q-info">' +
             '<div class="q-top">' +
               '<span class="q-place">' + q.place + '</span>' +
               '<span class="q-dist">' + distKm + '</span>' +
             '</div>' +
-            '<div class="q-meta">' + timeStr + ' &middot; ' + dirStr + '</div>' +
+            '<div class="q-meta">' + timeStr + ' &middot; ' + dirStr +
+              (isTsunamiRisk ? ' <span class="tsunami-badge"><i data-lucide="waves" aria-hidden="true"></i> Tsunami risk</span>' : '') +
+            '</div>' +
           '</div>' +
           '<div class="q-actions">' +
             '<a class="q-map" href="' + mapsUrl + '" target="_blank" rel="noopener" aria-label="View on Google Maps">' +
@@ -1405,6 +1413,59 @@
       }
     }
 
+    // ─── PULL-TO-REFRESH ────────────────────────────────────────
+    _setupPullToRefresh() {
+      const indicator = document.getElementById('pullIndicator');
+      const pullText = document.getElementById('pullText');
+      if (!indicator) return;
+
+      let startY = 0;
+      let pulling = false;
+      const THRESHOLD = 80; // px to trigger refresh
+
+      const onTouchStart = (e) => {
+        // Only activate if scrolled to top
+        if (window.scrollY > 5) return;
+        startY = e.touches[0].clientY;
+        pulling = true;
+        indicator.classList.add('visible');
+        indicator.classList.remove('pull-ready');
+        pullText.textContent = 'Pull to refresh';
+      };
+
+      const onTouchMove = (e) => {
+        if (!pulling) return;
+        const deltaY = e.touches[0].clientY - startY;
+        if (deltaY <= 0) {
+          indicator.classList.remove('visible', 'pull-ready');
+          pulling = false;
+          return;
+        }
+        if (deltaY >= THRESHOLD) {
+          indicator.classList.add('pull-ready');
+          pullText.textContent = 'Release to refresh';
+        } else {
+          indicator.classList.remove('pull-ready');
+          pullText.textContent = 'Pull to refresh';
+        }
+      };
+
+      const onTouchEnd = (e) => {
+        if (!pulling) return;
+        pulling = false;
+        const deltaY = e.changedTouches[0].clientY - startY;
+        indicator.classList.remove('visible', 'pull-ready');
+        if (deltaY >= THRESHOLD) {
+          pullText.textContent = 'Refreshing…';
+          this.loadData();
+        }
+      };
+
+      document.addEventListener('touchstart', onTouchStart, { passive: true });
+      document.addEventListener('touchmove', onTouchMove, { passive: true });
+      document.addEventListener('touchend', onTouchEnd, { passive: true });
+    }
+
     // ─── MAGNITUDE FILTER ─────────────────────────────────────
     setMagFilter(min) {
       this.magFilter = min;
@@ -1521,7 +1582,7 @@
           '</div>' +
           '<div class="detail-info-item">' +
             '<div class="label">Depth</div>' +
-            '<div class="value">--</div>' +
+            '<div class="value">' + (q.depth !== null ? q.depth + ' km' : '--') + '</div>' +
           '</div>' +
         '</div>';
 
