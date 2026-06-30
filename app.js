@@ -1421,13 +1421,24 @@
 
       let startY = 0;
       let pulling = false;
+      let suppressClick = false;
       const THRESHOLD = 80; // px to trigger refresh
 
+      // Find the list card top position to know the boundary
+      const getListCardTop = () => {
+        const listCard = document.querySelector('.list-card');
+        return listCard ? listCard.getBoundingClientRect().top : 300;
+      };
+
       const onTouchStart = (e) => {
-        // Only activate if scrolled to top
-        if (window.scrollY > 5) return;
-        startY = e.touches[0].clientY;
+        // Only activate if at the very top of the page
+        if (window.scrollY > 2) return;
+        // Only activate if touch is above the list card (in the header/character area)
+        const touchY = e.touches[0].clientY;
+        if (touchY >= getListCardTop()) return;
+        startY = touchY;
         pulling = true;
+        suppressClick = false;
         indicator.classList.add('visible');
         indicator.classList.remove('pull-ready');
         pullText.textContent = 'Pull to refresh';
@@ -1456,10 +1467,22 @@
         const deltaY = e.changedTouches[0].clientY - startY;
         indicator.classList.remove('visible', 'pull-ready');
         if (deltaY >= THRESHOLD) {
+          suppressClick = true;
           pullText.textContent = 'Refreshing…';
           this.loadData();
+          // Suppress any click that might follow this touch gesture
+          setTimeout(() => { suppressClick = false; }, 500);
         }
       };
+
+      // Suppress click events after a pull-to-refresh gesture
+      document.addEventListener('click', (e) => {
+        if (suppressClick) {
+          e.stopPropagation();
+          e.preventDefault();
+          suppressClick = false;
+        }
+      }, true);
 
       document.addEventListener('touchstart', onTouchStart, { passive: true });
       document.addEventListener('touchmove', onTouchMove, { passive: true });
