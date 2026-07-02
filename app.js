@@ -1,347 +1,8 @@
-(function() {
-  'use strict';
+import { JAVI_MESSAGES, JAVI_REACTIONS, SAFETY_TIPS, EMERGENCY_CONTACTS } from './messages.js';
+import { playAlertSound } from './audio.js';
+import { API, CONFIG, timeSince, getCompassDir, getDistance, parsePlaceName, magClass } from './api-utils.js';
 
-  // ─── API & CONFIG ────────────────────────────────────────────
-  const API = {
-    USGS: 'https://earthquake.usgs.gov/fdsnws/event/1/query',
-    NOMINATIM: 'https://nominatim.openstreetmap.org/reverse',
-    NOMINATIM_SEARCH: 'https://nominatim.openstreetmap.org/search'
-  };
-
-  const CONFIG = {
-    QUAKE_LIMIT: 25,
-    MIN_MAGNITUDE: 1,
-    DISPLAY_COUNT: 10,
-    AUTO_REFRESH_MS: 300000,
-    DANGER_THRESHOLD: 5.0,
-    WARNING_THRESHOLD: 3.0,
-    DANGER_WINDOW_MS: 21600000,
-    WARNING_WINDOW_MS: 86400000,
-    TODAY_WINDOW_MS: 86400000
-  };
-
-  // ─── JAVI MESSAGES ───────────────────────────────────────────
-  const JAVI_MESSAGES = {
-    safe: [
-      "Safe tayo dito, walang malakas na lindol sa paligid natin.",
-      "Okay lang dito sa area natin, walang malakas na pagyanig.",
-      "Wala akong nakitang malakas na lindol malapit sa atin.",
-      "Relax lang, safe naman tayo ngayon.",
-      "Walang malakas na earthquake na malapit sa atin.",
-      "Tahimik ang lupa sa paligid natin ngayon.",
-      "Safe ang pakiramdam ko dito, walang malakas na lindol.",
-      "Wala akong na-detect na malakas na pagyanig sa area natin.",
-      "Panatag ang loob ko, walang malakas na lindol ngayon.",
-      "Good news! Walang malakas na earthquake na malapit.",
-      "Kalmado ang lupa ngayon, safe tayo.",
-      "Walang dapat ipag-alala, walang malakas na pagyanig.",
-      "Maaliwalas ang monitoring ko, walang malakas na lindol.",
-      "Safe ang paligid natin ngayon, relax lang.",
-      "Wala akong nakikitang threat na lindol sa ngayon.",
-      "Okay ang lahat, walang malakas na earthquake na malapit.",
-      "Tahimik ang seismic activity sa area natin.",
-      "Walang malakas na pagyanig na na-detect, safe tayo.",
-      "Maganda ang balita, walang malakas na lindol ngayon.",
-      "Safe zone tayo ngayon, walang malakas na earthquake."
-    ],
-    warning: [
-      "May naramdaman akong katamtamang pagyanig, mag-ingat tayo.",
-      "Alert, may moderate na lindol sa malapit, stay aware.",
-      "Medyo may galaw ang lupa, ingat lang tayo sa mga susunod.",
-      "May nakitang pagyanig na katamtaman, huwag maging kampante.",
-      "Ingat, may moderate earthquake na na-detect ako malapit.",
-      "May naramdaman akong yanig, stay alert lang tayo.",
-      "Katamtamang lindol ang na-detect ko, mag-ingat palagi.",
-      "Alert tayo, may moderate na pagyanig na malapit sa atin.",
-      "May naramdaman akong paggalaw ng lupa, ingat tayo.",
-      "Moderate na lindol ang na-detect ko, maging handa tayo.",
-      "Alert level, may katamtamang pagyanig sa malapit.",
-      "May nakitang pagyanig, stay vigilant tayo.",
-      "Ingat, may naramdaman akong yanig sa area natin.",
-      "Moderate earthquake alert, mag-ingat sa mga susunod na oras.",
-      "May pagyanig na na-detect, huwag balewalain.",
-      "Alert tayo, may moderate seismic activity malapit.",
-      "Nakaramdam ako ng yanig, mag-ingat sa paligid.",
-      "May katamtamang lindol, stay safe at alerto.",
-      "Warning, may moderate na pagyanig, maging handa.",
-      "May nakitang paggalaw ng lupa, ingat tayo sa aftershocks."
-    ],
-    danger: [
-      "MALAKAS na lindol! Kailangan nating mag-ingat at sumilong!",
-      "Emergency! May malakas na pagyanig, manatiling kalmado at safe.",
-      "Malakas na lindol ang na-detect ko! Stay safe at mag-ingat.",
-      "Danger! May malakas na earthquake, mag-ingat tayo.",
-      "Malakas na pagyanig! Sumilong at manatiling safe.",
-      "Alert! May malakas na lindol, kailangan nating maging handa.",
-      "Malakas na lindol ang na-detect ko! Stay calm at mag-ingat.",
-      "Emergency! Malakas na pagyanig, ingat at manatiling safe.",
-      "MALAKAS na earthquake! DROP, COVER, and HOLD ON!",
-      "Mapanganib na lindol! Lumayo sa mga bintana at sumilong!",
-      "Malakas na pagyanig! Iwasan ang mga falling objects!",
-      "DANGER! Malakas na lindol, manatili sa safe spot!",
-      "Malakas na earthquake! Sumilong sa ilalim ng matibay na mesa!",
-      "Emergency alert! Malakas na pagyanig, protektahan ang sarili!",
-      "Malakas na lindol! Huwag tumakbo sa labas, sumilong sa loob!",
-      "Danger! May malakas na pagyanig, DROP COVER HOLD ON!",
-      "Malakas na earthquake! Manatiling kalmado at sumilong agad!",
-      "Alert! Malakas na lindol, lumayo sa mga pader at bintana!",
-      "Mapanganib na pagyanig! Gamitin ang safety position!",
-      "Malakas na lindol! Manatili sa loob hanggang tumigil ang pagyanig!"
-    ]
-  };
-
-  // ─── EARTHQUAKE SAFETY TIPS ──────────────────────────────────
-  const SAFETY_TIPS = [
-    "DROP, COVER, and HOLD ON! Dapa, sumilong sa ilalim ng matibay na mesa, at hawakan ito.",
-    "Lumayo sa mga bintana, salamin, at mga pwedeng mahulog na bagay.",
-    "Kung nasa loob ng bahay, manatili sa loob. Huwag tumakbo sa labas habang umuuga.",
-    "Kung nasa labas, lumayo sa mga gusali, poste, at wires.",
-    "Kung nasa sasakyan, huminto sa safe na lugar at manatili sa loob.",
-    "Pagkatapos ng lindol, mag-ingat sa aftershocks at suriin ang paligid.",
-    "Maghanda ng emergency kit: tubig, pagkain, flashlight, at first aid.",
-    "Alamin ang safe spots sa bahay niyo — ilalim ng matibay na mesa o pinto.",
-    "Huwag gumamit ng elevator pagkatapos ng lindol, baka mawalan ng kuryente.",
-    "Kung may gas leak, patayin ang gas at buksan ang mga bintana.",
-    "Suriin ang pamilya at mga kasama pagkatapos ng lindol.",
-    "Mag-identify ng evacuation route sa inyong lugar.",
-    "Itago ang importanteng dokumento sa waterproof container.",
-    "Magkaroon ng emergency plan kasama ang pamilya.",
-    "Kung nasa beach at malakas ang lindol, lumayo sa coast dahil baka may tsunami.",
-    "Huwag maniwala sa false rumors, makinig lang sa official announcements.",
-    "Mag-stock ng extra batteries at power bank para sa communication.",
-    "Alamin kung saan ang pinakamalapit na evacuation center.",
-    "Turuan ang mga bata kung ano ang gagawin kapag may lindol.",
-    "Manatiling kalmado at huwag mag-panic — makatutulong ito sa malinaw na pag-iisip."
-  ];
-
-  const JAVI_REACTIONS = [
-    "Hoy! 'wag mo 'kong pindot-pindot! 😤",
-    "Aray! Masakit yun! 🥲",
-    "Haha, ano 'yun? 😄",
-    "Ingat lagi, bes! 🫶",
-    "Earthquake? Ako na bahala! 💪",
-    "Bakit? Miss mo 'ko? 😏",
-    "Sige, isa pa! Pindot ulit! 😆",
-    "Busy ako mag-monitor ng lindol! 📡",
-    "Loko-loko ka! 😂",
-    "Alam mo ba kung gaano kahirap maging bantay-lindol? 🥹",
-    "Wag kang mag-alala, nandito lang ako! 🫡",
-    "Salamat sa pagpindot! Sana masarap ulam mo! 🍽️",
-    "Pindot ka nang pindot, wala namang lindol! 🤷",
-    "Javi, laging handa! 🦸",
-    "Mahal kita pero 'wag mong saktan! 💔",
-    "Okay lang 'yan, nandito si Javi! 🌟",
-    "Hoy! Respeto naman sa character ko! 😤",
-    "Ang cute ko diba? 🥰",
-    "Sige lang, kaya pa 'to! 💪",
-    "Bakit ka nandito? May lindol ba? 🌍",
-    "Ang kulit mo! 😆",
-    "Tama na please! 🥺",
-    "Hoy bantay! May lindol kaya ako! 🚨",
-    "Seryoso ka ba? 😅",
-    "Ang saya saya! 🎉",
-    "Miss na kita! 🥹",
-    "Sana all masaya! ✨",
-    "Wag kang maingay! 🤫",
-    "Javi is watching you! 👀",
-    "Ang init init! 🥵",
-    "Penge naman ice cream! 🍦",
-    "Sana bumagyo na! 🌧️",
-    "Ang boring naman! 😴",
-    "Gising gising! ☕",
-    "Kape muna bago lindol! ☕",
-    "Sana walang lindol today! 🙏",
-    "Ingat sa byahe! 🚗",
-    "Mahal kita! 💕",
-    "Sana masarap ulam mo lagi! 🍛",
-    "Ang galing mo mag-pindot! 👏",
-    "Isa pa ulit! 🔄",
-    "Hoy tawa naman dyan! 😁",
-    "Ang cute ng araw na 'to! 🌤️",
-    "Sana happy ka! 😊",
-    "Javi loves you! 💖",
-    "Wag kang mag-alala, andito ako! 🤗",
-    "Ang sarap ng buhay! 🌈",
-    "Sana all may Javi! 😎",
-    "Ang galing ko diba? 🏆",
-    "Salamat sa support! 🙌",
-    "Laban lang! 🥊",
-    "Kaya mo yan! 💪",
-    "Wag kang susuko! 🔥",
-    "Ang ganda ng araw! ☀️",
-    "Sana masarap tulog mo! 🛌",
-    "Good vibes lang! ✌️",
-    "Ang saya ng pindot! 🎯",
-    "Hoy ingat sa lindol! ⚠️",
-    "Javi alert lagi! 📢",
-    "Sana all naka-ready! 🎒",
-    "Ang bilis ng kamay mo! 🏃",
-    "Hoy bakit ka napadpad dito? 🗺️",
-    "Ang galing ng app na 'to! 📱",
-    "Sana all may earthquake app! 📲",
-    "Javi number one! 🥇",
-    "Ang saya ng buhay! 🎈",
-    "Sana all naka-install! 📥",
-    "Wag kalimutan mag-ready! 🧰",
-    "Ang galing ng team natin! 🤝",
-    "Sana all safe! 🛡️",
-    "Ingat palagi! 💝",
-    "Mahal ko kayo! 💗",
-    "Salamat sa pag-download! 📂",
-    "Ang galing ng Quake Buddy! 🎊",
-    "Sana all may emergency kit! 🧳",
-    "Hoy mag-stock ng tubig! 💧",
-    "Sana all may flashlight! 🔦",
-    "Ang galing ng preparation! 📋",
-    "Javi approved! ✅",
-    "Sana all naka-charge! 🔋",
-    "Wag kalimutan ang power bank! 🔌",
-    "Ang galing ng community natin! 🌍",
-    "Sana all may plano! 📝",
-    "Ingat sa aftershock! 🌊",
-    "Javi nandito lang! 🏠",
-    "Sana all may first aid kit! 🩹",
-    "Ang galing ng teamwork! 🤗",
-    "Mahal ko kayo lahat! 💞",
-    "Salamat sa tiwala! 🙏",
-    "Ang saya ng pamilyang 'to! 👨‍👩‍👧‍👦",
-    "Sana all may JaviAlert! 📡",
-    "Hoy magdasal tayo! 🙏",
-    "Ang galing ng Diyos! ✝️",
-    "Sana all blessed! 🌟",
-    "Javi, out! 🎤",
-    // ─── PICKUP LINES ─────────────────────────────────────────
-    "Are you an earthquake? Kasi you shook my world! 🌍💓",
-    "Bes, ang ganda/gwapo mo naman! 😍",
-    "May mapa ka ba? Kasi naliligaw ako sa mata mo! 🗺️👀",
-    "Are you a fault line? Kasi I'm falling for you! 💘",
-    "Sakit ka sa ulo… pero gusto pa rin kita! 🤕💕",
-    "Ang init mo… parang lindol sa puso ko! 🌋❤️",
-    "Are you a tsunami? Kasi wave after wave ng feelings ko! 🌊💗",
-    "Pwede ba kitang i-rescue? Kasi nakulong ako sa smile mo! 🦸💖",
-    "Earthquake ka ba? Kasi ginigiba mo ang mundo ko! 💔😍",
-    "Bes, may number ka ba? Kasi I'd like to call you mine! 📞💕",
-    "Ang galing mo mag-pindot… pindotin mo rin puso ko! ❤️😏",
-    "Are you a 7.0? Kasi malakas tama mo sa akin! 💥😍",
-    "Penge namang time mo, kahit aftershock lang! ⏱️💗",
-    "Ang cute mo… parang safe zone sa puso ko! 🛡️🥰",
-    "Are you a PHIVOLCS? Kasi lagi kitang mino-monitor! 📡💕",
-    "Bes, may first aid ka ba? Kasi nasaktan ako sa ganda mo! 🩹😍",
-    "Ang galing ng epicenter mo… nasa puso ko! 🎯💖",
-    "Pwede ba maging emergency contact mo? Para laging tawag ka lang! 📞💕",
-    "Are you a red alert? Kasi you make my heart race! 🚨💓",
-    "Bes, mag-evacuate na tayo… sa puso ko! 🏠💗",
-    // ─── MORE YARN FUNNY ───────────────────────────────────────
-    "Ano yarn? May lindol yarn? 🌍",
-    "Bakit mo ko pinindot yarn? May kailangan ka ba yarn? 🤔",
-    "Ang random mo yarn 😆",
-    "Sabi ko nga ba at may magpi-pindot yarn 😏",
-    "Javi yarn? Nandito lang yarn 🏠",
-    "Lindol yarn? Saan yarn? 🌍",
-    "Seryoso yarn? Haha 😄",
-    "Ang saya ko yarn kasi pinindot mo ko 🎉",
-    "Salamat yarn! Sana all may pumipindot 🙏",
-    "Ang boring ng araw ko yarn pero naging masaya 🌈",
-    "Earthquake yarn? Alert yarn! 🚨",
-    "Ready yarn? Laging ready yarn ✅",
-    "Safe yarn?",
-    "Ingat yarn?",
-    "Mahal yarn?",
-    "Bakit yarn?",
-    "Ano ba yarn? 😅",
-    "Kaya yarn! 💪",
-    "Galing yarn! 🏆",
-    "Saya yarn? 🎉",
-    "Cute yarn? 🥰",
-    "Ganda yarn? ✨",
-    "Pogi yarn? Javi yarn! 😎",
-    "Yarn yarn yarn! 🧶",
-    "Yarnception yarn 🌀",
-    "Ang daming yarn sa mundo yarn 🌍",
-    "Yarn is life yarn 💯",
-    "Yarn lang yarn 😌",
-    "Wag kang mag-yarn yarn 🤫",
-    "Yarn mo yarn, yarn ko yarn 🔄",
-    "Ang gulo ng yarn yarn 😵",
-    "Yarn yarn yarn yarn 🧶",
-    "Sabi ko yarn e 🙃",
-    "Yarn na yarn 💀",
-    "Yarn yarn yarn yarn yarn 🧶",
-  ];
-
-  const EMERGENCY_CONTACTS = [
-    { name: "NDRRMC (National Disaster)",      num: "911" },
-    { name: "Red Cross 24/7 Hotline",          num: "143" },
-    { name: "Philippine National Police (PNP)", num: "117" },
-    { name: "PNP Text Hotline",                num: "0917-847-5757" },
-    { name: "Bureau of Fire Protection (BFP)",  num: "160" },
-    { name: "BFP Emergency",                   num: "02-8426-3819" },
-    { name: "Philippine Coast Guard",          num: "527-8480" },
-    { name: "Coast Guard Emergency",           num: "0917-724-3682" },
-    { name: "MMDA (Metro Manila)",             num: "136" },
-    { name: "MMDA Text Hotline",               num: "0917-550-8877" },
-    { name: "DOH (Department of Health)",      num: "02-8651-7800" },
-    { name: "DOH Emergency",                   num: "1555" },
-    { name: "National Emergency Hotline",      num: "8888" },
-    { name: "Smart Emergency",                 num: "0918-944-4444" },
-    { name: "Globe Emergency",                 num: "0917-555-1212" },
-  ];
-
-  // ─── HELPER FUNCTIONS ────────────────────────────────────────
-  function timeSince(ts) {
-    const diff = Date.now() - new Date(ts).getTime();
-    const mins = Math.floor(diff / 60000);
-    if (mins < 1) return 'just now';
-    if (mins < 60) return mins + 'm ago';
-    const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return hrs + 'h ago';
-    const days = Math.floor(hrs / 24);
-    if (days < 30) return days + 'd ago';
-    return Math.floor(days / 30) + 'mo ago';
-  }
-
-  function getCompassDir(lat1, lon1, lat2, lon2) {
-    const dLon = ((lon2 - lon1) * Math.PI) / 180;
-    const y = Math.sin(dLon) * Math.cos((lat2 * Math.PI) / 180);
-    const x = Math.cos((lat1 * Math.PI) / 180) * Math.sin((lat2 * Math.PI) / 180) -
-              Math.sin((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.cos(dLon);
-    const brng = ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
-    const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
-    return dirs[Math.round(brng / 22.5) % 16];
-  }
-
-  function getDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371;
-    const dLat = ((lat2 - lat1) * Math.PI) / 180;
-    const dLon = ((lon2 - lon1) * Math.PI) / 180;
-    const a = Math.sin(dLat / 2) ** 2 +
-              Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
-    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  }
-
-  function parsePlaceName(raw) {
-    // USGS format: "20 km SSW of La Paz, Philippines"
-    const match = raw.match(/^([\d.]+)\s*km\s+(\w+)\s+of\s+(.+)$/i);
-    if (match) {
-      return {
-        distance: parseFloat(match[1]),
-        direction: match[2].toUpperCase(),
-        place: match[3].trim()
-      };
-    }
-    return { distance: null, direction: null, place: raw };
-  }
-
-  function magClass(mag) {
-    if (mag < 3) return 'mag-low';
-    if (mag < 4) return 'mag-minor';
-    if (mag < 5) return 'mag-moderate';
-    if (mag < 6) return 'mag-strong';
-    return 'mag-major';
-  }
-
-  // ─── JAVIALERT APP ───────────────────────────────────────────
-  class JaviAlertApp {
+class JaviAlertApp {
     constructor() {
       this.userLat = null;
       this.userLon = null;
@@ -500,7 +161,7 @@
       // Listen for postMessage from service worker (notification click → play sound)
       navigator.serviceWorker.addEventListener('message', (e) => {
         if (e.data && e.data.action === 'playAlertSound') {
-          this._playAlertSound(e.data.alertType);
+          playAlertSound(e.data.alertType, this.soundEnabled);
         }
       });
 
@@ -522,6 +183,22 @@
 
       // Auto-refresh
       this.refreshTimer = setInterval(() => this.loadData(), CONFIG.AUTO_REFRESH_MS);
+
+      // Throttle safety tip rotation when tab is hidden
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+          // Tab hidden — pause tip rotation
+          if (this._tipInterval) {
+            clearInterval(this._tipInterval);
+            this._tipInterval = null;
+          }
+        } else {
+          // Tab visible again — resume tip rotation
+          if (this.currentMood !== 'safe') {
+            this.showSafetyTip();
+          }
+        }
+      });
     }
 
     // ─── LOCATION DETECTION (improved) ─────────────────────────
@@ -1028,48 +705,6 @@
       document.getElementById('nextPage').disabled = this.currentPage >= totalPages;
     }
 
-    // ─── ALERT SOUND (Web Audio API) ───────────────────────────
-    _playAlertSound(type) {
-      if (!this.soundEnabled) return;
-      try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const now = ctx.currentTime;
-
-        if (type === 'warning') {
-          // Gentle two-tone alert: 660Hz then 880Hz, 0.15s each
-          [660, 880].forEach((freq, i) => {
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = 'sine';
-            osc.frequency.value = freq;
-            gain.gain.setValueAtTime(0.3, now + i * 0.15);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.15 + 0.15);
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start(now + i * 0.15);
-            osc.stop(now + i * 0.15 + 0.15);
-          });
-        } else if (type === 'danger') {
-          // Urgent descending siren: 880Hz → 440Hz sweep, 4 cycles, sawtooth for harshness
-          for (let c = 0; c < 4; c++) {
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = 'sawtooth';
-            const t = now + c * 0.35;
-            // Sweep from 880Hz down to 440Hz over 0.3s
-            osc.frequency.setValueAtTime(880, t);
-            osc.frequency.exponentialRampToValueAtTime(440, t + 0.3);
-            gain.gain.setValueAtTime(0.35, t);
-            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start(t);
-            osc.stop(t + 0.3);
-          }
-        }
-      } catch (_) { /* audio not supported */ }
-    }
-
     // ─── SET MOOD ──────────────────────────────────────────────
     setMood(mood) {
       this.currentMood = mood;
@@ -1188,12 +823,18 @@
     async loadData() {
       const bubble = document.getElementById('bubble');
       const ico = document.getElementById('refreshIcon');
+      const quakeContainer = document.getElementById('quakeList');
 
       bubble.className = 'bubble loading';
       bubble.innerHTML = '<i data-lucide="search" aria-hidden="true"></i> Checking for earthquakes...';
       try { lucide.createIcons(); } catch (_) { /* ignore */ }
 
       ico.classList.add('spin');
+
+      // Show skeleton loaders in the quake list
+      if (quakeContainer) {
+        quakeContainer.innerHTML = this._getSkeletonHTML();
+      }
 
       try {
         const features = await this.fetchEarthquakeData();
@@ -1215,7 +856,39 @@
         try { lucide.createIcons(); } catch (_) { /* ignore */ }
         ico.classList.remove('spin');
         console.error('loadData error:', err);
+
+        // Show inline retry button
+        if (quakeContainer) {
+          quakeContainer.innerHTML =
+            '<div class="error-retry">' +
+              '<i data-lucide="wifi-off" aria-hidden="true"></i>' +
+              '<div class="error-msg">Could not load earthquake data.<br>Check your connection and try again.</div>' +
+              '<button class="retry-btn" id="retryLoadBtn">' +
+                '<i data-lucide="refresh-cw" aria-hidden="true"></i> Retry' +
+              '</button>' +
+            '</div>';
+          try { lucide.createIcons(); } catch (_) { /* ignore */ }
+          const retryBtn = document.getElementById('retryLoadBtn');
+          if (retryBtn) {
+            retryBtn.addEventListener('click', () => this.loadData());
+          }
+        }
       }
+    }
+
+    _getSkeletonHTML() {
+      const items = Array.from({ length: 5 }, (_, i) =>
+        '<div class="skeleton-item' + (i === 4 ? '"' : '"') + '>' +
+          '<div class="skeleton-badge"></div>' +
+          '<div class="skeleton-lines">' +
+            '<div class="skeleton-line"></div>' +
+            '<div class="skeleton-line"></div>' +
+          '</div>' +
+          '<div class="skeleton-icon"></div>' +
+          '<div class="skeleton-icon"></div>' +
+        '</div>'
+      ).join('');
+      return '<div class="skeleton-list">' + items + '</div>';
     }
 
     // ─── NEW QUAKE DETECTION ───────────────────────────────────
@@ -1250,7 +923,7 @@
 
       // Play alert sound
       if (alertType) {
-        this._playAlertSound(alertType);
+        playAlertSound(alertType, this.soundEnabled);
       }
 
       // Show browser notification
@@ -1743,4 +1416,3 @@
     app.init();
   });
 
-})();

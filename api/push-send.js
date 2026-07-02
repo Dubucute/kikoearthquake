@@ -1,11 +1,11 @@
-import { MongoClient } from 'mongodb';
 import webpush from 'web-push';
+import { getDb } from './_db.js';
 
 const vapidPublicKey = process.env.VAPID_PUBLIC_KEY;
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
 
 if (!vapidPublicKey || !vapidPrivateKey) {
-  console.warn('VAPID keys not set \u2014 push sending disabled');
+  console.warn('VAPID keys not set — push sending disabled');
 }
 
 webpush.setVapidDetails(
@@ -14,22 +14,36 @@ webpush.setVapidDetails(
   vapidPrivateKey
 );
 
-const client = new MongoClient(process.env.MONGODB_URI);
-let db;
+// ─── CORS helper ──────────────────────────────────────────────
+const ALLOWED_ORIGINS = [
+  'https://javi-alert.vercel.app',
+  'http://localhost:3000',
+  'http://localhost:5173',
+];
 
-async function getDb() {
-  if (!db) {
-    await client.connect();
-    db = client.db('javi-alert');
+function setCorsHeaders(res, origin) {
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', 'https://javi-alert.vercel.app');
   }
-  return db;
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 }
 
 export default async function handler(req, res) {
+  // Handle preflight
+  if (req.method === 'OPTIONS') {
+    setCorsHeaders(res, req.headers.origin);
+    return res.status(204).end();
+  }
+
   if (req.method !== 'POST') {
+    setCorsHeaders(res, req.headers.origin);
     return res.status(405).json({ error: 'Method not allowed' });
   }
   if (!vapidPublicKey || !vapidPrivateKey) {
+    setCorsHeaders(res, req.headers.origin);
     return res.status(500).json({ error: 'VAPID keys not configured' });
   }
   try {
@@ -37,6 +51,7 @@ export default async function handler(req, res) {
     const subs = database.collection('pushSubscriptions');
     const allSubs = await subs.find({}).toArray();
     if (!allSubs.length) {
+      setCorsHeaders(res, req.headers.origin);
       return res.json({ sent: 0, total: 0 });
     }
     const payload = JSON.stringify({
@@ -55,12 +70,14 @@ export default async function handler(req, res) {
     if (invalidEndpoints.length > 0) {
       await subs.deleteMany({ endpoint: { $in: invalidEndpoints } });
     }
+    setCorsHeaders(res, req.headers.origin);
     res.json({
       sent: results.filter(r => r.status === 'fulfilled').length,
       total: allSubs.length
     });
   } catch (err) {
     console.error('push-send error:', err);
+    setCorsHeaders(res, req.headers.origin);
     res.status(500).json({ error: err.message });
   }
 }

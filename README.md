@@ -38,7 +38,7 @@ A progressive web app that monitors nearby earthquakes using USGS data and provi
    - Click **Deploy**
 
 4. **Done!**
-   - Vercel will deploy instantly — your app is live at `https://kikoearthquake.vercel.app`
+   - Vercel will deploy instantly — your app is live at `https://javi-alert.vercel.app`
    - Every push to `main` auto-deploys
 
 ### Custom Domain (optional)
