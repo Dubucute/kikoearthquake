@@ -213,7 +213,6 @@ body.danger {
   border: var(--cartoon-border);
   transform: rotate(-0.3deg);
   position: relative;
-  margin-bottom: 20px;
 }
 /* Decorative sparkle on character card */
 .char-card::before {
@@ -303,26 +302,25 @@ body.danger {
   75% { transform: translateX(3px) rotate(2deg); }
 }
 
-/* STATUS PILL — sticker badge on character card */
-.char-card {
-  position: relative;
+/* STATUS ROW — centered under the character card */
+.status-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: -6px 0 14px;
 }
+
+/* STATUS PILL */
 .status-pill {
-  position: absolute;
-  bottom: -12px;
-  left: 50%;
-  transform: translateX(-50%) rotate(-1deg);
-  display: inline-flex; align-items: center; gap: 5px;
+  display: inline-flex; align-items: center; gap: 6px;
   width: fit-content;
-  padding: 5px 16px; border-radius: 30px;
-  font-size: 13px; font-weight: 700; color: white;
+  padding: 6px 18px; border-radius: 30px;
+  font-size: 14px; font-weight: 700; color: white;
   box-shadow: 4px 4px 0px rgba(0,0,0,.15);
   letter-spacing: .3px;
   border: 2.5px solid #2d3436;
-  z-index: 5;
-  white-space: nowrap;
 }
-.status-pill i { width: 14px; height: 14px; }
+.status-pill i { width: 15px; height: 15px; }
 .pill-safe    { background: #00b894; }
 .pill-warning { background: #fdcb6e; color: #2d3436; }
 .pill-danger  { background: #e17055; animation: pulse-red 1s infinite; }
