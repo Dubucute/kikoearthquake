@@ -53,6 +53,9 @@
       <button class="topbar-btn" id="soundToggleBtn" aria-label="Toggle sound">
         <i data-lucide="volume-2" id="soundToggleIcon" aria-hidden="true"></i>
       </button>
+      <button class="topbar-btn" id="ambientToggleBtn" aria-label="Toggle ambient sound">
+        <i data-lucide="wind" id="ambientToggleIcon" aria-hidden="true"></i>
+      </button>
       <button class="refresh-ico" id="refreshBtn" aria-label="Refresh earthquake data">
         <i data-lucide="refresh-cw" id="refreshIcon" aria-hidden="true"></i>
       </button>
@@ -166,6 +169,10 @@
       <i data-lucide="shield" aria-hidden="true"></i>
       Safety Tips
     </button>
+    <button class="action-bar-btn action-bar-btn-primary" id="pillAnalysisBtn" aria-label="Am I safe? Analysis">
+      <i data-lucide="search-check" aria-hidden="true"></i>
+      Am I Safe?
+    </button>
     <button class="action-bar-btn" id="pillContactsBtn" aria-label="Emergency hotlines to call">
       <i data-lucide="phone" aria-hidden="true"></i>
       Hotlines
@@ -215,6 +222,28 @@
     </div>
   </div>
 
+  <!-- Am I Safe? analysis modal -->
+  <div class="modal-overlay hidden" id="analysisModal" role="dialog" aria-modal="true" aria-label="Earthquake safety analysis">
+    <div class="modal-card analysis-modal-card">
+      <button class="modal-close" id="analysisModalClose" aria-label="Close">&times;</button>
+      <div class="modal-header">
+        <i data-lucide="search-check" aria-hidden="true" id="analysisModalIcon"></i>
+        <h2 class="modal-title">Am I Safe?</h2>
+      </div>
+      <div class="analysis-loading" id="analysisLoading">
+        <div class="analysis-spinner"></div>
+        <span>Javi is checking nearby quakes...</span>
+      </div>
+      <div class="analysis-body hidden" id="analysisBody">
+        <div class="analysis-javi-msg" id="analysisJaviMsg"></div>
+        <div class="analysis-breakdown" id="analysisBreakdown"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-btn" id="analysisModalGotIt">Thanks, Javi!</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Quake detail modal -->
   <div class="modal-overlay hidden" id="quakeDetailModal" role="dialog" aria-modal="true" aria-label="Earthquake details">
     <div class="modal-card detail-modal-card">
@@ -229,7 +258,9 @@
       </div>
       <div class="modal-footer">
         <button class="modal-btn" id="detailViewMap">Open in Google Maps</button>
-        <button class="modal-btn modal-btn-secondary" id="detailShare">Share</button>
+        <button class="modal-btn modal-btn-secondary" id="detailShareImg">
+          <i data-lucide="image" aria-hidden="true"></i> Share as Image
+        </button>
       </div>
     </div>
   </div>

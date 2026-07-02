@@ -43,3 +43,93 @@ export function playAlertSound(type, soundEnabled) {
     }
   } catch (_) { /* audio not supported */ }
 }
+
+// ─── AMBIENT SOUND ──────────────────────────────────────────
+let _ambientCtx = null;
+let _ambientGain = null;
+let _ambientNoise = null;
+let _ambientNodes = [];
+
+/**
+ * Start a gentle ambient wind-like sound.
+ * Uses filtered pink noise for a subtle, calming effect.
+ */
+export function startAmbientSound() {
+  try {
+    // Clean up any existing ambient
+    stopAmbientSound();
+
+    _ambientCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    // Create pink noise buffer
+    const sampleRate = _ambientCtx.sampleRate;
+    const duration = 4; // 4-second loop
+    const length = sampleRate * duration;
+    const buffer = _ambientCtx.createBuffer(1, length, sampleRate);
+    const data = buffer.getChannelData(0);
+
+    // Pink noise approximation (fill with random, then filter)
+    let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+    for (let i = 0; i < length; i++) {
+      const white = Math.random() * 2 - 1;
+      b0 = 0.99886 * b0 + white * 0.0555179;
+      b1 = 0.99332 * b1 + white * 0.0750759;
+      b2 = 0.96900 * b2 + white * 0.1538520;
+      b3 = 0.86650 * b3 + white * 0.3104856;
+      b4 = 0.55000 * b4 + white * 0.5329522;
+      b5 = -0.7616 * b5 - white * 0.0168980;
+      data[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.05;
+      b6 = white * 0.115926;
+    }
+
+    _ambientNoise = _ambientCtx.createBufferSource();
+    _ambientNoise.buffer = buffer;
+    _ambientNoise.loop = true;
+
+    // Low-pass filter to make it sound like gentle wind
+    const filter = _ambientCtx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 600;
+    filter.Q.value = 0.5;
+
+    // Another bandpass to shape it
+    const filter2 = _ambientCtx.createBiquadFilter();
+    filter2.type = 'bandpass';
+    filter2.frequency.value = 200;
+    filter2.Q.value = 0.8;
+
+    // Master gain — very quiet
+    _ambientGain = _ambientCtx.createGain();
+    _ambientGain.gain.value = 0.08;
+
+    // Connect: noise → filter → filter2 → gain → destination
+    _ambientNoise.connect(filter);
+    filter.connect(filter2);
+    filter2.connect(_ambientGain);
+    _ambientGain.connect(_ambientCtx.destination);
+
+    _ambientNoise.start();
+    _ambientNodes = [_ambientNoise, filter, filter2, _ambientGain];
+  } catch (_) { /* ambient audio not supported */ }
+}
+
+/**
+ * Stop the ambient sound.
+ */
+export function stopAmbientSound() {
+  try {
+    _ambientNodes.forEach(n => {
+      try { n.disconnect(); } catch (_) {}
+    });
+    _ambientNodes = [];
+    if (_ambientNoise) {
+      try { _ambientNoise.stop(); } catch (_) {}
+      _ambientNoise = null;
+    }
+    if (_ambientCtx) {
+      try { _ambientCtx.close(); } catch (_) {}
+      _ambientCtx = null;
+    }
+    _ambientGain = null;
+  } catch (_) { /* ignore */ }
+}

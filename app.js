@@ -1,5 +1,5 @@
 import { JAVI_MESSAGES, JAVI_REACTIONS, SAFETY_TIPS, EMERGENCY_CONTACTS } from './messages.js';
-import { playAlertSound } from './audio.js';
+import { playAlertSound, startAmbientSound, stopAmbientSound } from './audio.js';
 import { API, CONFIG, timeSince, getCompassDir, getDistance, parsePlaceName, magClass } from './api-utils.js';
 
 class JaviAlertApp {
@@ -25,6 +25,8 @@ class JaviAlertApp {
       this.mapMarkers = [];
       this.userMarker = null;
       this.mapTiles = null;
+      this.ambientEnabled = localStorage.getItem('javiAmbientEnabled') === 'true';
+      this.ambientActive = false;
 
       // Bind
       this.init = this.init.bind(this);
@@ -54,6 +56,9 @@ class JaviAlertApp {
       this._triggerServerPush = this._triggerServerPush.bind(this);
       this._initMap = this._initMap.bind(this);
       this._updateMapMarkers = this._updateMapMarkers.bind(this);
+      this.toggleAmbient = this.toggleAmbient.bind(this);
+      this._showAnalysis = this._showAnalysis.bind(this);
+      this._shareQuakeAsImage = this._shareQuakeAsImage.bind(this);
     }
 
     // ─── INIT ──────────────────────────────────────────────────
@@ -145,6 +150,22 @@ class JaviAlertApp {
       this._updateSoundIcon();
       document.getElementById('soundToggleBtn').addEventListener('click', this.toggleSound);
 
+      // Ambient sound toggle
+      this._updateAmbientIcon();
+      document.getElementById('ambientToggleBtn').addEventListener('click', this.toggleAmbient);
+
+      // Am I Safe? analysis
+      document.getElementById('pillAnalysisBtn').addEventListener('click', () => this._showAnalysis());
+      document.getElementById('analysisModalClose').addEventListener('click', () => {
+        document.getElementById('analysisModal').classList.add('hidden');
+      });
+      document.getElementById('analysisModalGotIt').addEventListener('click', () => {
+        document.getElementById('analysisModal').classList.add('hidden');
+      });
+      document.getElementById('analysisModal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) e.currentTarget.classList.add('hidden');
+      });
+
       // Magnitude filter
       document.getElementById('magFilter').addEventListener('click', (e) => {
         const btn = e.target.closest('.mag-filter-btn');
@@ -192,6 +213,12 @@ class JaviAlertApp {
 
       // Auto-refresh
       this.refreshTimer = setInterval(() => this.loadData(), CONFIG.AUTO_REFRESH_MS);
+
+      // Auto-start ambient if enabled
+      if (this.ambientEnabled && this.currentMood !== 'danger') {
+        startAmbientSound();
+        this.ambientActive = true;
+      }
 
       // Throttle safety tip rotation when tab is hidden
       document.addEventListener('visibilitychange', () => {
@@ -775,6 +802,19 @@ class JaviAlertApp {
 
       // Record mood for history
       this._recordMood(mood);
+
+      // Ambient sound: stop in danger, auto-start in safe/warning if enabled
+      if (mood === 'danger') {
+        if (this.ambientActive) {
+          stopAmbientSound();
+          this.ambientActive = false;
+        }
+      } else {
+        if (this.ambientEnabled && !this.ambientActive) {
+          startAmbientSound();
+          this.ambientActive = true;
+        }
+      }
 
       // Show safety tips on every refresh (rotates every 3 sec)
       this.showSafetyTip();
@@ -1525,7 +1565,7 @@ class JaviAlertApp {
       const mapFrame = document.getElementById('detailMap');
       const body = document.getElementById('detailBody');
       const viewBtn = document.getElementById('detailViewMap');
-      const shareBtn = document.getElementById('detailShare');
+      const shareBtn = document.getElementById('detailShareImg');
 
       const mag = q.mag.toFixed(1);
       const cls = magClass(q.mag);
@@ -1571,13 +1611,13 @@ class JaviAlertApp {
 
       // Button actions
       viewBtn.onclick = () => window.open(mapsUrl, '_blank', 'noopener');
-      shareBtn.onclick = () => this._shareQuake(q);
+      shareBtn.onclick = () => this._shareQuakeAsImage(q);
 
       // Show modal
       modal.classList.remove('hidden');
     }
 
-    // ─── SHARE QUAKE ──────────────────────────────────────────
+    // ─── SHARE QUAKE (text fallback) ──────────────────────────
     _shareQuake(q) {
       const mapsUrl = 'https://www.google.com/maps?q=' + q.lat + ',' + q.lon;
       const text = '🌍 Magnitude ' + q.mag.toFixed(1) + ' earthquake\n' +
@@ -1590,6 +1630,443 @@ class JaviAlertApp {
         // Fallback: copy to clipboard
         navigator.clipboard.writeText(text).catch(() => {});
       }
+    }
+
+    // ─── SHARE QUAKE AS IMAGE ─────────────────────────────────
+    _shareQuakeAsImage(q) {
+      // Build a canvas card and show share overlay
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const w = 600, h = 380;
+      canvas.width = w * 2; canvas.height = h * 2;
+      ctx.scale(2, 2); // retina
+
+      // Background gradient
+      const grad = ctx.createLinearGradient(0, 0, w, h);
+      const dark = this.isDarkMode;
+      if (dark) {
+        grad.addColorStop(0, '#1a1a2e');
+        grad.addColorStop(1, '#302b63');
+      } else {
+        grad.addColorStop(0, '#4facfe');
+        grad.addColorStop(1, '#a8edea');
+      }
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
+
+      // Rounded card area
+      ctx.shadowColor = 'rgba(0,0,0,0.15)';
+      ctx.shadowBlur = 20;
+      ctx.shadowOffsetY = 4;
+      ctx.fillStyle = dark ? '#2a2a3e' : 'rgba(255,255,255,0.92)';
+      this._roundRect(ctx, 20, 20, w - 40, h - 40, 16);
+      ctx.fill();
+      ctx.shadowColor = 'transparent';
+
+      // Border
+      ctx.strokeStyle = dark ? '#555' : '#2d3436';
+      ctx.lineWidth = 2.5;
+      this._roundRect(ctx, 20, 20, w - 40, h - 40, 16);
+      ctx.stroke();
+
+      // Header: JaviAlert
+      ctx.fillStyle = dark ? '#e0e0e0' : '#2d3436';
+      ctx.font = 'bold 22px Fredoka, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('JaviAlert', 44, 58);
+
+      // Icon circle
+      ctx.fillStyle = '#fd79a8';
+      ctx.beginPath();
+      ctx.arc(32, 46, 10, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Separator line
+      ctx.strokeStyle = dark ? '#444' : '#dfe6e9';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(36, 68);
+      ctx.lineTo(w - 36, 68);
+      ctx.stroke();
+
+      // Magnitude badge
+      const mag = q.mag.toFixed(1);
+      const cls = magClass(q.mag);
+      const badgeColor = cls === 'danger' ? '#e17055' : cls === 'warning' ? '#fdcb6e' : '#00b894';
+      ctx.fillStyle = badgeColor;
+      ctx.beginPath();
+      this._roundRect(ctx, 44, 86, 68, 52, 12);
+      ctx.fill();
+
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 32px Fredoka, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(mag, 78, 120);
+
+      ctx.fillStyle = cls === 'warning' ? '#2d3436' : '#fff';
+      ctx.font = 'bold 11px Fredoka, sans-serif';
+      ctx.fillText('MAGNITUDE', 78, 103);
+
+      // Title: place
+      ctx.fillStyle = dark ? '#e0e0e0' : '#2d3436';
+      ctx.font = 'bold 18px Fredoka, sans-serif';
+      ctx.textAlign = 'left';
+      const placeLabel = q.dist + ' km ' + q.dir + ' of ' + q.place;
+      this._wrapText(ctx, placeLabel, 128, 106, w - 172, 22, 2);
+
+      // Info rows
+      const infoY = 152;
+      const infoData = [
+        { label: 'Time', value: timeSince(q.time) },
+        { label: 'Depth', value: q.depth !== null ? q.depth + ' km' : '--' },
+        { label: 'Coordinates', value: q.lat.toFixed(2) + ', ' + q.lon.toFixed(2) },
+      ];
+      infoData.forEach((item, i) => {
+        const x = 52;
+        const y = infoY + i * 36;
+        ctx.fillStyle = dark ? '#999' : '#636e72';
+        ctx.font = '11px Fredoka, sans-serif';
+        ctx.fillText(item.label, x, y);
+        ctx.fillStyle = dark ? '#e0e0e0' : '#2d3436';
+        ctx.font = 'bold 16px Fredoka, sans-serif';
+        ctx.fillText(item.value, x + 70, y);
+      });
+
+      // Footer: earthquake alert from Javi
+      ctx.fillStyle = dark ? '#777' : '#999';
+      ctx.font = '12px Fredoka, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('🌏 Earthquake alert brought to you by Javi', w / 2, h - 42);
+
+      // Also show raw place
+      ctx.fillStyle = dark ? '#555' : '#bbb';
+      ctx.font = '10px Fredoka, sans-serif';
+      ctx.fillText(q.rawPlace, w / 2, h - 28);
+
+      // Show overlay
+      this._showShareImageOverlay(canvas, q);
+    }
+
+    _roundRect(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+    }
+
+    _wrapText(ctx, text, x, y, maxWidth, lineHeight, maxLines) {
+      const words = text.split(' ');
+      let line = '';
+      let lines = 0;
+      for (const word of words) {
+        const test = line ? line + ' ' + word : word;
+        const m = ctx.measureText(test);
+        if (m.width > maxWidth && line) {
+          ctx.fillText(line, x, y);
+          line = word;
+          y += lineHeight;
+          lines++;
+          if (lines >= maxLines) {
+            ctx.fillText(line.slice(0, -3) + '...', x, y);
+            return;
+          }
+        } else {
+          line = test;
+        }
+      }
+      ctx.fillText(line, x, y);
+    }
+
+    _showShareImageOverlay(canvas, q) {
+      const existing = document.querySelector('.share-img-overlay');
+      if (existing) existing.remove();
+
+      const overlay = document.createElement('div');
+      overlay.className = 'share-img-overlay';
+      overlay.innerHTML =
+        '<div class="share-img-card">' +
+          '<canvas width="' + (canvas.width) + '" height="' + (canvas.height) + '"></canvas>' +
+          '<div class="share-img-actions">' +
+            '<button class="share-img-btn" id="shareImgDownload"><i data-lucide="download" aria-hidden="true"></i> Save</button>' +
+            '<button class="share-img-btn" id="shareImgShare"><i data-lucide="share-2" aria-hidden="true"></i> Share</button>' +
+            '<button class="share-img-btn" id="shareImgClose"><i data-lucide="x" aria-hidden="true"></i> Close</button>' +
+          '</div>' +
+        '</div>';
+      document.body.appendChild(overlay);
+
+      // Draw canvas onto the visible canvas
+      const visCanvas = overlay.querySelector('canvas');
+      const visCtx = visCanvas.getContext('2d');
+      visCtx.drawImage(canvas, 0, 0);
+
+      try { lucide.createIcons(); } catch (_) { /* ignore */ }
+
+      // Handle save
+      document.getElementById('shareImgDownload').onclick = () => {
+        const link = document.createElement('a');
+        link.download = 'javi-alert-' + q.mag.toFixed(1) + 'mag.png';
+        link.href = visCanvas.toDataURL('image/png');
+        link.click();
+      };
+
+      // Handle share (Web Share API)
+      document.getElementById('shareImgShare').onclick = () => {
+        visCanvas.toBlob((blob) => {
+          if (!blob) return;
+          const file = new File([blob], 'javi-alert-' + q.mag.toFixed(1) + 'mag.png', { type: 'image/png' });
+          if (navigator.share) {
+            navigator.share({
+              title: 'Earthquake Alert — Mag ' + q.mag.toFixed(1),
+              text: q.dist + ' km ' + q.dir + ' of ' + q.place,
+              files: [file]
+            }).catch(() => {});
+          } else {
+            // Fallback: download
+            const link = document.createElement('a');
+            link.download = file.name;
+            link.href = URL.createObjectURL(blob);
+            link.click();
+            URL.revokeObjectURL(link.href);
+          }
+        });
+      };
+
+      // Close
+      document.getElementById('shareImgClose').onclick = () => overlay.remove();
+      overlay.addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) overlay.remove();
+      });
+    }
+
+    // ─── AMBIENT SOUND TOGGLE ─────────────────────────────────
+    toggleAmbient() {
+      this.ambientEnabled = !this.ambientEnabled;
+      localStorage.setItem('javiAmbientEnabled', this.ambientEnabled);
+      if (this.ambientEnabled) {
+        startAmbientSound();
+        this.ambientActive = true;
+      } else {
+        stopAmbientSound();
+        this.ambientActive = false;
+      }
+      this._updateAmbientIcon();
+    }
+    _updateAmbientIcon() {
+      const btn = document.getElementById('ambientToggleBtn');
+      const icon = document.getElementById('ambientToggleIcon');
+      if (icon) {
+        icon.setAttribute('data-lucide', this.ambientEnabled ? 'wind' : 'wind');
+        try { lucide.createIcons(); } catch (_) { /* ignore */ }
+      }
+      if (btn) {
+        btn.classList.toggle('ambient-active', this.ambientEnabled);
+      }
+    }
+
+    // ─── AM I SAFE? ANALYSIS ──────────────────────────────────
+    _showAnalysis() {
+      const modal = document.getElementById('analysisModal');
+      const loading = document.getElementById('analysisLoading');
+      const body = document.getElementById('analysisBody');
+      const msgEl = document.getElementById('analysisJaviMsg');
+      const breakdown = document.getElementById('analysisBreakdown');
+      const icon = document.getElementById('analysisModalIcon');
+
+      if (!modal) return;
+
+      // Reset
+      loading.classList.remove('hidden');
+      body.classList.add('hidden');
+      modal.classList.remove('hidden');
+
+      // Determine mood icon
+      const moodIcon = this.currentMood === 'danger' ? 'alert-octagon'
+        : this.currentMood === 'warning' ? 'alert-triangle' : 'shield-check';
+      if (icon) icon.setAttribute('data-lucide', moodIcon);
+      try { lucide.createIcons(); } catch (_) { /* ignore */ }
+
+      // Run analysis (async with small delay for UX)
+      setTimeout(() => {
+        const result = this._runAnalysis();
+        loading.classList.add('hidden');
+        body.classList.remove('hidden');
+        msgEl.innerHTML = this._formatAnalysisMessage(result);
+        breakdown.innerHTML = this._renderAnalysisBreakdown(result);
+        try { lucide.createIcons(); } catch (_) { /* ignore */ }
+      }, 600);
+    }
+
+    _runAnalysis() {
+      const quakes = this.allQuakes;
+      const lat = this.userLat;
+      const lon = this.userLon;
+      const now = Date.now();
+
+      if (!quakes || quakes.length === 0) {
+        return {
+          verdict: 'safe',
+          score: 100,
+          factors: [],
+          message: 'No earthquakes detected near you. You\'re all good!'
+        };
+      }
+
+      // Calculate factors
+      let nearestDist = Infinity;
+      let nearestMag = 0;
+      let strongestMag = 0;
+      let strongestDist = Infinity;
+      let recentCount = 0;
+      let dangerCount = 0;
+      let warningCount = 0;
+
+      quakes.forEach(q => {
+        const dist = q.dist || 0;
+        const mag = q.mag || 0;
+        const age = now - new Date(q.time).getTime();
+
+        // Nearest
+        if (dist < nearestDist) {
+          nearestDist = dist;
+          nearestMag = mag;
+        }
+
+        // Strongest
+        if (mag > strongestMag) {
+          strongestMag = mag;
+          strongestDist = dist;
+        }
+
+        // Recent (last 24h)
+        if (age < 86400000) {
+          recentCount++;
+          if (mag >= CONFIG.DANGER_THRESHOLD) dangerCount++;
+          else if (mag >= CONFIG.WARNING_THRESHOLD) warningCount++;
+        }
+      });
+
+      // Score calculation (100 = perfectly safe, 0 = extremely dangerous)
+      let score = 100;
+
+      // Deduct for nearest quake
+      if (nearestDist < 50) score -= Math.max(0, 30 - nearestDist * 0.5);
+      if (nearestDist < 10) score -= 15;
+
+      // Deduct for magnitude
+      if (strongestMag >= 5) score -= 35;
+      else if (strongestMag >= 4) score -= 20;
+      else if (strongestMag >= 3) score -= 10;
+
+      // Deduct for recency
+      if (dangerCount > 0) score -= 25;
+      if (warningCount > 0) score -= 15;
+
+      // Deduct for near + strong combo
+      if (nearestDist < 100 && strongestMag >= 4) score -= 10;
+
+      score = Math.max(0, Math.min(100, score));
+
+      // Verdict
+      let verdict;
+      if (score >= 80) verdict = 'safe';
+      else if (score >= 50) verdict = 'warning';
+      else verdict = 'danger';
+
+      // Build factors
+      const factors = [];
+      if (nearestDist < Infinity) {
+        factors.push({
+          icon: nearestDist < 50 ? (nearestMag >= CONFIG.DANGER_THRESHOLD ? 'danger' : nearestMag >= CONFIG.WARNING_THRESHOLD ? 'warning' : 'safe') : 'safe',
+          label: 'Nearest quake',
+          detail: nearestDist.toFixed(1) + ' km away at ' + nearestMag.toFixed(1) + ' mag'
+        });
+      }
+      factors.push({
+        icon: strongestMag >= CONFIG.DANGER_THRESHOLD ? 'danger' : strongestMag >= CONFIG.WARNING_THRESHOLD ? 'warning' : 'safe',
+        label: 'Strongest quake',
+        detail: strongestMag.toFixed(1) + ' mag at ' + strongestDist.toFixed(1) + ' km away'
+      });
+      factors.push({
+        icon: dangerCount > 0 ? 'danger' : warningCount > 0 ? 'warning' : 'safe',
+        label: 'Recent activity',
+        detail: recentCount + ' quake' + (recentCount !== 1 ? 's' : '') + ' in 24h' +
+          (dangerCount > 0 ? ' (' + dangerCount + ' dangerous)' : '')
+      });
+
+      return { verdict, score, factors, nearestDist, strongestMag, dangerCount, warningCount };
+    }
+
+    _formatAnalysisMessage(result) {
+      const name = this.userPlace || 'dito';
+      if (result.verdict === 'danger') {
+        const msgs = [
+          '⚠️ <strong>Not safe, friend!</strong> May malakas na lindol na malapit sa ' + name + '. Kailangan maging handa! Sundin ang safety tips at makinig sa balita.',
+          '🚨 <strong>Delikado!</strong> May malapit na malakas na lindol sa ' + name + '. Ihanda ang emergency kit at maging alerto!'
+        ];
+        return msgs[Math.floor(Math.random() * msgs.length)];
+      } else if (result.verdict === 'warning') {
+        const msgs = [
+          '🤔 <strong>Medyo hindi sigurado.</strong> May mga lindol malapit sa ' + name + ', pero hindi naman sobrang lakas. Mag-ingat ka pa rin!',
+          '👀 <strong>Nakatutok ako.</strong> May nararamdaman akong galaw malapit sa ' + name + '. Hindi naman sobrang lakas, pero alerto tayo!'
+        ];
+        return msgs[Math.floor(Math.random() * msgs.length)];
+      } else {
+        const msgs = [
+          '✅ <strong>Safe ka dito, pare!</strong> Walang malapit na malakas na lindol sa ' + name + '. Relax lang!',
+          '😊 <strong>Wala kang dapat ipag-alala.</strong> Lahat ng lindol ay malayo at mahihina lang. Enjoy your day!'
+        ];
+        return msgs[Math.floor(Math.random() * msgs.length)];
+      }
+    }
+
+    _renderAnalysisBreakdown(result) {
+      const scoreColor = result.score >= 80 ? '#00b894' : result.score >= 50 ? '#fdcb6e' : '#e17055';
+      const scoreEmoji = result.score >= 80 ? '🟢' : result.score >= 50 ? '🟡' : '🔴';
+      const statusText = result.verdict === 'safe' ? 'Safe'
+        : result.verdict === 'warning' ? 'Caution' : 'Danger';
+
+      let html = '';
+
+      // Score bar
+      html +=
+        '<div class="analysis-factor" style="padding: 12px 14px; margin-bottom: 4px;">' +
+          '<div class="analysis-factor-icon ' + result.verdict + '" style="font-size: 18px;">' + scoreEmoji + '</div>' +
+          '<div class="analysis-factor-text">' +
+            '<strong>Safety Score</strong>' +
+            '<span>' + result.score + '% — <strong>' + statusText + '</strong></span>' +
+          '</div>' +
+        '</div>';
+
+      // Score bar visual
+      html +=
+        '<div style="height: 10px; background: #dfe6e9; border-radius: 6px; margin: 0 14px 10px; overflow: hidden; border: 1.5px solid ' + (this.isDarkMode ? '#555' : '#2d3436') + ';">' +
+          '<div style="height: 100%; width: ' + result.score + '%; background: ' + scoreColor + '; border-radius: 6px; transition: width .6s ease;"></div>' +
+        '</div>';
+
+      // Factors
+      result.factors.forEach(f => {
+        html +=
+          '<div class="analysis-factor">' +
+            '<div class="analysis-factor-icon ' + f.icon + '">' +
+              (f.icon === 'safe' ? '<i data-lucide="shield-check" style="width: 14px; height: 14px;"></i>' :
+               f.icon === 'warning' ? '<i data-lucide="alert-triangle" style="width: 14px; height: 14px;"></i>' :
+               '<i data-lucide="alert-octagon" style="width: 14px; height: 14px;"></i>') +
+            '</div>' +
+            '<div class="analysis-factor-text">' +
+              '<strong>' + f.label + '</strong>' +
+              '<span>' + f.detail + '</span>' +
+            '</div>' +
+          '</div>';
+      });
+
+      return html;
     }
   }
 
