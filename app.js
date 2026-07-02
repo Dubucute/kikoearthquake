@@ -359,6 +359,7 @@
       this.soundEnabled = localStorage.getItem('javiSoundEnabled') !== 'false';
       this.moodHistory = this._loadMoodHistory();
       this.magFilter = 0;
+      this._pushReady = false;
 
       // Bind
       this.init = this.init.bind(this);
@@ -383,6 +384,9 @@
       this._recordMood = this._recordMood.bind(this);
       this._renderMoodHistory = this._renderMoodHistory.bind(this);
       this._updateLastSignificant = this._updateLastSignificant.bind(this);
+      this._setupPushNotifications = this._setupPushNotifications.bind(this);
+      this._fetchVapidPublicKey = this._fetchVapidPublicKey.bind(this);
+      this._triggerServerPush = this._triggerServerPush.bind(this);
     }
 
     // ─── INIT ──────────────────────────────────────────────────
@@ -394,11 +398,15 @@
         } catch (_) { /* ignore */ }
       }
 
-      // Request notification permission
+      // Request notification permission + setup push
       if ('Notification' in window && Notification.permission === 'default') {
         try {
-          Notification.requestPermission();
+          Notification.requestPermission().then(result => {
+            if (result === 'granted') this._setupPushNotifications();
+          });
         } catch (_) { /* ignore */ }
+      } else if ('Notification' in window && Notification.permission === 'granted') {
+        this._setupPushNotifications();
       }
 
       // Javi tap interaction
@@ -1248,6 +1256,9 @@
         } catch (_) { /* ignore */ }
       }
 
+      // Trigger server-side push for background delivery
+      this._triggerServerPush(biggest, newQuakes.length);
+
       // Update bubble message
       const bubble = document.getElementById('bubble');
       const count = newQuakes.length;
@@ -1257,6 +1268,70 @@
       bubble.className = 'bubble';
       bubble.innerHTML = '<i data-lucide="bell" aria-hidden="true"></i> ' + msg;
       try { lucide.createIcons(); } catch (_) { /* ignore */ }
+    }
+
+    // ─── PUSH NOTIFICATIONS ────────────────────────────────────
+    async _setupPushNotifications() {
+      if (!('PushManager' in window)) return;
+      if (!('Notification' in window) || Notification.permission !== 'granted') return;
+      try {
+        const registration = await navigator.serviceWorker.ready;
+        let subscription = await registration.pushManager.getSubscription();
+        if (!subscription) {
+          const publicKey = await this._fetchVapidPublicKey();
+          if (!publicKey) return;
+          subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: this._urlBase64ToUint8Array(publicKey)
+          });
+        }
+        await fetch('/api/push-subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(subscription.toJSON())
+        });
+        this._pushReady = true;
+      } catch (_) { /* push not supported */ }
+    }
+
+    async _fetchVapidPublicKey() {
+      try {
+        const res = await fetch('/api/push-public-key');
+        if (!res.ok) return null;
+        const data = await res.json();
+        return data.publicKey;
+      } catch (_) {
+        return null;
+      }
+    }
+
+    async _triggerServerPush(biggest, count) {
+      if (!this._pushReady) return;
+      try {
+        const title = count === 1 ? 'New earthquake detected!'
+          : count + ' new earthquakes!';
+        const body = biggest.mag.toFixed(1) + ' mag \u2014 ' +
+          biggest.place + ' (' + biggest.dist + ' km away)';
+        await fetch('/api/push-send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: '\uD83C\uDF0D ' + title,
+            body: body,
+            url: '/',
+            tag: 'quake-' + Date.now()
+          })
+        });
+      } catch (_) { /* ignore */ }
+    }
+
+    _urlBase64ToUint8Array(base64String) {
+      const padding = '='.repeat((4 - base64String.length % 4) % 4);
+      const base64 = (base64String + padding)
+        .replace(/\-/g, '+')
+        .replace(/_/g, '/');
+      const rawData = window.atob(base64);
+      return Uint8Array.from([].map.call(rawData, char => char.charCodeAt(0)));
     }
 
     // ─── INSTALL PROMPT ────────────────────────────────────────

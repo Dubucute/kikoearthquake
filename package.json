@@ -1,0 +1,13 @@
+{
+  "name": "javi-alert",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "generate-keys": "node scripts/generate-keys.js"
+  },
+  "dependencies": {
+    "mongodb": "^7.4.0",
+    "web-push": "^3.6.7"
+  }
+}

@@ -24,9 +24,56 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   if (e.request.url.includes('earthquake.usgs.gov') || e.request.url.includes('openrouter.ai')) {
-    return; // always fetch live data
+    return;
   }
   e.respondWith(
     caches.match(e.request).then(cached => cached || fetch(e.request))
+  );
+});
+
+self.addEventListener('push', e => {
+  let data = {
+    title: 'JaviAlert',
+    body: 'May bagong earthquake update!',
+    icon: '/icons/javi-icon.png',
+    badge: '/icons/javi-icon.png',
+    url: '/',
+    tag: 'javi-alert'
+  };
+  try {
+    if (e.data) {
+      const payload = e.data.json();
+      data = { ...data, ...payload };
+    }
+  } catch (_) { /* ignore */ }
+
+  e.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: data.icon,
+      badge: data.badge,
+      tag: data.tag,
+      renotify: true,
+      vibrate: [200, 100, 200],
+      requireInteraction: true,
+      data: { url: data.url }
+    })
+  );
+});
+
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  const urlToOpen = e.notification.data?.url || '/';
+  e.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
+      for (const client of clientList) {
+        if (client.url === urlToOpen && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow(urlToOpen);
+      }
+    })
   );
 });
