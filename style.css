@@ -1536,3 +1536,46 @@ body.dark-mode .s12 { animation-delay: 0.8s; }
   0%   { opacity: 0; transform: translateY(16px); }
   100% { opacity: 1; transform: translateY(0); }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   SCROLL TO TOP — floating button
+   ═══════════════════════════════════════════════════════════════ */
+.scroll-top-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.9);
+  border: 2.5px solid #2d3436;
+  box-shadow: 3px 3px 0px #2d3436;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  transition: transform .15s, opacity .2s;
+  opacity: 0;
+  pointer-events: none;
+}
+.scroll-top-btn.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+.scroll-top-btn:active {
+  transform: scale(.9);
+}
+.scroll-top-btn i {
+  width: 20px;
+  height: 20px;
+  color: var(--text);
+}
+body.dark-mode .scroll-top-btn {
+  background: rgba(40,40,60,.9);
+  border-color: #555;
+  box-shadow: 3px 3px 0px #555;
+}
+body.dark-mode .scroll-top-btn i {
+  color: #e0e0e0;
+}

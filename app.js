@@ -220,6 +220,20 @@ class JaviAlertApp {
         this.ambientActive = true;
       }
 
+      // Scroll-to-top button visibility
+      window.addEventListener('scroll', () => {
+        const btn = document.getElementById('scrollTopBtn');
+        if (!btn) return;
+        if (window.scrollY > 400) {
+          btn.classList.add('visible');
+        } else {
+          btn.classList.remove('visible');
+        }
+      }, { passive: true });
+      document.getElementById('scrollTopBtn').addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+
       // Throttle safety tip rotation when tab is hidden
       document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
@@ -770,6 +784,11 @@ class JaviAlertApp {
 
       try { lucide.createIcons(); } catch (_) { /* ignore */ }
 
+      // Haptic feedback on mood change
+      if (mood === 'danger' || mood === 'warning') {
+        this._hapticAlert(mood);
+      }
+
       // Safety card visibility — always shown via showSafetyTip() below
       // Just stop rotation when safe so it doesn't keep cycling
       if (mood === 'safe' && this._tipInterval) {
@@ -977,6 +996,9 @@ class JaviAlertApp {
       if (alertType) {
         playAlertSound(alertType, this.soundEnabled);
       }
+
+      // Haptic feedback on alert
+      this._hapticAlert(alertType);
 
       // Show browser notification
       if ('Notification' in window && Notification.permission === 'granted') {
@@ -2154,6 +2176,21 @@ class JaviAlertApp {
       });
 
       return html;
+    }
+
+    // ─── HAPTIC FEEDBACK ON ALERT ────────────────────────────
+    _hapticAlert(type) {
+      if (!type) return;
+      if (!navigator.vibrate) return;
+      try {
+        if (type === 'danger') {
+          // Three strong bursts
+          navigator.vibrate([200, 100, 200, 100, 200]);
+        } else if (type === 'warning') {
+          // Two gentler bursts
+          navigator.vibrate([100, 80, 100]);
+        }
+      } catch (_) { /* vibration not supported */ }
     }
 
     // ─── SPAWN SPARKLES ON JAVI TAP ──────────────────────────
