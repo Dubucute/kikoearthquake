@@ -62,14 +62,7 @@
     </div>
   </div>
 
-  <div class="loc-bar" role="region" aria-label="Your location">
-    <i data-lucide="map-pin" aria-hidden="true"></i>
-    <input type="text" id="locInput" class="loc-input" placeholder="Search your location..." autocomplete="off" spellcheck="false"/>
-    <button class="loc-btn hidden" id="useLocationBtn" aria-label="Use my location">📍 Use my location</button>
-    <div class="loc-dropdown hidden" id="locDropdown"></div>
-  </div>
-
-  <!-- Sun / Moon (behind clouds) -->
+  <!-- Sun / Moon (behind everything) -->
   <div class="sky-body" id="skyBody" aria-hidden="true">
     <div class="sun" id="sun"></div>
     <div class="moon" id="moon"></div>
@@ -85,6 +78,13 @@
     <div class="star s10"></div>
     <div class="star s11"></div>
     <div class="star s12"></div>
+  </div>
+
+  <div class="loc-bar" role="region" aria-label="Your location">
+    <i data-lucide="map-pin" aria-hidden="true"></i>
+    <input type="text" id="locInput" class="loc-input" placeholder="Search your location..." autocomplete="off" spellcheck="false"/>
+    <button class="loc-btn hidden" id="useLocationBtn" aria-label="Use my location">📍 Use my location</button>
+    <div class="loc-dropdown hidden" id="locDropdown"></div>
   </div>
 
   <div class="clouds" aria-hidden="true">
