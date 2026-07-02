@@ -128,79 +128,162 @@ body.danger {
   font-size: 11px; color: var(--muted); margin-top: 1px;
 }
 
-/* CLOUDS */
+/* ═══════════════════════════════════════════════════════════════
+   CLOUDS — endless drift, mood-reactive, dark mode, parallax depth
+   ═══════════════════════════════════════════════════════════════ */
 .clouds {
-  position: relative; height: 70px;
-  margin-bottom: -20px;
+  position: relative;
+  height: 140px;
+  margin-bottom: -50px;
   pointer-events: none;
+  overflow: visible;
 }
 .cloud {
   position: absolute;
-  background: rgba(255,255,255,.88);
   border-radius: 50px;
   animation: drift linear infinite;
   will-change: transform;
-  filter: drop-shadow(2px 2px 0px rgba(0,0,0,.12));
+  transition: background .8s ease, opacity .8s ease;
+  filter: drop-shadow(2px 2px 0px rgba(0,0,0,.1));
 }
 .cloud::before, .cloud::after {
   content: ''; position: absolute;
-  background: inherit; border-radius: 50%;
+  border-radius: 50%;
+  background: inherit;
 }
-/* Cloud 1 — large, close, fast */
+
+/* ── Cloud sizes & base positions (spread 0%–95%) ── */
 .c1 {
-  width: 90px; height: 26px;
-  top: 18px; left: 5%;
-  opacity: .9;
-  animation-duration: 22s;
-}
-.c1::before { width: 38px; height: 38px; top: -18px; left: 12px; }
-.c1::after  { width: 28px; height: 28px; top: -12px; left: 38px; }
-/* Cloud 2 — small, far, slow */
-.c2 {
-  width: 50px; height: 16px;
-  top: 32px; left: 40%;
-  opacity: .55;
-  animation-duration: 35s;
-  animation-delay: -10s;
-}
-.c2::before { width: 22px; height: 22px; top: -10px; left: 8px; }
-.c2::after  { width: 16px; height: 16px; top: -6px; left: 22px; }
-/* Cloud 3 — medium, mid */
-.c3 {
-  width: 70px; height: 20px;
-  top: 14px; right: 8%;
+  width: 100px; height: 28px;
+  top: 18px; left: -8%;
   opacity: .85;
-  animation-duration: 26s;
-  animation-delay: -6s;
+  background: rgba(255,255,255,.95);
+  animation-duration: 28s;
+  animation-delay: 0s;
+  z-index: 2;
 }
-.c3::before { width: 30px; height: 30px; top: -14px; left: 10px; }
-.c3::after  { width: 22px; height: 22px; top: -10px; left: 30px; }
-/* Cloud 4 — tiny accent */
+.c1::before { width: 42px; height: 42px; top: -20px; left: 14px; }
+.c1::after  { width: 30px; height: 30px; top: -14px; left: 44px; }
+
+.c2 {
+  width: 55px; height: 16px;
+  top: 48px; left: 15%;
+  opacity: .45;
+  background: rgba(255,255,255,.75);
+  animation-duration: 42s;
+  animation-delay: -12s;
+  z-index: 1;
+}
+.c2::before { width: 24px; height: 24px; top: -10px; left: 8px; }
+.c2::after  { width: 16px; height: 16px; top: -6px; left: 24px; }
+
+.c3 {
+  width: 80px; height: 22px;
+  top: 10px; left: 30%;
+  opacity: .75;
+  background: rgba(255,255,255,.92);
+  animation-duration: 32s;
+  animation-delay: -8s;
+  z-index: 3;
+}
+.c3::before { width: 34px; height: 34px; top: -16px; left: 12px; }
+.c3::after  { width: 24px; height: 24px; top: -10px; left: 36px; }
+
 .c4 {
   width: 40px; height: 12px;
-  top: 40px; left: 18%;
-  opacity: .45;
-  animation-duration: 40s;
-  animation-delay: -18s;
+  top: 60px; left: 48%;
+  opacity: .35;
+  background: rgba(255,255,255,.7);
+  animation-duration: 50s;
+  animation-delay: -20s;
+  z-index: 1;
 }
 .c4::before { width: 18px; height: 18px; top: -8px; left: 6px; }
 .c4::after  { width: 12px; height: 12px; top: -5px; left: 18px; }
-/* Cloud 5 — large accent on right */
+
 .c5 {
-  width: 80px; height: 24px;
-  top: 24px; right: 25%;
+  width: 90px; height: 26px;
+  top: 28px; left: 60%;
   opacity: .65;
+  background: rgba(255,255,255,.9);
   animation-duration: 30s;
-  animation-delay: -14s;
+  animation-delay: -16s;
+  z-index: 2;
 }
-.c5::before { width: 34px; height: 34px; top: -16px; left: 10px; }
-.c5::after  { width: 24px; height: 24px; top: -10px; left: 34px; }
+.c5::before { width: 38px; height: 38px; top: -18px; left: 12px; }
+.c5::after  { width: 28px; height: 28px; top: -12px; left: 40px; }
+
+.c6 {
+  width: 65px; height: 18px;
+  top: 42px; left: 75%;
+  opacity: .5;
+  background: rgba(255,255,255,.8);
+  animation-duration: 36s;
+  animation-delay: -28s;
+  z-index: 1;
+}
+.c6::before { width: 26px; height: 26px; top: -12px; left: 10px; }
+.c6::after  { width: 18px; height: 18px; top: -8px; left: 28px; }
+
+.c7 {
+  width: 110px; height: 30px;
+  top: 6px; left: 84%;
+  opacity: .8;
+  background: rgba(255,255,255,.93);
+  animation-duration: 26s;
+  animation-delay: -5s;
+  z-index: 3;
+}
+.c7::before { width: 46px; height: 46px; top: -22px; left: 16px; }
+.c7::after  { width: 32px; height: 32px; top: -14px; left: 50px; }
+
+.c8 {
+  width: 35px; height: 10px;
+  top: 54px; left: 95%;
+  opacity: .3;
+  background: rgba(255,255,255,.65);
+  animation-duration: 55s;
+  animation-delay: -38s;
+  z-index: 1;
+}
+.c8::before { width: 14px; height: 14px; top: -6px; left: 4px; }
+.c8::after  { width: 10px; height: 10px; top: -4px; left: 14px; }
+
+/* ── Endless right-to-left drift ── */
 @keyframes drift {
   0%   { transform: translateX(0); }
-  25%  { transform: translateX(10px) translateY(-2px); }
-  50%  { transform: translateX(16px) translateY(0); }
-  75%  { transform: translateX(8px) translateY(2px); }
-  100% { transform: translateX(0); }
+  100% { transform: translateX(-160px); }
+}
+
+/* ── Mood-reactive clouds ── */
+body.warning .cloud {
+  background: rgba(180, 160, 180, 0.6) !important;
+  filter: drop-shadow(2px 2px 0px rgba(120, 60, 80, 0.15));
+  animation-duration: calc(var(--dur, 30s) * 0.7);
+}
+body.danger .cloud {
+  background: rgba(100, 80, 90, 0.5) !important;
+  filter: drop-shadow(2px 2px 0px rgba(80, 20, 30, 0.2));
+  animation-duration: calc(var(--dur, 30s) * 0.45);
+  opacity: 0.6 !important;
+}
+/* Assign --dur for proportional speed-up in warning/danger */
+.c1, .c7 { --dur: 26s; }
+.c3, .c5 { --dur: 30s; }
+.c2, .c6 { --dur: 36s; }
+.c4 { --dur: 50s; }
+.c8 { --dur: 55s; }
+
+/* ── Dark mode ── */
+body.dark-mode .cloud {
+  background: rgba(50, 60, 90, 0.35) !important;
+  filter: drop-shadow(2px 2px 0px rgba(0,0,0,.2));
+}
+body.dark-mode.warning .cloud {
+  background: rgba(80, 50, 80, 0.35) !important;
+}
+body.dark-mode.danger .cloud {
+  background: rgba(60, 30, 40, 0.4) !important;
 }
 
 /* CHARACTER CARD */
