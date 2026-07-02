@@ -249,23 +249,26 @@ body.danger {
 .c8::before { width: 14px; height: 14px; top: -6px; left: 4px; }
 .c8::after  { width: 10px; height: 10px; top: -4px; left: 14px; }
 
-/* ── Endless right-to-left drift ── */
+/* ── Gentle floating drift (back-and-forth) ── */
 @keyframes drift {
   0%   { transform: translateX(0); }
-  100% { transform: translateX(-160px); }
+  25%  { transform: translateX(12px) translateY(-3px); }
+  50%  { transform: translateX(24px) translateY(0); }
+  75%  { transform: translateX(12px) translateY(3px); }
+  100% { transform: translateX(0); }
 }
 
 /* ── Mood-reactive clouds ── */
 body.warning .cloud {
-  background: rgba(180, 160, 180, 0.6) !important;
-  filter: drop-shadow(2px 2px 0px rgba(120, 60, 80, 0.15));
-  animation-duration: calc(var(--dur, 30s) * 0.7);
+  background: rgba(235, 140, 200, 0.55) !important;
+  filter: drop-shadow(2px 2px 0px rgba(180, 80, 120, 0.2));
+  animation-duration: calc(var(--dur, 30s) * 0.75);
 }
 body.danger .cloud {
-  background: rgba(100, 80, 90, 0.5) !important;
-  filter: drop-shadow(2px 2px 0px rgba(80, 20, 30, 0.2));
-  animation-duration: calc(var(--dur, 30s) * 0.45);
-  opacity: 0.6 !important;
+  background: rgba(120, 70, 80, 0.5) !important;
+  filter: drop-shadow(2px 2px 0px rgba(80, 20, 30, 0.25));
+  animation-duration: calc(var(--dur, 30s) * 0.5);
+  opacity: 0.55 !important;
 }
 /* Assign --dur for proportional speed-up in warning/danger */
 .c1, .c7 { --dur: 26s; }
@@ -276,14 +279,14 @@ body.danger .cloud {
 
 /* ── Dark mode ── */
 body.dark-mode .cloud {
-  background: rgba(50, 60, 90, 0.35) !important;
+  background: rgba(50, 60, 90, 0.3) !important;
   filter: drop-shadow(2px 2px 0px rgba(0,0,0,.2));
 }
 body.dark-mode.warning .cloud {
-  background: rgba(80, 50, 80, 0.35) !important;
+  background: rgba(160, 80, 140, 0.35) !important;
 }
 body.dark-mode.danger .cloud {
-  background: rgba(60, 30, 40, 0.4) !important;
+  background: rgba(80, 30, 40, 0.4) !important;
 }
 
 /* CHARACTER CARD */
