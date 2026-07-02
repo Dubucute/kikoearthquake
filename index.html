@@ -86,19 +86,11 @@
     </div>
   </div>
 
-  <div class="pill-row" role="alert" aria-live="assertive">
+  <div class="status-row" role="alert" aria-live="assertive">
     <span class="status-pill pill-safe" id="statusPill">
       <i data-lucide="shield-check" aria-hidden="true"></i>
       <span id="pillText">Checking...</span>
     </span>
-    <button class="action-btn" id="pillTipsBtn" aria-label="What to do during an earthquake">
-      <i data-lucide="shield" aria-hidden="true"></i>
-      What to do?
-    </button>
-    <button class="action-btn" id="pillContactsBtn" aria-label="Emergency hotlines to call">
-      <i data-lucide="phone" aria-hidden="true"></i>
-      Who to call?
-    </button>
   </div>
 
   <!-- Install banner -->
@@ -169,6 +161,18 @@
       <span>Earthquake Map</span>
     </div>
     <div class="map-container" id="quakeMap"></div>
+  </div>
+
+  <!-- Quick action buttons -->
+  <div class="action-bar">
+    <button class="action-bar-btn" id="pillTipsBtn" aria-label="What to do during an earthquake">
+      <i data-lucide="shield" aria-hidden="true"></i>
+      Safety Tips
+    </button>
+    <button class="action-bar-btn" id="pillContactsBtn" aria-label="Emergency hotlines to call">
+      <i data-lucide="phone" aria-hidden="true"></i>
+      Hotlines
+    </button>
   </div>
 
   <!-- Safety tips -->
