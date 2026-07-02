@@ -21,6 +21,10 @@ class JaviAlertApp {
       this.moodHistory = this._loadMoodHistory();
       this.magFilter = 0;
       this._pushReady = false;
+      this.map = null;
+      this.mapMarkers = [];
+      this.userMarker = null;
+      this.mapTiles = null;
 
       // Bind
       this.init = this.init.bind(this);
@@ -48,6 +52,8 @@ class JaviAlertApp {
       this._setupPushNotifications = this._setupPushNotifications.bind(this);
       this._fetchVapidPublicKey = this._fetchVapidPublicKey.bind(this);
       this._triggerServerPush = this._triggerServerPush.bind(this);
+      this._initMap = this._initMap.bind(this);
+      this._updateMapMarkers = this._updateMapMarkers.bind(this);
     }
 
     // ─── INIT ──────────────────────────────────────────────────
@@ -180,6 +186,9 @@ class JaviAlertApp {
       // Detect location then load
       await this.detectLocation();
       await this.loadData();
+
+      // Init map (needs userLat/Lon from location)
+      this._initMap();
 
       // Auto-refresh
       this.refreshTimer = setInterval(() => this.loadData(), CONFIG.AUTO_REFRESH_MS);
@@ -612,6 +621,9 @@ class JaviAlertApp {
 
       // Render quake list with current sort
       this.applySortAndRender();
+
+      // Update map markers
+      this._updateMapMarkers();
 
       // Last update
       document.getElementById('lastUpdate').textContent = 'Updated ' + new Date().toLocaleTimeString();
@@ -1146,6 +1158,157 @@ class JaviAlertApp {
       try { lucide.createIcons(); } catch (_) { /* ignore */ }
     }
 
+    // ─── MAP ──────────────────────────────────────────────────
+    _initMap() {
+      const el = document.getElementById('quakeMap');
+      if (!el) return;
+      if (this.map) {
+        this.map.invalidateSize();
+        return;
+      }
+
+      const dark = this.isDarkMode;
+      const tileUrl = dark
+        ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+        : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+      const attr = dark
+        ? '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>'
+        : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+
+      this.map = L.map(el, {
+        center: [this.userLat || 14.5995, this.userLon || 120.9842],
+        zoom: 7,
+        zoomControl: true,
+        attributionControl: true,
+      });
+
+      this.mapTiles = L.tileLayer(tileUrl, {
+        maxZoom: 19,
+        attribution: attr,
+      }).addTo(this.map);
+
+      // User location marker
+      const userIcon = L.divIcon({
+        className: '',
+        html: '<div class="user-loc-marker"></div>',
+        iconSize: [20, 20],
+        iconAnchor: [10, 10],
+      });
+      this.userMarker = L.marker([this.userLat || 14.5995, this.userLon || 120.9842], {
+        icon: userIcon,
+        interactive: false,
+        zIndexOffset: 1000,
+      }).addTo(this.map);
+
+      // Invalidate size after a short delay to ensure the map renders properly
+      setTimeout(() => { if (this.map) this.map.invalidateSize(); }, 300);
+
+      // Re-render markers now that the map exists
+      this._updateMapMarkers();
+    }
+
+    _updateMapMarkers() {
+      if (!this.map) return;
+
+      // Update user marker position
+      if (this.userMarker && this.userLat && this.userLon) {
+        this.userMarker.setLatLng([this.userLat, this.userLon]);
+      }
+
+      // Clear existing quake markers
+      this.mapMarkers.forEach((m) => this.map.removeLayer(m));
+      this.mapMarkers = [];
+
+      if (!this.allQuakes || !this.allQuakes.length) return;
+
+      // Determine which quakes to show (respects mag filter)
+      let shown = this.allQuakes;
+      if (this.magFilter > 0) {
+        shown = shown.filter((q) => q.mag >= this.magFilter);
+      }
+
+      // Fit bounds to include all markers
+      const bounds = [];
+
+      shown.forEach((q) => {
+        const color = this._magColor(q.mag);
+        const radius = Math.max(6, Math.min(q.mag * 3, 20));
+
+        const marker = L.circleMarker([q.lat, q.lon], {
+          radius,
+          color: '#2d3436',
+          weight: 2,
+          fillColor: color,
+          fillOpacity: 0.8,
+        });
+
+        const ts = timeSince(q.time);
+        const mag = q.mag.toFixed(1);
+        const cls = magClass(q.mag);
+        const badgeColor = this._magBgColor(q.mag);
+
+        marker.bindPopup(
+          '<div class="quake-popup">' +
+            '<div><span class="popup-mag" style="background:' + badgeColor + '">' + mag + '</span>' +
+            '<span class="popup-place">' + q.place + '</span></div>' +
+            '<div class="popup-meta">' +
+              '<span>📍 ' + q.dist + ' km ' + q.dir + '</span>' +
+              '<span>🕐 ' + ts + '</span>' +
+              (q.depth !== null ? '<span>📏 ' + q.depth + ' km</span>' : '') +
+            '</div>' +
+            '<a class="popup-link" data-quake-id="' + q.id + '">🔍 View details</a>' +
+          '</div>',
+          { className: 'quake-popup', maxWidth: 260 }
+        );
+
+        marker.on('popupopen', () => {
+          // Attach click handler to the "View details" link after popup opens
+          setTimeout(() => {
+            const link = document.querySelector('.quake-popup .popup-link[data-quake-id="' + q.id + '"]');
+            if (link) {
+              link.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.map.closePopup();
+                this._showQuakeDetail(q);
+              });
+            }
+          }, 50);
+        });
+
+        marker.addTo(this.map);
+        this.mapMarkers.push(marker);
+        bounds.push([q.lat, q.lon]);
+      });
+
+      // Add user location to bounds
+      if (this.userLat && this.userLon) {
+        bounds.push([this.userLat, this.userLon]);
+      }
+
+      // Fit map to bounds if there are markers
+      if (bounds.length > 1) {
+        try {
+          this.map.fitBounds(bounds, { padding: [30, 30], maxZoom: 10 });
+        } catch (_) { /* ignore bounds errors */ }
+      }
+    }
+
+    _magColor(mag) {
+      if (mag < 3) return '#00b894';
+      if (mag < 4) return '#fdcb6e';
+      if (mag < 5) return '#e17055';
+      if (mag < 6) return '#d63031';
+      return '#6c5ce7';
+    }
+
+    _magBgColor(mag) {
+      if (mag < 3) return '#00b894';
+      if (mag < 4) return '#fdcb6e';
+      if (mag < 5) return '#e17055';
+      if (mag < 6) return '#d63031';
+      return '#6c5ce7';
+    }
+
     // ─── TOGGLE DARK MODE ─────────────────────────────────────
     toggleDarkMode() {
       this.isDarkMode = !this.isDarkMode;
@@ -1156,6 +1319,26 @@ class JaviAlertApp {
         icon.setAttribute('data-lucide', this.isDarkMode ? 'sun' : 'moon');
         try { lucide.createIcons(); } catch (_) { /* ignore */ }
       }
+
+      // Switch map tiles for dark mode
+      this._switchMapTiles();
+    }
+
+    _switchMapTiles() {
+      if (!this.map || !this.mapTiles) return;
+      const dark = this.isDarkMode;
+      const tileUrl = dark
+        ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+        : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+      const attr = dark
+        ? '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>'
+        : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+
+      this.map.removeLayer(this.mapTiles);
+      this.mapTiles = L.tileLayer(tileUrl, {
+        maxZoom: 19,
+        attribution: attr,
+      }).addTo(this.map);
     }
 
     // ─── TOGGLE SOUND ─────────────────────────────────────────

@@ -22,6 +22,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/lucide@0.468.0/dist/umd/lucide.min.js"></script>
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 </head>
 <body>
 <main>
@@ -158,6 +160,15 @@
     <button class="mag-filter-btn" data-min="3">≥ 3.0</button>
     <button class="mag-filter-btn" data-min="4">≥ 4.0</button>
     <button class="mag-filter-btn" data-min="5">≥ 5.0</button>
+  </div>
+
+  <!-- Earthquake map -->
+  <div class="map-card" id="mapCard">
+    <div class="map-header">
+      <i data-lucide="map" aria-hidden="true"></i>
+      <span>Earthquake Map</span>
+    </div>
+    <div class="map-container" id="quakeMap"></div>
   </div>
 
   <!-- Safety tips -->
