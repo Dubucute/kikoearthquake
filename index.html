@@ -80,6 +80,17 @@
     <div class="cloud c8"></div>
   </div>
 
+  <!-- Sun / Moon -->
+  <div class="sky-body" id="skyBody" aria-hidden="true">
+    <div class="sun" id="sun"></div>
+    <div class="moon" id="moon"></div>
+    <div class="star s1"></div>
+    <div class="star s2"></div>
+    <div class="star s3"></div>
+    <div class="star s4"></div>
+    <div class="star s5"></div>
+  </div>
+
   <!-- Character -->
   <div class="char-card">
     <div class="bubble loading" id="bubble" role="status" aria-live="polite">
@@ -89,6 +100,7 @@
     <div class="kid-wrap" id="kidWrap">
       <div class="char-name">Javi</div>
       <div id="kidGif" class="kid-gif" role="img" aria-label="Javi animation"></div>
+      <div class="javi-sparkles" id="javiSparkles"></div>
       <span class="status-pill pill-safe" id="statusPill">
         <i data-lucide="shield-check" aria-hidden="true"></i>
         <span id="pillText">Checking...</span>
@@ -124,7 +136,7 @@
   </div>
 
   <!-- Stats -->
-  <section class="stats-row" aria-label="Earthquake statistics">
+  <section class="stats-row entrance entrance-d1" aria-label="Earthquake statistics">
     <div class="stat">
       <div class="stat-num" id="statCount">&mdash;</div>
       <div class="stat-lbl">Shakes today</div>
@@ -158,16 +170,18 @@
   </div>
 
   <!-- Earthquake map -->
-  <div class="map-card" id="mapCard">
+  <div class="map-card entrance entrance-d2" id="mapCard">
     <div class="map-header">
       <i data-lucide="map" aria-hidden="true"></i>
       <span>Earthquake Map</span>
     </div>
-    <div class="map-container" id="quakeMap"></div>
+    <div class="map-container" id="quakeMap">
+      <div class="quake-ripple" id="quakeRipple"></div>
+    </div>
   </div>
 
   <!-- Quick action buttons -->
-  <div class="action-bar">
+  <div class="action-bar entrance entrance-d3">
     <button class="action-bar-btn" id="pillTipsBtn" aria-label="What to do during an earthquake">
       <i data-lucide="shield" aria-hidden="true"></i>
       Safety Tips
@@ -267,7 +281,7 @@
   </div>
 
   <!-- Quake list -->
-  <div class="list-card">
+  <div class="list-card entrance entrance-d4">
     <div class="list-header">
       <i data-lucide="target" aria-hidden="true"></i>
       <span id="listTitle">Nearest Earthquakes</span>
@@ -292,6 +306,11 @@
         <i data-lucide="chevron-right" aria-hidden="true"></i>
       </button>
     </div>
+  </div>
+
+  <!-- Ground strip -->
+  <div class="ground" aria-hidden="true">
+    <div class="ground-grass"></div>
   </div>
 
   <!-- Footer -->

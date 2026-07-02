@@ -1324,3 +1324,229 @@ body.dark-mode .analysis-factor-text span { color: #e0e0e0; }
 body.dark-mode .share-img-card { background: #2a2a3e; }
 body.dark-mode .share-img-btn { background: #333350; color: #e0e0e0; border-color: #555; box-shadow: 3px 3px 0px #555; }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* ═══════════════════════════════════════════════════════════════
+   SKY BODY — Sun, Moon & Stars
+   ═══════════════════════════════════════════════════════════════ */
+.sky-body {
+  position: relative;
+  height: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.sun {
+  position: absolute;
+  top: -52px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  background: #ffd93d;
+  border-radius: 50%;
+  box-shadow: 0 0 20px rgba(255,217,61,0.6), 0 0 60px rgba(255,217,61,0.25);
+  transition: opacity .8s ease, transform .8s ease;
+}
+.sun::before, .sun::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 2px dashed rgba(255,217,61,0.35);
+  animation: sunPulse 3s ease-in-out infinite;
+}
+.sun::after {
+  inset: -12px;
+  animation-delay: 0.6s;
+  border-width: 1.5px;
+}
+@keyframes sunPulse {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.15); opacity: 1; }
+}
+body.warning .sun {
+  background: #f39c12;
+  box-shadow: 0 0 20px rgba(243,156,18,0.5), 0 0 60px rgba(243,156,18,0.2);
+}
+body.warning .sun::before, body.warning .sun::after {
+  border-color: rgba(243,156,18,0.3);
+}
+body.danger .sun {
+  opacity: 0;
+  transform: scale(0.3);
+  pointer-events: none;
+}
+
+/* Moon — hidden by default, shown in dark mode */
+.moon {
+  display: none;
+  position: absolute;
+  top: -52px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  background: #f0e68c;
+  border-radius: 50%;
+  box-shadow: 0 0 16px rgba(240,230,140,0.3);
+  transition: opacity .8s ease;
+}
+.moon::before {
+  content: '';
+  position: absolute;
+  top: -4px; left: 6px;
+  width: 26px; height: 26px;
+  background: var(--safe-sky1);
+  border-radius: 50%;
+}
+body.dark-mode .sun { display: none; }
+body.dark-mode .moon { display: block; }
+body.dark-mode.danger .moon {
+  opacity: 0.3;
+  box-shadow: 0 0 8px rgba(240,230,140,0.1);
+}
+
+/* Stars — only in dark mode */
+.star {
+  position: absolute;
+  width: 3px; height: 3px;
+  background: #fff;
+  border-radius: 50%;
+  opacity: 0;
+  animation: twinkle 2s ease-in-out infinite;
+}
+body.dark-mode .star { opacity: 0.7; }
+.s1 { top: -44px; right: 64px; animation-delay: 0s; }
+.s2 { top: -38px; right: 80px; animation-delay: 0.5s; }
+.s3 { top: -48px; right: 74px; animation-delay: 1s; }
+.s4 { top: -36px; right: 56px; animation-delay: 1.5s; }
+.s5 { top: -42px; right: 88px; animation-delay: 0.8s; }
+@keyframes twinkle {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.3); }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   GROUND STRIP — green grass at the bottom
+   ═══════════════════════════════════════════════════════════════ */
+.ground {
+  position: relative;
+  height: 28px;
+  margin: 6px -16px 0;
+  overflow: hidden;
+}
+.ground-grass {
+  position: absolute;
+  bottom: 0;
+  left: 0; right: 0;
+  height: 40px;
+  background: linear-gradient(to top, #27ae60 0%, #2ecc71 60%, transparent 100%);
+  border-radius: 50% 50% 0 0 / 20px 20px 0 0;
+  opacity: 0.55;
+}
+.ground-grass::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0; right: 0;
+  height: 100%;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0px,
+    transparent 6px,
+    rgba(39,174,96,0.3) 6px,
+    rgba(39,174,96,0.3) 8px
+  );
+}
+body.dark-mode .ground-grass {
+  background: linear-gradient(to top, #1a5a30 0%, #2a6a40 60%, transparent 100%);
+}
+body.danger .ground-grass {
+  opacity: 0.3;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   QUAKE MAP RIPPLE — sonar pulse on new quake
+   ═══════════════════════════════════════════════════════════════ */
+.map-container {
+  position: relative;
+}
+.quake-ripple {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 20px; height: 20px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 500;
+}
+.quake-ripple::before,
+.quake-ripple::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 3px solid #e17055;
+  animation: rippleOut 1.4s ease-out forwards;
+}
+.quake-ripple::after {
+  animation-delay: 0.4s;
+}
+@keyframes rippleOut {
+  0%   { transform: scale(0); opacity: 1; }
+  100% { transform: scale(25); opacity: 0; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   JAVI SPARKLES — floating stars on tap
+   ═══════════════════════════════════════════════════════════════ */
+.javi-sparkles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+  z-index: 5;
+}
+.spark {
+  position: absolute;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  animation: sparkFloat 0.8s ease-out forwards;
+}
+.spark::before {
+  content: '✦';
+  font-size: 14px;
+  color: #ffd93d;
+  display: block;
+  line-height: 1;
+}
+.spark.spark-pink::before { color: #fd79a8; }
+.spark.spark-green::before { color: #55efc4; }
+.spark.spark-blue::before { color: #74b9ff; }
+@keyframes sparkFloat {
+  0%   { transform: translate(0, 0) scale(0.3); opacity: 1; }
+  100% { transform: translate(var(--sx, 20px), var(--sy, -40px)) scale(1); opacity: 0; }
+}
+.spark.spark-danger::before {
+  content: '⚡';
+  font-size: 16px;
+  color: #e17055;
+}
+@keyframes sparkDanger {
+  0%   { transform: translate(0, 0) scale(0.5); opacity: 1; }
+  100% { transform: translate(var(--sx, 10px), var(--sy, -30px)) scale(1.2); opacity: 0; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ENTRANCE ANIMATIONS — cards slide up on first load
+   ═══════════════════════════════════════════════════════════════ */
+.entrance {
+  animation: slideUpFade 0.5s ease both;
+}
+.entrance-d1 { animation-delay: 0.05s; }
+.entrance-d2 { animation-delay: 0.1s; }
+.entrance-d3 { animation-delay: 0.15s; }
+.entrance-d4 { animation-delay: 0.2s; }
+.entrance-d5 { animation-delay: 0.25s; }
+.entrance-d6 { animation-delay: 0.3s; }
+.entrance-d7 { animation-delay: 0.35s; }
+@keyframes slideUpFade {
+  0%   { opacity: 0; transform: translateY(16px); }
+  100% { opacity: 1; transform: translateY(0); }
+}

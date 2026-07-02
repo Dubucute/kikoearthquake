@@ -991,6 +991,9 @@ class JaviAlertApp {
       // Trigger server-side push for background delivery
       this._triggerServerPush(biggest, newQuakes.length);
 
+      // Trigger map ripple effect
+      this._triggerQuakeRipple();
+
       // Update bubble message
       const bubble = document.getElementById('bubble');
       const count = newQuakes.length;
@@ -1099,6 +1102,9 @@ class JaviAlertApp {
       void wrap.offsetWidth;
       wrap.classList.add('shake');
       setTimeout(() => wrap.classList.remove('shake'), 500);
+
+      // Show sparkles
+      this._spawnSparkles(this.currentMood === 'danger' ? 'danger' : 'safe');
 
       // If warning or danger, show a safety tip instead of jokes
       if (this.currentMood === 'warning' || this.currentMood === 'danger') {
@@ -2148,6 +2154,46 @@ class JaviAlertApp {
       });
 
       return html;
+    }
+
+    // ─── SPAWN SPARKLES ON JAVI TAP ──────────────────────────
+    _spawnSparkles(mood) {
+      const container = document.getElementById('javiSparkles');
+      if (!container) return;
+      // Clear previous
+      container.innerHTML = '';
+      const count = mood === 'danger' ? 3 : 6;
+      const colors = mood === 'danger'
+        ? ['spark-danger']
+        : ['spark', 'spark-pink', 'spark-green', 'spark-blue'];
+      for (let i = 0; i < count; i++) {
+        const el = document.createElement('div');
+        const cls = colors[Math.floor(Math.random() * colors.length)];
+        el.className = 'spark ' + cls;
+        // Random position around Javi
+        el.style.left = (20 + Math.random() * 80) + '%';
+        el.style.top = (10 + Math.random() * 60) + '%';
+        // Random float direction
+        el.style.setProperty('--sx', (Math.random() * 40 - 20) + 'px');
+        el.style.setProperty('--sy', (-20 - Math.random() * 30) + 'px');
+        el.style.animation = mood === 'danger'
+          ? 'sparkDanger ' + (0.6 + Math.random() * 0.4) + 's ease-out forwards'
+          : 'sparkFloat ' + (0.6 + Math.random() * 0.4) + 's ease-out forwards';
+        el.style.animationDelay = (i * 0.08) + 's';
+        container.appendChild(el);
+        // Auto-remove
+        setTimeout(() => el.remove(), 2000);
+      }
+    }
+
+    // ─── TRIGGER QUAKE RIPPLE ON MAP ─────────────────────────
+    _triggerQuakeRipple() {
+      const mapEl = document.getElementById('quakeMap');
+      if (!mapEl) return;
+      mapEl.classList.remove('map-ripple-active');
+      void mapEl.offsetWidth;
+      mapEl.classList.add('map-ripple-active');
+      setTimeout(() => mapEl.classList.remove('map-ripple-active'), 1500);
     }
   }
 
