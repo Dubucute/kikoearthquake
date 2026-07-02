@@ -1633,11 +1633,14 @@ class JaviAlertApp {
     }
 
     // ─── SHARE QUAKE AS IMAGE ─────────────────────────────────
-    _shareQuakeAsImage(q) {
+    async _shareQuakeAsImage(q) {
+      // Load Javi icon for the card
+      const javiIcon = await this._loadImage('icons/javi-icon.png');
+
       // Build a canvas card and show share overlay
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      const w = 600, h = 380;
+      const w = 600, h = 420;
       canvas.width = w * 2; canvas.height = h * 2;
       ctx.scale(2, 2); // retina
 
@@ -1654,6 +1657,21 @@ class JaviAlertApp {
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, w, h);
 
+      // ── Decorative clouds ──
+      ctx.globalAlpha = 0.12;
+      ctx.fillStyle = '#fff';
+      for (let i = 0; i < 4; i++) {
+        const cx = [80, 200, 420, 520][i];
+        const cy = [40, 80, 30, 70][i];
+        const r = [50, 40, 60, 35][i];
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.arc(cx + r * 0.7, cy - r * 0.3, r * 0.7, 0, Math.PI * 2);
+        ctx.arc(cx + r * 1.2, cy, r * 0.6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+
       // Rounded card area
       ctx.shadowColor = 'rgba(0,0,0,0.15)';
       ctx.shadowBlur = 20;
@@ -1669,53 +1687,67 @@ class JaviAlertApp {
       this._roundRect(ctx, 20, 20, w - 40, h - 40, 16);
       ctx.stroke();
 
+      // ── Javi icon (top-right area) ──
+      if (javiIcon) {
+        // Circular mask
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(w - 64, 54, 22, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.drawImage(javiIcon, w - 86, 32, 44, 44);
+        ctx.restore();
+        // Circle border
+        ctx.strokeStyle = dark ? '#555' : '#2d3436';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(w - 64, 54, 22, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
       // Header: JaviAlert
       ctx.fillStyle = dark ? '#e0e0e0' : '#2d3436';
       ctx.font = 'bold 22px Fredoka, sans-serif';
       ctx.textAlign = 'left';
       ctx.fillText('JaviAlert', 44, 58);
 
-      // Icon circle
-      ctx.fillStyle = '#fd79a8';
-      ctx.beginPath();
-      ctx.arc(32, 46, 10, 0, Math.PI * 2);
-      ctx.fill();
-
       // Separator line
       ctx.strokeStyle = dark ? '#444' : '#dfe6e9';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.moveTo(36, 68);
-      ctx.lineTo(w - 36, 68);
+      ctx.moveTo(36, 72);
+      ctx.lineTo(w - 36, 72);
       ctx.stroke();
 
-      // Magnitude badge
+      // ── Magnitude badge (fixed: no more overlap) ──
       const mag = q.mag.toFixed(1);
       const cls = magClass(q.mag);
       const badgeColor = cls === 'danger' ? '#e17055' : cls === 'warning' ? '#fdcb6e' : '#00b894';
+      const badgeW = 80, badgeH = 62, badgeX = 44, badgeY = 90;
       ctx.fillStyle = badgeColor;
       ctx.beginPath();
-      this._roundRect(ctx, 44, 86, 68, 52, 12);
+      this._roundRect(ctx, badgeX, badgeY, badgeW, badgeH, 12);
       ctx.fill();
 
-      ctx.fillStyle = '#fff';
-      ctx.font = 'bold 32px Fredoka, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(mag, 78, 120);
-
+      // "MAGNITUDE" label
       ctx.fillStyle = cls === 'warning' ? '#2d3436' : '#fff';
-      ctx.font = 'bold 11px Fredoka, sans-serif';
-      ctx.fillText('MAGNITUDE', 78, 103);
+      ctx.font = 'bold 10px Fredoka, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('MAGNITUDE', badgeX + badgeW / 2, badgeY + 18);
 
-      // Title: place
+      // Magnitude number
+      ctx.fillStyle = cls === 'warning' ? '#2d3436' : '#fff';
+      ctx.font = 'bold 34px Fredoka, sans-serif';
+      ctx.fillText(mag, badgeX + badgeW / 2, badgeY + 52);
+
+      // ── Place name ──
       ctx.fillStyle = dark ? '#e0e0e0' : '#2d3436';
-      ctx.font = 'bold 18px Fredoka, sans-serif';
+      ctx.font = 'bold 17px Fredoka, sans-serif';
       ctx.textAlign = 'left';
       const placeLabel = q.dist + ' km ' + q.dir + ' of ' + q.place;
-      this._wrapText(ctx, placeLabel, 128, 106, w - 172, 22, 2);
+      this._wrapText(ctx, placeLabel, 142, 110, w - 200, 20, 2);
 
-      // Info rows
-      const infoY = 152;
+      // ── Info rows ──
+      const infoY = 172;
       const infoData = [
         { label: 'Time', value: timeSince(q.time) },
         { label: 'Depth', value: q.depth !== null ? q.depth + ' km' : '--' },
@@ -1723,28 +1755,77 @@ class JaviAlertApp {
       ];
       infoData.forEach((item, i) => {
         const x = 52;
-        const y = infoY + i * 36;
+        const y = infoY + i * 38;
         ctx.fillStyle = dark ? '#999' : '#636e72';
         ctx.font = '11px Fredoka, sans-serif';
         ctx.fillText(item.label, x, y);
         ctx.fillStyle = dark ? '#e0e0e0' : '#2d3436';
         ctx.font = 'bold 16px Fredoka, sans-serif';
-        ctx.fillText(item.value, x + 70, y);
+        ctx.fillText(item.value, x + 74, y);
       });
+
+      // ── Small map pin indicating location ──
+      const pinX = w - 90, pinY = 150;
+      ctx.fillStyle = '#e17055';
+      ctx.beginPath();
+      ctx.arc(pinX, pinY, 12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 14px Fredoka, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('📍', pinX, pinY + 5);
+
+      // Pin label
+      ctx.fillStyle = dark ? '#999' : '#636e72';
+      ctx.font = '9px Fredoka, sans-serif';
+      ctx.fillText(q.lat.toFixed(1) + ', ' + q.lon.toFixed(1), pinX, pinY + 28);
+
+      // ── Javi character quote at bottom ──
+      ctx.fillStyle = dark ? '#555' : '#e8f4f8';
+      this._roundRect(ctx, 44, h - 126, w - 88, 32, 10);
+      ctx.fill();
+      ctx.fillStyle = dark ? '#999' : '#636e72';
+      ctx.font = '12px Fredoka, sans-serif';
+      ctx.textAlign = 'center';
+      const quote = this._getRandomQuote();
+      ctx.fillText(quote, w / 2, h - 106);
 
       // Footer: earthquake alert from Javi
       ctx.fillStyle = dark ? '#777' : '#999';
-      ctx.font = '12px Fredoka, sans-serif';
+      ctx.font = '11px Fredoka, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('🌏 Earthquake alert brought to you by Javi', w / 2, h - 42);
+      ctx.fillText('Brought to you by JaviAlert', w / 2, h - 76);
 
-      // Also show raw place
+      // Raw place
       ctx.fillStyle = dark ? '#555' : '#bbb';
       ctx.font = '10px Fredoka, sans-serif';
-      ctx.fillText(q.rawPlace, w / 2, h - 28);
+      ctx.fillText(q.rawPlace, w / 2, h - 60);
 
       // Show overlay
       this._showShareImageOverlay(canvas, q);
+    }
+
+    _loadImage(src) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = () => resolve(null);
+        img.src = src;
+      });
+    }
+
+    _getRandomQuote() {
+      const quotes = [
+        'Ingat palagi, pare!',
+        'Laging handa, hindi balahura!',
+        'Mag-ingat sa lindol!',
+        'Safety first lagi!',
+        'Keep calm and Javi on!',
+        'Alagaan ang sarili!',
+        'Dapat laging handa!',
+      ];
+      return quotes[Math.floor(Math.random() * quotes.length)];
     }
 
     _roundRect(ctx, x, y, w, h, r) {

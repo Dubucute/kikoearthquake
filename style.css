@@ -1259,7 +1259,8 @@ body.dark-mode .analysis-factor-text span { color: #e0e0e0; }
 }
 .share-img-btn {
   flex: 1;
-  padding: 10px;
+  padding: 10px 6px;
+  min-height: 44px;
   border: 2.5px solid #2d3436;
   border-radius: 12px;
   background: white;
@@ -1267,12 +1268,14 @@ body.dark-mode .analysis-factor-text span { color: #e0e0e0; }
   font-size: 13px;
   font-family: inherit;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 5px;
   box-shadow: 3px 3px 0px #2d3436;
   transition: transform .1s;
+  white-space: nowrap;
+  line-height: 1;
 }
 .share-img-btn:active { transform: scale(.95); }
 .share-img-btn i { width: 16px; height: 16px; }
