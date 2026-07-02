@@ -258,7 +258,7 @@ body.danger {
   justify-content: center;
   position: relative;
   flex-shrink: 0;
-  padding: 18px 0;
+  padding: 18px 0 8px;
   cursor: pointer;
 }
 .char-name {
@@ -279,7 +279,7 @@ body.danger {
   letter-spacing: .5px;
 }
 .kid-gif {
-  height: 190px;
+  height: 170px;
   width: 120px;
   background-size: contain;
   background-repeat: no-repeat;
@@ -302,29 +302,21 @@ body.danger {
   75% { transform: translateX(3px) rotate(2deg); }
 }
 
-/* STATUS ROW — centered under the character card */
-.status-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: -6px 0 14px;
-}
-
-/* STATUS PILL */
+/* STATUS PILL — sits under Javi's image inside the character card */
 .status-pill {
-  display: inline-flex; align-items: center; gap: 6px;
+  display: inline-flex; align-items: center; gap: 5px;
   width: fit-content;
-  padding: 6px 18px; border-radius: 30px;
-  font-size: 14px; font-weight: 700; color: white;
-  box-shadow: 4px 4px 0px rgba(0,0,0,.15);
-  letter-spacing: .3px;
+  padding: 4px 14px; border-radius: 30px;
+  font-size: 12px; font-weight: 700; color: white;
+  box-shadow: 3px 3px 0px rgba(0,0,0,.15);
   border: 2.5px solid #2d3436;
+  margin-top: 2px;
 }
-.status-pill i { width: 15px; height: 15px; }
+.status-pill i { width: 13px; height: 13px; }
 .pill-safe    { background: #00b894; }
 .pill-warning { background: #fdcb6e; color: #2d3436; }
 .pill-danger  { background: #e17055; animation: pulse-red 1s infinite; }
-@keyframes pulse-red { 0%,100% { box-shadow: 4px 4px 0px rgba(0,0,0,.15); } 50% { box-shadow: 4px 4px 0px rgba(0,0,0,.15), 0 0 0 8px rgba(225,112,85,0.3); } }
+@keyframes pulse-red { 0%,100% { box-shadow: 3px 3px 0px rgba(0,0,0,.15); } 50% { box-shadow: 3px 3px 0px rgba(0,0,0,.15), 0 0 0 6px rgba(225,112,85,0.3); } }
 
 /* ═══════════════════════════════════════════════════════════════
    ACTION BAR (Safety Tips + Hotlines)
