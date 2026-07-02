@@ -43,7 +43,8 @@ export default async function handler(req, res) {
       title: req.body.title || 'JaviAlert',
       body: req.body.body || 'May bagong earthquake update!',
       url: req.body.url || '/',
-      tag: req.body.tag || 'javi-alert'
+      tag: req.body.tag || 'javi-alert',
+      alertType: req.body.alertType || null
     });
     const results = await Promise.allSettled(
       allSubs.map(s => webpush.sendNotification(s, payload))

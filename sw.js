@@ -56,7 +56,7 @@ self.addEventListener('push', e => {
       renotify: true,
       vibrate: [200, 100, 200],
       requireInteraction: true,
-      data: { url: data.url }
+      data: { url: data.url, alertType: data.alertType }
     })
   );
 });
@@ -64,15 +64,25 @@ self.addEventListener('push', e => {
 self.addEventListener('notificationclick', e => {
   e.notification.close();
   const urlToOpen = e.notification.data?.url || '/';
+  const alertType = e.notification.data?.alertType;
   e.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
       for (const client of clientList) {
-        if (client.url === urlToOpen && 'focus' in client) {
+        if (client.url.startsWith(self.location.origin) && 'focus' in client) {
+          if (alertType) {
+            client.postMessage({ action: 'playAlertSound', alertType });
+          }
           return client.focus();
         }
       }
       if (clients.openWindow) {
-        return clients.openWindow(urlToOpen);
+        return clients.openWindow(urlToOpen).then(newWin => {
+          if (newWin && alertType) {
+            newWin.onload = () => {
+              newWin.postMessage({ action: 'playAlertSound', alertType });
+            };
+          }
+        });
       }
     })
   );

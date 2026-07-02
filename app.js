@@ -497,6 +497,13 @@
         document.getElementById('offlineBanner').classList.remove('hidden');
       }
 
+      // Listen for postMessage from service worker (notification click → play sound)
+      navigator.serviceWorker.addEventListener('message', (e) => {
+        if (e.data && e.data.action === 'playAlertSound') {
+          this._playAlertSound(e.data.alertType);
+        }
+      });
+
       // Pull-to-refresh (mobile)
       this._setupPullToRefresh();
 
@@ -1307,6 +1314,9 @@
 
     async _triggerServerPush(biggest, count) {
       if (!this._pushReady) return;
+      const alertType = biggest.mag >= CONFIG.DANGER_THRESHOLD ? 'danger'
+        : biggest.mag >= CONFIG.WARNING_THRESHOLD ? 'warning'
+        : null;
       try {
         const title = count === 1 ? 'New earthquake detected!'
           : count + ' new earthquakes!';
@@ -1319,7 +1329,8 @@
             title: '\uD83C\uDF0D ' + title,
             body: body,
             url: '/',
-            tag: 'quake-' + Date.now()
+            tag: 'quake-' + Date.now(),
+            alertType: alertType
           })
         });
       } catch (_) { /* ignore */ }
