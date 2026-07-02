@@ -1338,7 +1338,7 @@ body.dark-mode .share-img-btn { background: #333350; color: #e0e0e0; border-colo
 }
 .sun {
   position: absolute;
-  top: -80px;
+  top: -20px;
   right: 16px;
   width: 36px;
   height: 36px;
@@ -1381,7 +1381,7 @@ body.danger .sun {
 .moon {
   display: none;
   position: absolute;
-  top: -80px;
+  top: -20px;
   right: 16px;
   width: 32px;
   height: 32px;
@@ -1417,18 +1417,18 @@ body.dark-mode .star {
   opacity: 0.7;
   animation: twinkle 2s ease-in-out infinite;
 }
-.s1 { top: -74px; right: 60px; }
-.s2 { top: -66px; right: 82px; }
-.s3 { top: -80px; right: 72px; }
-.s4 { top: -62px; right: 50px; }
-.s5 { top: -70px; right: 90px; }
-.s6 { top: -76px; right: 42px; }
-.s7 { top: -64px; right: 96px; }
-.s8 { top: -78px; right: 84px; }
-.s9 { top: -68px; right: 68px; }
-.s10 { top: -72px; right: 52px; }
-.s11 { top: -60px; right: 74px; }
-.s12 { top: -76px; right: 44px; }
+.s1 { top: -10px; right: 60px; }
+.s2 { top: -2px; right: 82px; }
+.s3 { top: -16px; right: 72px; }
+.s4 { top: 2px; right: 50px; }
+.s5 { top: -6px; right: 90px; }
+.s6 { top: -12px; right: 42px; }
+.s7 { top: 0px; right: 96px; }
+.s8 { top: -14px; right: 84px; }
+.s9 { top: -4px; right: 68px; }
+.s10 { top: -8px; right: 52px; }
+.s11 { top: 4px; right: 74px; }
+.s12 { top: -12px; right: 44px; }
 body.dark-mode .s1 { animation-delay: 0s; }
 body.dark-mode .s2 { animation-delay: 0.3s; }
 body.dark-mode .s3 { animation-delay: 0.7s; }
