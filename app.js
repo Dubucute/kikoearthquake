@@ -25,7 +25,7 @@ class JaviAlertApp {
       this.mapMarkers = [];
       this.userMarker = null;
       this.mapTiles = null;
-      this.ambientEnabled = localStorage.getItem('javiAmbientEnabled') === 'true';
+      this.ambientEnabled = localStorage.getItem('javiAmbientEnabled') !== 'false';
       this.ambientActive = false;
       this.ambientTrack = localStorage.getItem('javiAmbientTrack') || '';
       this.volumeLevel = parseFloat(localStorage.getItem('javiVolume') || '0.5');

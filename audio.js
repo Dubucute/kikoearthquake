@@ -151,27 +151,28 @@ export function startAmbientSound(track) {
     _ambientAudio = new Audio();
     _ambientAudio.preload = 'auto';
     _ambientAudio.loop = (_playbackMode === 'loop-one');
-    if (track) {
-      _ambientAudio.src = track;
-      _ambientAudio.volume = _ambientVolume;
-      _ambientAudio.play().catch(() => {});
-      _applyPlaybackMode();
-      // Don't notify track — opening music plays first on tap
-    } else {
+
+    let firstTrack = track;
+    if (!firstTrack) {
       _trackQueue = _shuffle(AMBIENT_FILES);
-      // Set first track without notifying — opening plays first
-      const firstTrack = _trackQueue.pop();
-      _ambientAudio.src = firstTrack;
-      _ambientAudio.volume = _ambientVolume;
-      _ambientAudio.play().catch(() => {});
-      _applyPlaybackMode();
+      firstTrack = _trackQueue.pop();
+    }
+    _ambientAudio.src = firstTrack;
+    _ambientAudio.volume = _ambientVolume;
+    _ambientAudio.play().catch(() => {});
+    _applyPlaybackMode();
+
+    // If opening music is queued (paused, awaiting first gesture), don't notify yet
+    const openingQueued = _openingAudio && _openingAudio.src && _openingAudio.paused;
+    if (!openingQueued) {
+      _notifyTrack(firstTrack);
     }
   } catch (_) {}
 }
 
 export function stopAmbientSound() {
   try {
-    stopOpeningMusic();
+    // Don't stop opening music! It may be queued for first user tap.
     if (_ambientAudio) {
       _ambientAudio.pause();
       _ambientAudio.removeEventListener('ended', _playNextAmbient);
