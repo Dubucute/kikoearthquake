@@ -55,6 +55,24 @@ const AMBIENT_FILES = [
   'sounds/Javilerto.mp3'
 ];
 
+/** Pretty name for track display */
+function _trackLabel(path) {
+  if (!path) return '—';
+  // Extract "Alerto sa Sakuna" from "sounds/Alerto sa Sakuna.mp3"
+  const name = path.split('/').pop().replace(/\.mp3$/i, '');
+  return name;
+}
+
+// Callback when track changes — set by app.js for "Now Playing" UI
+let _trackChangeCallback = null;
+export function setOnTrackChange(fn) {
+  _trackChangeCallback = fn;
+}
+
+function _notifyTrack(path) {
+  if (_trackChangeCallback) _trackChangeCallback(path || '');
+}
+
 function _shuffle(arr) {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -67,9 +85,11 @@ function _shuffle(arr) {
 function _playNextAmbient() {
   if (!_ambientAudio) return;
   if (_trackQueue.length === 0) _trackQueue = _shuffle(AMBIENT_FILES);
-  _ambientAudio.src = _trackQueue.pop();
+  const track = _trackQueue.pop();
+  _ambientAudio.src = track;
   _ambientAudio.volume = _ambientVolume;
   _ambientAudio.play().catch(() => {});
+  _notifyTrack(track);
 }
 
 export function setAmbientVolume(vol) {
@@ -94,6 +114,7 @@ export function startAmbientSound(track) {
       _ambientAudio.src = track;
       _ambientAudio.volume = _ambientVolume;
       _ambientAudio.play().catch(() => {});
+      _notifyTrack(track);
     } else {
       _trackQueue = _shuffle(AMBIENT_FILES);
       _ambientAudio.addEventListener('ended', _playNextAmbient);
@@ -112,6 +133,7 @@ export function stopAmbientSound() {
       _ambientAudio = null;
     }
     _trackQueue = [];
+    _notifyTrack('');
   } catch (_) {}
 }
 
@@ -143,6 +165,7 @@ export function resumeAmbient() {
       try { _openingAudio = null; } catch (_) {}
       if (_ambientAudio && _ambientAudio.paused && _ambientAudio.src) {
         _ambientAudio.play().catch(() => {});
+        _notifyTrack(_ambientAudio.src);
       }
     };
     return;
@@ -153,6 +176,7 @@ export function resumeAmbient() {
       try { _openingAudio = null; } catch (_) {}
       if (_ambientAudio && _ambientAudio.paused && _ambientAudio.src) {
         _ambientAudio.play().catch(() => {});
+        _notifyTrack(_ambientAudio.src);
       }
     };
     return;
@@ -160,6 +184,7 @@ export function resumeAmbient() {
   // No opening music — just resume ambient
   if (_ambientAudio && _ambientAudio.paused && _ambientAudio.src) {
     _ambientAudio.play().catch(() => {});
+    _notifyTrack(_ambientAudio.src);
   }
 }
 
@@ -175,6 +200,7 @@ export function playOpeningMusic() {
     _openingAudio.src = OPENING_FILE;
     _openingAudio.volume = 0.35;
     _openingAudio.play().catch(() => {});
+    _notifyTrack('Sabay_sabay_Tayong_Bida');
   } catch (_) {}
 }
 
@@ -185,5 +211,6 @@ export function stopOpeningMusic() {
       _openingAudio.src = '';
       _openingAudio = null;
     }
+    // Don't clear now-playing here — ambient may be queued
   } catch (_) {}
 }

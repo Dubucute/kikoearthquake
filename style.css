@@ -83,6 +83,31 @@ body.danger {
 .refresh-ico:disabled { opacity: .5; }
 .refresh-ico svg { pointer-events: none; }
 
+/* NOW PLAYING — shows current track name below topbar */
+.now-playing {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255,255,255,.85);
+  text-shadow: 1px 1px 0px rgba(0,0,0,.1);
+  overflow: hidden;
+  white-space: nowrap;
+}
+.now-playing-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.now-playing-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+body.dark-mode .now-playing {
+  color: rgba(255,255,255,.6);
+}
+
 /* LOCATION BAR */
 .loc-bar {
   background: rgba(255,255,255,.8); backdrop-filter: blur(8px);

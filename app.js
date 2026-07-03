@@ -1,5 +1,5 @@
 import { JAVI_MESSAGES, JAVI_REACTIONS, SAFETY_TIPS, EMERGENCY_CONTACTS } from './messages.js';
-import { playAlertSound, startAmbientSound, stopAmbientSound, setAmbientVolume, setAmbientTrack, resumeAmbient, playOpeningMusic } from './audio.js';
+import { playAlertSound, startAmbientSound, stopAmbientSound, setAmbientVolume, setAmbientTrack, resumeAmbient, playOpeningMusic, setOnTrackChange } from './audio.js';
 import { API, CONFIG, timeSince, getCompassDir, getDistance, parsePlaceName, magClass } from './api-utils.js';
 
 class JaviAlertApp {
@@ -209,6 +209,22 @@ class JaviAlertApp {
       // Settings button
       document.getElementById('settingsBtn').addEventListener('click', this._showSettings);
       this._setupSettingsModal();
+
+      // Now Playing track change callback
+      setOnTrackChange((trackPath) => {
+        const el = document.getElementById('nowPlaying');
+        const textEl = document.getElementById('nowPlayingText');
+        if (!el || !textEl) return;
+        if (!trackPath) {
+          el.classList.add('hidden');
+          textEl.textContent = 'Now Playing: —';
+        } else {
+          // Extract pretty name from path: "sounds/Alerto sa Sakuna.mp3" → "Alerto sa Sakuna"
+          const name = trackPath.split('/').pop().replace(/\.mp3$/i, '');
+          textEl.textContent = '♫ ' + name;
+          el.classList.remove('hidden');
+        }
+      });
 
       // Am I Safe? analysis
       document.getElementById('pillAnalysisBtn').addEventListener('click', () => this._showAnalysis());
