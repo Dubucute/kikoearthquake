@@ -2115,14 +2115,12 @@ class JaviAlertApp {
         if (pct) pct.textContent = Math.round(this.volumeLevel * 100) + '%';
       });
 
-      // Update Logs toggle
+      // Update Logs — open separate modal
       document.getElementById('updateLogsRow').addEventListener('click', () => {
         const body = document.getElementById('updateLogsBody');
-        const chevron = document.getElementById('updateLogsChevron');
         if (!body) return;
-        const isOpen = body.classList.toggle('open');
-        chevron.classList.toggle('open', isOpen);
-        if (isOpen && !body.dataset.populated) {
+        // Populate on first open
+        if (!body.dataset.populated) {
           body.dataset.populated = '1';
           body.innerHTML = CHANGELOG.map(entry => `
             <div class="update-log-entry">
@@ -2136,6 +2134,18 @@ class JaviAlertApp {
             </div>
           `).join('');
         }
+        document.getElementById('updateLogsModal').classList.remove('hidden');
+      });
+
+      // Update Logs modal close
+      document.getElementById('updateLogsClose').addEventListener('click', () => {
+        document.getElementById('updateLogsModal').classList.add('hidden');
+      });
+      document.getElementById('updateLogsGotIt').addEventListener('click', () => {
+        document.getElementById('updateLogsModal').classList.add('hidden');
+      });
+      document.getElementById('updateLogsModal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) e.currentTarget.classList.add('hidden');
       });
     }
 

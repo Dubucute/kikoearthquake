@@ -382,12 +382,26 @@
             <i data-lucide="history" aria-hidden="true"></i>
             <span>Update Logs</span>
           </div>
-          <span class="update-logs-chevron" id="updateLogsChevron">▸</span>
+          <span class="update-logs-chevron">▸</span>
         </div>
-        <div class="update-logs-body hidden" id="updateLogsBody"></div>
       </div>
       <div class="modal-footer">
         <button class="modal-btn" id="settingsModalGotIt">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Update Logs modal -->
+  <div class="modal-overlay hidden" id="updateLogsModal" role="dialog" aria-modal="true" aria-label="Update Logs">
+    <div class="modal-card update-logs-modal-card">
+      <button class="modal-close" id="updateLogsClose" aria-label="Close">&times;</button>
+      <div class="modal-header">
+        <i data-lucide="history" aria-hidden="true"></i>
+        <h2 class="modal-title">Update Logs</h2>
+      </div>
+      <div class="update-logs-modal-body" id="updateLogsBody"></div>
+      <div class="modal-footer">
+        <button class="modal-btn" id="updateLogsGotIt">Got it!</button>
       </div>
     </div>
   </div>

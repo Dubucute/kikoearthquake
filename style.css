@@ -1753,25 +1753,24 @@ body.dark-mode .settings-slider {
 .update-logs-chevron {
   font-size: 14px;
   color: var(--text-muted);
-  transition: transform .25s ease;
   flex-shrink: 0;
 }
-.update-logs-chevron.open {
-  transform: rotate(90deg);
+/* Update Logs modal */
+.update-logs-modal-card {
+  max-width: 400px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
 }
-.update-logs-body {
-  padding: 0 14px 4px;
-  overflow: hidden;
-  max-height: 0;
-  transition: max-height .35s ease, padding .35s ease;
-}
-.update-logs-body.open {
-  max-height: 600px;
-  padding: 4px 14px 10px;
+.update-logs-modal-body {
+  padding: 8px 16px 4px;
+  overflow-y: auto;
+  flex: 1;
+  -webkit-overflow-scrolling: touch;
 }
 .update-log-entry {
   border-bottom: 1px solid rgba(0,0,0,.06);
-  padding: 10px 0;
+  padding: 12px 0;
 }
 .update-log-entry:last-child { border-bottom: none; }
 .update-log-ver {
@@ -1780,7 +1779,7 @@ body.dark-mode .settings-slider {
   color: var(--text);
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 .update-log-date {
   font-size: 11px;
@@ -1789,14 +1788,14 @@ body.dark-mode .settings-slider {
 }
 .update-log-items {
   list-style: none;
-  margin: 4px 0 0;
+  margin: 6px 0 0;
   padding: 0;
 }
 .update-log-items li {
   font-size: 12px;
   line-height: 1.5;
   color: var(--text-muted);
-  padding: 2px 0 2px 14px;
+  padding: 3px 0 3px 14px;
   position: relative;
 }
 .update-log-items li::before {
