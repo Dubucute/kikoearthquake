@@ -91,6 +91,39 @@ export const SAFETY_TIPS = [
   "Manatiling kalmado at huwag mag-panic — makatutulong ito sa malinaw na pag-iisip."
 ];
 
+// ─── CHANGELOG ───────────────────────────────────────────────
+export const CHANGELOG = [
+  { ver: 'v25', date: '2026-07-03', items: [
+    'Fixed: App now loads in Messenger and other in-app browsers (non-blocking SW)',
+    'Fixed: Track names display correctly with URL decoding and "by JaviAlert"',
+    'New: Official NDRRMC Alert sound replaces old synthesized beeps'
+  ]},
+  { ver: 'v24', date: '2026-07-02', items: [
+    'New: Now Playing bar with song name, play/pause, next, and mode controls',
+    'New: Playback modes — Shuffle All, Loop One, Play Once',
+    'New: Background Music toggle + Volume slider in settings',
+    'New: Opening theme song (Sabay-sabay Tayong Bida) plays before ambient mix',
+    'Fixed: Autoplay music works on page load (browser policy compliant)',
+    'Fixed: Opening and ambient music no longer overlap (merged into one player)'
+  ]},
+  { ver: 'v23', date: '2026-07-01', items: [
+    'New: Push notifications highlight the NEWEST quake (not the strongest)',
+    'New: Depth-adjusted magnitude — shallow quakes feel stronger, deep ones feel weaker',
+    'New: Lowered danger threshold to Mag 4.0, with distance-triggered danger at Mag 3.5+ within 120km',
+    'Fixed: Service Worker auto-clears old cache on every update',
+    'Fixed: "Pinakamalakas" changed to "Pinakabago" in alert bubbles'
+  ]},
+  { ver: 'v22', date: '2026-06-30', items: [
+    'New: Real MP3 music tracks replace synthesized melodies',
+    'New: Javi cartoon redesign with animated GIF reactions',
+    'New: Earthquake safety tips, emergency hotlines, and "Am I Safe?" analysis',
+    'New: Dark mode toggle',
+    'New: Leaflet map with earthquake markers and magnitude filters',
+    'New: Installable PWA with offline support via Service Worker',
+    'New: Push notifications for new earthquakes'
+  ]}
+];
+
 export const JAVI_REACTIONS = [
   "Hoy! 'wag mo 'kong pindot-pindot! 😤",
   "Aray! Masakit yun! 🥲",

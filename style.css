@@ -1742,6 +1742,74 @@ body.dark-mode .settings-slider {
   border-color: #555;
 }
 
+/* Update Logs collapsible */
+.settings-row-logs {
+  cursor: pointer;
+  user-select: none;
+}
+.settings-row-logs:active {
+  opacity: .6;
+}
+.update-logs-chevron {
+  font-size: 14px;
+  color: var(--text-muted);
+  transition: transform .25s ease;
+  flex-shrink: 0;
+}
+.update-logs-chevron.open {
+  transform: rotate(90deg);
+}
+.update-logs-body {
+  padding: 0 14px 4px;
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height .35s ease, padding .35s ease;
+}
+.update-logs-body.open {
+  max-height: 600px;
+  padding: 4px 14px 10px;
+}
+.update-log-entry {
+  border-bottom: 1px solid rgba(0,0,0,.06);
+  padding: 10px 0;
+}
+.update-log-entry:last-child { border-bottom: none; }
+.update-log-ver {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.update-log-date {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+.update-log-items {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+}
+.update-log-items li {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-muted);
+  padding: 2px 0 2px 14px;
+  position: relative;
+}
+.update-log-items li::before {
+  content: '•';
+  position: absolute;
+  left: 2px;
+  color: #00b894;
+  font-weight: 700;
+}
+body.dark-mode .update-log-entry {
+  border-bottom-color: rgba(255,255,255,.08);
+}
+
 /* ═══════════════════════════════════════════════════════════════
    LOADING OVERLAY — splash screen on first load
    ═══════════════════════════════════════════════════════════════ */

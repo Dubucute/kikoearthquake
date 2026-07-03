@@ -1,4 +1,4 @@
-import { JAVI_MESSAGES, JAVI_REACTIONS, SAFETY_TIPS, EMERGENCY_CONTACTS } from './messages.js';
+import { JAVI_MESSAGES, JAVI_REACTIONS, SAFETY_TIPS, EMERGENCY_CONTACTS, CHANGELOG } from './messages.js';
 import { playAlertSound, startAmbientSound, stopAmbientSound, setAmbientVolume, setAmbientTrack, resumeAmbient, setOnTrackChange, getPlaybackMode, setPlaybackMode, nextTrack, toggleAmbient, isAmbientPlaying } from './audio.js';
 import { API, CONFIG, timeSince, getCompassDir, getDistance, parsePlaceName, magClass } from './api-utils.js';
 
@@ -2113,6 +2113,29 @@ class JaviAlertApp {
         setAmbientVolume(this.volumeLevel);
         const pct = document.getElementById('settingsVolPct');
         if (pct) pct.textContent = Math.round(this.volumeLevel * 100) + '%';
+      });
+
+      // Update Logs toggle
+      document.getElementById('updateLogsRow').addEventListener('click', () => {
+        const body = document.getElementById('updateLogsBody');
+        const chevron = document.getElementById('updateLogsChevron');
+        if (!body) return;
+        const isOpen = body.classList.toggle('open');
+        chevron.classList.toggle('open', isOpen);
+        if (isOpen && !body.dataset.populated) {
+          body.dataset.populated = '1';
+          body.innerHTML = CHANGELOG.map(entry => `
+            <div class="update-log-entry">
+              <div class="update-log-ver">
+                ${entry.ver}
+                <span class="update-log-date">${entry.date}</span>
+              </div>
+              <ul class="update-log-items">
+                ${entry.items.map(i => `<li>${i}</li>`).join('')}
+              </ul>
+            </div>
+          `).join('');
+        }
       });
     }
 
