@@ -1,5 +1,5 @@
 import { JAVI_MESSAGES, JAVI_REACTIONS, SAFETY_TIPS, EMERGENCY_CONTACTS } from './messages.js';
-import { playAlertSound, startAmbientSound, stopAmbientSound, setAmbientVolume, resumeAmbient, playOpeningMusic, stopOpeningMusic } from './audio.js';
+import { playAlertSound, startAmbientSound, stopAmbientSound, setAmbientVolume, resumeAmbient, playOpeningMusic } from './audio.js';
 import { API, CONFIG, timeSince, getCompassDir, getDistance, parsePlaceName, magClass } from './api-utils.js';
 
 class JaviAlertApp {
@@ -2113,7 +2113,8 @@ class JaviAlertApp {
     _dismissLoading() {
       const overlay = document.getElementById('loadingOverlay');
       if (!overlay || overlay.classList.contains('fade-out')) return; // already dismissing
-      stopOpeningMusic();
+      // Don't stop opening music here — browser may have blocked autoplay.
+      // It will transition to ambient on first user tap via _unlockAudioOnce.
       overlay.classList.add('fade-out');
       setTimeout(() => {
         overlay.classList.add('hidden');

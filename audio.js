@@ -82,6 +82,7 @@ export function startAmbientSound() {
     stopAmbientSound();
     _trackQueue = _shuffle(AMBIENT_FILES);
     _ambientAudio = new Audio();
+    _ambientAudio.preload = 'auto';
     _ambientAudio.addEventListener('ended', _playNextAmbient);
     _playNextAmbient();
   } catch (_) {}
@@ -100,11 +101,33 @@ export function stopAmbientSound() {
 }
 
 export function resumeAmbient() {
+  // First user gesture — now audio can play
+  if (_openingAudio && _openingAudio.src) {
+    if (_openingAudio.paused) {
+      // Opening never played (autoplay blocked) — play it now
+      _openingAudio.play().catch(() => {});
+      // When opening ends, start ambient
+      _openingAudio.onended = () => {
+        try { _openingAudio = null; } catch (_) {}
+        if (_ambientAudio && _ambientAudio.paused && _ambientAudio.src) {
+          _ambientAudio.play().catch(() => {});
+        }
+      };
+      return;
+    } else {
+      // Opening is already playing — queue ambient to start after it ends
+      _openingAudio.onended = () => {
+        try { _openingAudio = null; } catch (_) {}
+        if (_ambientAudio && _ambientAudio.paused && _ambientAudio.src) {
+          _ambientAudio.play().catch(() => {});
+        }
+      };
+      return;
+    }
+  }
+  // No opening music — just resume ambient
   if (_ambientAudio && _ambientAudio.paused && _ambientAudio.src) {
     _ambientAudio.play().catch(() => {});
-  }
-  if (_openingAudio && _openingAudio.paused && _openingAudio.src) {
-    _openingAudio.play().catch(() => {});
   }
 }
 
@@ -115,7 +138,9 @@ const OPENING_FILE = 'sounds/Sabay_sabay_Tayong_Bida.mp3';
 export function playOpeningMusic() {
   try {
     stopOpeningMusic();
-    _openingAudio = new Audio(OPENING_FILE);
+    _openingAudio = new Audio();
+    _openingAudio.preload = 'auto';
+    _openingAudio.src = OPENING_FILE;
     _openingAudio.volume = 0.35;
     _openingAudio.play().catch(() => {});
   } catch (_) {}
