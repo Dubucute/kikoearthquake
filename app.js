@@ -1106,10 +1106,10 @@ class JaviAlertApp {
     }
 
     _alertNewQuakes(newQuakes) {
-      // Determine alert level from biggest quake
-      const biggest = newQuakes.reduce((a, b) => a.mag > b.mag ? a : b);
-      const alertType = biggest.mag >= CONFIG.DANGER_THRESHOLD ? 'danger' :
-                        biggest.mag >= CONFIG.WARNING_THRESHOLD ? 'warning' : null;
+      // Determine alert level from the NEWEST quake (most recent time)
+      const newest = newQuakes.reduce((a, b) => a.time > b.time ? a : b);
+      const alertType = newest.mag >= CONFIG.DANGER_THRESHOLD ? 'danger' :
+                        newest.mag >= CONFIG.WARNING_THRESHOLD ? 'warning' : null;
 
       // Play alert sound
       if (alertType) {
@@ -1123,14 +1123,14 @@ class JaviAlertApp {
       if ('Notification' in window && Notification.permission === 'granted') {
         const count = newQuakes.length;
         const title = count === 1 ? 'New earthquake detected!' : count + ' new earthquakes detected!';
-        const body = biggest.mag.toFixed(1) + ' mag at ' + biggest.place + ' (' + biggest.dist + ' km away)';
+        const body = newest.mag.toFixed(1) + ' mag at ' + newest.place + ' (' + newest.dist + ' km away)';
         try {
           new Notification(title, { body, icon: 'icons/javi-icon.png' });
         } catch (_) { /* ignore */ }
       }
 
       // Trigger server-side push for background delivery
-      this._triggerServerPush(biggest, newQuakes.length);
+      this._triggerServerPush(newest, newQuakes.length);
 
       // Trigger map ripple effect
       this._triggerQuakeRipple();
@@ -1139,8 +1139,8 @@ class JaviAlertApp {
       const bubble = document.getElementById('bubble');
       const count = newQuakes.length;
       const msg = count === 1
-        ? 'May bago akong na-detect na lindol! ' + biggest.mag.toFixed(1) + ' mag sa ' + biggest.place
-        : count + ' na bagong lindol ang na-detect ko! Pinakamalakas: ' + biggest.mag.toFixed(1) + ' mag';
+        ? 'May bago akong na-detect na lindol! ' + newest.mag.toFixed(1) + ' mag sa ' + newest.place
+        : count + ' na bagong lindol ang na-detect ko! Pinakabago: ' + newest.mag.toFixed(1) + ' mag';
       bubble.className = 'bubble';
       bubble.innerHTML = '<i data-lucide="bell" aria-hidden="true"></i> ' + msg;
       try { lucide.createIcons(); } catch (_) { /* ignore */ }
@@ -1181,16 +1181,16 @@ class JaviAlertApp {
       }
     }
 
-    async _triggerServerPush(biggest, count) {
+    async _triggerServerPush(newest, count) {
       if (!this._pushReady) return;
-      const alertType = biggest.mag >= CONFIG.DANGER_THRESHOLD ? 'danger'
-        : biggest.mag >= CONFIG.WARNING_THRESHOLD ? 'warning'
+      const alertType = newest.mag >= CONFIG.DANGER_THRESHOLD ? 'danger'
+        : newest.mag >= CONFIG.WARNING_THRESHOLD ? 'warning'
         : null;
       try {
         const title = count === 1 ? 'New earthquake detected!'
           : count + ' new earthquakes!';
-        const body = biggest.mag.toFixed(1) + ' mag \u2014 ' +
-          biggest.place + ' (' + biggest.dist + ' km away)';
+        const body = newest.mag.toFixed(1) + ' mag \u2014 ' +
+          newest.place + ' (' + newest.dist + ' km away)';
         await fetch('/api/push-send', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
