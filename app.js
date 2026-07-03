@@ -10,7 +10,7 @@ class JaviAlertApp {
       this.currentMood = 'safe';
       this.currentPage = 1;
       this.allQuakes = [];
-      this.sortMode = 'nearest';
+      this.sortMode = 'newest';
       this.isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
       this.isAndroid = /Android/.test(navigator.userAgent);
       this.deferredPrompt = null;
