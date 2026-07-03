@@ -22,13 +22,10 @@ self.addEventListener('activate', e => {
   self.clients.claim();
 });
 
-// Listen for messages from the app
+// Listen for skipWaiting message from the app
 self.addEventListener('message', e => {
   if (e.data && e.data.action === 'skipWaiting') {
     self.skipWaiting();
-  }
-  if (e.data && e.data.action === 'getVersion' && e.ports && e.ports[0]) {
-    e.ports[0].postMessage({ version: CACHE });
   }
 });
 

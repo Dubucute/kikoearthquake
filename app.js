@@ -65,87 +65,69 @@ class JaviAlertApp {
 
     // ─── INIT ──────────────────────────────────────────────────
     async init() {
-      // Register SW with update detection
+      // Register SW with auto-update during loading screen
       if ('serviceWorker' in navigator) {
         try {
           const registration = await navigator.serviceWorker.register('sw.js');
-
-          // Remember if there was already an active SW controlling the page.
-          // If false, this is a first-time install — don't show "update" banner.
           const hadController = !!navigator.serviceWorker.controller;
 
-          // Suppress banner on first load after an update (set when user taps Update).
+          // Cooldown flag — prevents infinite reload loop after auto-update
           const justUpdated = localStorage.getItem('javiJustUpdated');
           const recentUpdate = justUpdated && (Date.now() - parseInt(justUpdated, 10)) < 300000;
-          // Clean up old flag (more than 5 min old) immediately
           if (justUpdated && !recentUpdate) {
             localStorage.removeItem('javiJustUpdated');
           }
 
-          // Check if there's a waiting SW (new version already downloaded)
-          if (registration.waiting && hadController && !recentUpdate) {
-            this._checkWaitingVersion(registration);
-          }
-
-          // Listen for new SW updates
-          registration.addEventListener('updatefound', () => {
-            const newSW = registration.installing;
-            if (newSW) {
-              newSW.addEventListener('statechange', () => {
-                if (newSW.state === 'installed' && hadController) {
-                  // Still check the flag — it's live in localStorage
-                  const stillRecent = localStorage.getItem('javiJustUpdated') &&
-                    (Date.now() - parseInt(localStorage.getItem('javiJustUpdated'), 10)) < 300000;
-                  if (!stillRecent) {
-                    this._checkWaitingVersion(registration);
-                  }
-                }
-              });
-            }
-          });
-
-          // Detect controller change (SW updated)
+          // Reload when a new SW takes over (auto-update via skipWaiting in SW install)
           let refreshing = false;
           navigator.serviceWorker.addEventListener('controllerchange', () => {
             if (refreshing) return;
             refreshing = true;
-            // Set cooldown so the update banner doesn't reappear immediately
             localStorage.setItem('javiJustUpdated', Date.now());
-            // Refresh the page to use the new SW
             window.location.reload();
           });
-        } catch (_) { /* ignore */ }
-      }
 
-      // Update banner button
-      document.getElementById('updateBannerBtn').addEventListener('click', () => {
-        const overlay = document.getElementById('loadingOverlay');
-        if (overlay) {
-          overlay.classList.remove('hidden', 'fade-out');
-          overlay.classList.add('updating');
-          document.getElementById('loadingText').textContent = 'Updating...';
-        }
-        // Set flag so we don't show the banner again right after reload
-        localStorage.setItem('javiJustUpdated', Date.now());
-        // Remember the SW version we're acknowledging
-        const banner = document.getElementById('updateBanner');
-        const reg = banner && banner._registration;
-        if (reg && reg.waiting) {
-          // Try to get the SW version to store as acknowledged
-          this._getSWVersion(reg.waiting).then(version => {
-            if (version) {
-              localStorage.setItem('javiAcknowledgedVersion', version);
-            }
+          // Helper: trigger auto-update by activating the waiting SW
+          const autoUpdate = (sw) => {
+            if (!sw) return;
+            // Live cooldown check (in case updatefound fires much later)
+            const justUpdated = localStorage.getItem('javiJustUpdated');
+            if (justUpdated && (Date.now() - parseInt(justUpdated, 10)) < 300000) return;
+            document.getElementById('loadingText').textContent = 'Updating app...';
+            sw.postMessage({ action: 'skipWaiting' });
+          };
+
+          // Case 1: A new SW is already waiting (e.g. previous update found but not activated)
+          if (registration.waiting && hadController && !recentUpdate) {
+            autoUpdate(registration.waiting);
+            return; // controllerchange will reload
+          }
+
+          // Case 2: A new SW is currently installing (mid-update when register resolved)
+          if (registration.installing && hadController && !recentUpdate) {
+            document.getElementById('loadingText').textContent = 'Updating app...';
+            registration.installing.addEventListener('statechange', () => {
+              if (registration.waiting) autoUpdate(registration.waiting);
+            });
+          }
+
+          // Case 3: Future update detected while app runs
+          registration.addEventListener('updatefound', () => {
+            const newSW = registration.installing;
+            if (!newSW || !hadController) return;
+            // Ignore if cooldown is still active
+            const stillRecent = localStorage.getItem('javiJustUpdated') &&
+              (Date.now() - parseInt(localStorage.getItem('javiJustUpdated'), 10)) < 300000;
+            if (stillRecent) return;
+            document.getElementById('loadingText').textContent = 'Updating app...';
+            newSW.addEventListener('statechange', () => {
+              if (newSW.state === 'installed' && registration.waiting) {
+                autoUpdate(registration.waiting);
+              }
+            });
           });
-          reg.waiting.postMessage({ action: 'skipWaiting' });
-        }
-        // Auto-clean acknowledgment after 5 min so future real updates work
-        setTimeout(() => {
-          localStorage.removeItem('javiJustUpdated');
-        }, 300000);
-        // Fallback: reload after 3s if SW hasn't triggered controllerchange
-        setTimeout(() => { window.location.reload(); }, 3000);
-      });
+        } catch (_) { /* SW not supported */ }
+      }
 
       // Request notification permission + setup push
       if ('Notification' in window && Notification.permission === 'default') {
@@ -2149,43 +2131,6 @@ class JaviAlertApp {
       document.addEventListener('click', unlock);
       document.addEventListener('touchstart', unlock);
       document.addEventListener('keydown', unlock);
-    }
-
-    // Ask a SW for its cache version via MessageChannel
-    async _getSWVersion(sw) {
-      return new Promise(resolve => {
-        const channel = new MessageChannel();
-        const timer = setTimeout(() => resolve(null), 500);
-        channel.port1.onmessage = e => {
-          clearTimeout(timer);
-          resolve(e.data && e.data.version);
-        };
-        try {
-          sw.postMessage({ action: 'getVersion' }, [channel.port2]);
-        } catch (_) {
-          clearTimeout(timer);
-          resolve(null);
-        }
-      });
-    }
-
-    // Check waiting SW version and show banner if it's new
-    async _checkWaitingVersion(registration) {
-      if (!registration.waiting) return;
-      const version = await this._getSWVersion(registration.waiting);
-      const acknowledged = localStorage.getItem('javiAcknowledgedVersion');
-      if (version && version === acknowledged) {
-        return; // Already acknowledged this version
-      }
-      this._showUpdateBanner(registration);
-    }
-
-    _showUpdateBanner(registration) {
-      const banner = document.getElementById('updateBanner');
-      if (banner) {
-        banner.classList.remove('hidden');
-        banner._registration = registration;
-      }
     }
 
     _updateSettingsUI() {

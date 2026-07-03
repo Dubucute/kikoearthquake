@@ -1650,59 +1650,6 @@ body.dark-mode .settings-slider {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   UPDATE BANNER — new version available
-   ═══════════════════════════════════════════════════════════════ */
-.update-banner {
-  background: #00b894;
-  color: white;
-  text-align: center;
-  padding: 10px 14px;
-  font-size: 14px;
-  font-weight: 600;
-  border-radius: 12px;
-  margin-bottom: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  border: 2.5px solid #00856a;
-  box-shadow: 3px 3px 0px #00856a;
-  animation: bounceIn .4s ease;
-}
-.update-banner i {
-  width: 16px; height: 16px;
-  flex-shrink: 0;
-}
-.update-banner-text {
-  flex: 1;
-  text-align: left;
-}
-.update-banner-btn {
-  background: white;
-  color: #00856a;
-  border: 2px solid #00856a;
-  border-radius: 8px;
-  padding: 4px 14px;
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: transform .15s;
-}
-.update-banner-btn:active {
-  transform: scale(.92);
-}
-body.dark-mode .update-banner {
-  background: #00a381;
-  border-color: #006b54;
-  box-shadow: 3px 3px 0px #006b54;
-}
-body.dark-mode .update-banner-btn {
-  color: #006b54;
-  border-color: #006b54;
-}
-
-/* ═══════════════════════════════════════════════════════════════
    LOADING OVERLAY — splash screen on first load
    ═══════════════════════════════════════════════════════════════ */
 .loading-overlay {
