@@ -1,4 +1,4 @@
-const CACHE = 'quake-buddy-v16';
+const CACHE = 'quake-buddy-v17';
 const ASSETS = [
   '/', '/index.html', '/manifest.json',
   '/style.css', '/app.js',
@@ -16,7 +16,12 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
+  // Auto-clear ALL old caches before creating new one
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.map(k => caches.delete(k)))
+    ).then(() => caches.open(CACHE).then(c => c.addAll(ASSETS)))
+  );
   self.skipWaiting();
 });
 
