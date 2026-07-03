@@ -70,8 +70,12 @@ class JaviAlertApp {
         try {
           const registration = await navigator.serviceWorker.register('sw.js');
 
-          // Check if there's a waiting SW (new version already installed)
-          if (registration.waiting) {
+          // Remember if there was already an active SW controlling the page.
+          // If false, this is a first-time install — don't show "update" banner.
+          const hadController = !!navigator.serviceWorker.controller;
+
+          // Check if there's a waiting SW (new version already downloaded)
+          if (registration.waiting && hadController) {
             this._showUpdateBanner(registration);
           }
 
@@ -80,8 +84,8 @@ class JaviAlertApp {
             const newSW = registration.installing;
             if (newSW) {
               newSW.addEventListener('statechange', () => {
-                if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
-                  // New version installed and ready
+                if (newSW.state === 'installed' && hadController) {
+                  // New version installed and ready (only show if it's a real update)
                   this._showUpdateBanner(registration);
                 }
               });
@@ -102,15 +106,16 @@ class JaviAlertApp {
       document.getElementById('updateBannerBtn').addEventListener('click', () => {
         const overlay = document.getElementById('loadingOverlay');
         if (overlay) {
+          overlay.classList.remove('hidden', 'fade-out');
           overlay.classList.add('updating');
           document.getElementById('loadingText').textContent = 'Updating...';
         }
         // Post message to skip waiting and activate new SW
         if (navigator.serviceWorker.controller) {
           navigator.serviceWorker.controller.postMessage({ action: 'skipWaiting' });
-        } else {
-          window.location.reload();
         }
+        // Fallback: reload after 3s if SW hasn't triggered controllerchange
+        setTimeout(() => { window.location.reload(); }, 3000);
       });
 
       // Request notification permission + setup push
@@ -243,8 +248,13 @@ class JaviAlertApp {
       // Lucide
       try { lucide.createIcons(); } catch (_) { /* ignore */ }
 
+      // Safety timeout — dismiss loading after 8s no matter what
+      const safetyTimer = setTimeout(() => this._dismissLoading(), 8000);
+
       // Detect location then load
+      document.getElementById('loadingText').textContent = 'Detecting location...';
       await this.detectLocation();
+      document.getElementById('loadingText').textContent = 'Fetching earthquakes...';
       await this.loadData();
 
       // Init map (needs userLat/Lon from location)
@@ -255,7 +265,8 @@ class JaviAlertApp {
         this.refreshTimer = setInterval(() => this.loadData(), CONFIG.AUTO_REFRESH_MS);
       }
 
-      // Hide loading overlay
+      // Hide loading overlay (cancel safety timer first)
+      clearTimeout(safetyTimer);
       this._dismissLoading();
 
       // Auto-start ambient if enabled
@@ -2087,7 +2098,7 @@ class JaviAlertApp {
 
     _dismissLoading() {
       const overlay = document.getElementById('loadingOverlay');
-      if (!overlay) return;
+      if (!overlay || overlay.classList.contains('fade-out')) return; // already dismissing
       overlay.classList.add('fade-out');
       setTimeout(() => {
         overlay.classList.add('hidden');
