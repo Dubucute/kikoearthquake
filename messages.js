@@ -93,6 +93,11 @@ export const SAFETY_TIPS = [
 
 // ─── CHANGELOG ───────────────────────────────────────────────
 export const CHANGELOG = [
+  { ver: 'v29', date: '2026-07-03', items: [
+    'Fixed: Alert sound (NDRRMC) now plays on mobile — pre-authorized on first tap',
+    'Fixed: In-app notification toast shows on iOS where browser notifications are blocked',
+    'Fixed: Auto-refresh earthquake data when returning to the app'
+  ]},
   { ver: 'v25', date: '2026-07-03', items: [
     'Fixed: App now loads in Messenger and other in-app browsers (non-blocking SW)',
     'Fixed: Track names display correctly with URL decoding and "by JaviAlert"',
