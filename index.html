@@ -41,6 +41,18 @@
     No connection — showing last data
   </div>
 
+  <!-- In-app notification toast for mobile (when browser Notification API unavailable) -->
+  <div class="notif-toast hidden" id="notifToast">
+    <div class="notif-toast-inner">
+      <span class="notif-toast-icon" id="notifToastIcon">🔔</span>
+      <div class="notif-toast-content">
+        <div class="notif-toast-title" id="notifToastTitle">Earthquake Alert</div>
+        <div class="notif-toast-body" id="notifToastBody"></div>
+      </div>
+      <button class="notif-toast-close" id="notifToastClose">&times;</button>
+    </div>
+  </div>
+
   <div class="topbar">
     <div class="app-name">
       <img src="icons/javi-icon.png" alt="" class="app-icon" aria-hidden="true">

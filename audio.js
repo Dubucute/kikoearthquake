@@ -1,22 +1,84 @@
 /**
  * Play an alert sound using the NDRRMC alert MP3.
+ * Falls back to the ambient audio element if dedicated alert audio is blocked
+ * (common on mobile browsers with autoplay restrictions).
  * @param {'warning'|'danger'|null} type — alert severity
  * @param {boolean} soundEnabled — whether sound is allowed
  * @param {number} [volume=0.3] — volume level (0-1)
  */
 let _alertAudio = null;
+
+/**
+ * Pre-create and preload the alert audio element.
+ * Call during first user interaction to authorize playback on mobile.
+ */
+export function preloadAlertAudio() {
+  if (!_alertAudio) {
+    try {
+      _alertAudio = new Audio();
+      _alertAudio.preload = 'auto';
+    } catch (_) { return; }
+  }
+  try {
+    _alertAudio.src = 'sounds/NDRRMC-Alert.mp3';
+    _alertAudio.load();
+  } catch (_) {}
+}
+
 export function playAlertSound(type, soundEnabled, volume = 0.3) {
   if (!soundEnabled) return;
   if (!type) return;
-  try {
+  const playSrc = 'sounds/NDRRMC-Alert.mp3';
+  const vol = Math.max(0, Math.min(1, volume));
+
+  // Strategy 1: Use dedicated _alertAudio element
+  const tryAlertAudio = () => {
     if (!_alertAudio) {
       _alertAudio = new Audio();
       _alertAudio.preload = 'auto';
     }
-    _alertAudio.src = 'sounds/NDRRMC-Alert.mp3';
-    _alertAudio.volume = Math.max(0, Math.min(1, volume));
+    _alertAudio.src = playSrc;
+    _alertAudio.volume = vol;
     _alertAudio.currentTime = 0;
-    _alertAudio.play().catch(() => {});
+    return _alertAudio.play();
+  };
+
+  // Strategy 2: Fall back to ambient audio (already has playback permission)
+  const tryAmbientAudio = () => {
+    if (!_ambientAudio) return Promise.reject();
+    const wasPlaying = !_ambientAudio.paused && !!_ambientAudio.src;
+    const prevSrc = _ambientAudio.src;
+    const prevVol = _ambientAudio.volume;
+    const prevLoop = _ambientAudio.loop;
+    _ambientAudio.pause();
+    _ambientAudio.removeEventListener('ended', _playNextAmbient);
+    _ambientAudio.src = playSrc;
+    _ambientAudio.volume = vol;
+    _ambientAudio.currentTime = 0;
+    _ambientAudio.loop = false;
+    return _ambientAudio.play().then(() => {
+      // Restore ambient when alert finishes
+      _ambientAudio.onended = () => {
+        _ambientAudio.onended = null;
+        if (wasPlaying && prevSrc && prevSrc !== playSrc) {
+          _ambientAudio.src = prevSrc;
+          _ambientAudio.volume = prevVol;
+          _ambientAudio.loop = prevLoop;
+          _ambientAudio.currentTime = 0;
+          _ambientAudio.play().catch(() => {});
+          if (!prevLoop) {
+            _ambientAudio.addEventListener('ended', _playNextAmbient);
+          }
+          _notifyTrack(prevSrc);
+        }
+      };
+    });
+  };
+
+  try {
+    tryAlertAudio().catch(() => {
+      tryAmbientAudio().catch(() => {});
+    });
   } catch (_) { /* audio not supported */ }
 }
 

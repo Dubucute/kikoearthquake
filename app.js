@@ -1,5 +1,5 @@
 import { JAVI_MESSAGES, JAVI_REACTIONS, SAFETY_TIPS, EMERGENCY_CONTACTS, CHANGELOG } from './messages.js';
-import { playAlertSound, startAmbientSound, stopAmbientSound, setAmbientVolume, setAmbientTrack, resumeAmbient, setOnTrackChange, getPlaybackMode, setPlaybackMode, nextTrack, toggleAmbient, isAmbientPlaying } from './audio.js';
+import { playAlertSound, startAmbientSound, stopAmbientSound, setAmbientVolume, setAmbientTrack, resumeAmbient, setOnTrackChange, getPlaybackMode, setPlaybackMode, nextTrack, toggleAmbient, isAmbientPlaying, preloadAlertAudio } from './audio.js';
 import { API, CONFIG, timeSince, getCompassDir, getDistance, parsePlaceName, magClass } from './api-utils.js';
 
 class JaviAlertApp {
@@ -21,6 +21,7 @@ class JaviAlertApp {
       this.moodHistory = this._loadMoodHistory();
       this.magFilter = 0;
       this._pushReady = false;
+      this._toastTimer = null;
       this.map = null;
       this.mapMarkers = [];
       this.userMarker = null;
@@ -64,6 +65,7 @@ class JaviAlertApp {
       this._shareQuakeAsImage = this._shareQuakeAsImage.bind(this);
       this._showSettings = this._showSettings.bind(this);
       this._registerServiceWorker = this._registerServiceWorker.bind(this);
+      this._showNotifToast = this._showNotifToast.bind(this);
     }
 
     // ─── INIT ──────────────────────────────────────────────────
@@ -197,6 +199,14 @@ class JaviAlertApp {
         modeIcon.setAttribute('data-lucide', modeMap[getPlaybackMode()] || 'shuffle');
         try { lucide.createIcons(); } catch (_) {}
       }
+
+      // In-app notification toast close
+      document.getElementById('notifToastClose').addEventListener('click', () => {
+        const toast = document.getElementById('notifToast');
+        toast.classList.remove('toast-show');
+        setTimeout(() => toast.classList.add('hidden'), 400);
+        if (this._toastTimer) clearTimeout(this._toastTimer);
+      });
 
       // Am I Safe? analysis
       document.getElementById('pillAnalysisBtn').addEventListener('click', () => this._showAnalysis());
@@ -1079,7 +1089,7 @@ class JaviAlertApp {
       // Haptic feedback on alert
       this._hapticAlert(alertType);
 
-      // Show browser notification
+      // Show browser notification (works on Android Chrome, not on iOS Safari)
       if ('Notification' in window && Notification.permission === 'granted') {
         const count = newQuakes.length;
         const title = count === 1 ? 'New earthquake detected!' : count + ' new earthquakes detected!';
@@ -1087,6 +1097,11 @@ class JaviAlertApp {
         try {
           new Notification(title, { body, icon: 'icons/javi-icon.png' });
         } catch (_) { /* ignore */ }
+      }
+
+      // Always show in-app toast (critical for iOS where web notifications don't work)
+      if (alertType) {
+        this._showNotifToast(alertType, newest);
       }
 
       // Trigger server-side push for background delivery
@@ -2248,6 +2263,8 @@ class JaviAlertApp {
         if (unlocked) return;
         unlocked = true;
         resumeAmbient();
+        // Pre-authorize alert audio for mobile browsers that block new Audio().play()
+        preloadAlertAudio();
         // Remove all listeners after first interaction
         document.removeEventListener('click', unlock);
         document.removeEventListener('touchstart', unlock);
@@ -2530,6 +2547,39 @@ class JaviAlertApp {
           navigator.vibrate([100, 80, 100]);
         }
       } catch (_) { /* vibration not supported */ }
+    }
+
+    /** Show in-app notification toast (works on all mobile browsers) */
+    _showNotifToast(type, quake) {
+      const toast = document.getElementById('notifToast');
+      if (!toast) return;
+      const titleEl = document.getElementById('notifToastTitle');
+      const bodyEl = document.getElementById('notifToastBody');
+      const iconEl = document.getElementById('notifToastIcon');
+      if (!titleEl || !bodyEl) return;
+
+      // Set content
+      const emoji = type === 'danger' ? '🚨' : type === 'warning' ? '⚠️' : '🔔';
+      if (iconEl) iconEl.textContent = emoji;
+      titleEl.textContent = type === 'danger' ? 'DANGER! Strong Earthquake!'
+        : type === 'warning' ? 'Warning — Earthquake Detected'
+        : 'Earthquake Alert';
+      bodyEl.textContent = (quake.mag || '?').toFixed(1) + ' mag • '
+        + quake.dist + ' km away • ' + quake.place;
+
+      // Remove hidden, add show class for animation
+      toast.classList.remove('hidden');
+      // Re-trigger animation by removing then adding
+      toast.classList.remove('toast-show');
+      void toast.offsetWidth; // force reflow
+      toast.classList.add('toast-show');
+
+      // Auto-hide after 6 seconds
+      if (this._toastTimer) clearTimeout(this._toastTimer);
+      this._toastTimer = setTimeout(() => {
+        toast.classList.remove('toast-show');
+        setTimeout(() => toast.classList.add('hidden'), 400);
+      }, 6000);
     }
 
     // ─── SPAWN SPARKLES ON JAVI TAP ──────────────────────────
