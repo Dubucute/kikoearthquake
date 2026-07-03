@@ -74,8 +74,22 @@ class JaviAlertApp {
           // If false, this is a first-time install — don't show "update" banner.
           const hadController = !!navigator.serviceWorker.controller;
 
+          // Suppress banner on first load after an update (set when user taps Update).
+          // Keep the flag alive for 60s so both the initial check AND future
+          // updatefound events respect it. We clean it up after 60s via timeout.
+          const justUpdated = localStorage.getItem('javiJustUpdated');
+          const recentUpdate = justUpdated && (Date.now() - parseInt(justUpdated, 10)) < 60000;
+          // Clean up old flag (more than 60s old) immediately
+          if (justUpdated && !recentUpdate) {
+            localStorage.removeItem('javiJustUpdated');
+          }
+          // Auto-remove after 60s so future real updates work
+          if (recentUpdate) {
+            setTimeout(() => localStorage.removeItem('javiJustUpdated'), 60000);
+          }
+
           // Check if there's a waiting SW (new version already downloaded)
-          if (registration.waiting && hadController) {
+          if (registration.waiting && hadController && !recentUpdate) {
             this._showUpdateBanner(registration);
           }
 
@@ -85,8 +99,12 @@ class JaviAlertApp {
             if (newSW) {
               newSW.addEventListener('statechange', () => {
                 if (newSW.state === 'installed' && hadController) {
-                  // New version installed and ready (only show if it's a real update)
-                  this._showUpdateBanner(registration);
+                  // Still check the flag — it's live in localStorage
+                  const stillRecent = localStorage.getItem('javiJustUpdated') &&
+                    (Date.now() - parseInt(localStorage.getItem('javiJustUpdated'), 10)) < 60000;
+                  if (!stillRecent) {
+                    this._showUpdateBanner(registration);
+                  }
                 }
               });
             }
@@ -110,6 +128,8 @@ class JaviAlertApp {
           overlay.classList.add('updating');
           document.getElementById('loadingText').textContent = 'Updating...';
         }
+        // Set flag so we don't show the banner again right after reload
+        localStorage.setItem('javiJustUpdated', Date.now());
         // Post message to skip waiting and activate new SW
         if (navigator.serviceWorker.controller) {
           navigator.serviceWorker.controller.postMessage({ action: 'skipWaiting' });
