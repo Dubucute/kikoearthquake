@@ -1097,17 +1097,34 @@ class JaviAlertApp {
 
     // ─── INSTALL PROMPT ────────────────────────────────────────
     setupInstallPrompt() {
+      const banner = document.getElementById('installBanner');
+
+      // Already installed? Check standalone mode + localStorage flag
+      const isInstalled = localStorage.getItem('javiInstalled') === 'true' ||
+        window.matchMedia('(display-mode: standalone)').matches ||
+        window.matchMedia('(display-mode: fullscreen)').matches ||
+        window.matchMedia('(display-mode: minimal-ui)').matches;
+      if (isInstalled) {
+        banner.classList.add('hidden');
+        localStorage.setItem('javiInstalled', 'true');
+        return;
+      }
+
+      // Listen for appinstalled (fires on Android/Desktop after successful install)
+      window.addEventListener('appinstalled', () => {
+        banner.classList.add('hidden');
+        localStorage.setItem('javiInstalled', 'true');
+      });
+
       // Listen for beforeinstallprompt (Android/Desktop)
       window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         this.deferredPrompt = e;
-        const banner = document.getElementById('installBanner');
         banner.classList.remove('hidden');
       });
 
-      // On iOS, show banner with instructions
+      // On iOS, show banner with instructions if not installed
       if (this.isIOS) {
-        const banner = document.getElementById('installBanner');
         banner.classList.remove('hidden');
         banner.querySelector('.install-title').textContent = 'Install on iOS';
         banner.querySelector('.install-desc').textContent = 'Tap Share > Add to Home Screen';
