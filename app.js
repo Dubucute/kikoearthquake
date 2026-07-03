@@ -300,6 +300,13 @@ class JaviAlertApp {
       // Safety timeout — dismiss loading after 8s no matter what
       const safetyTimer = setTimeout(() => this._dismissLoading(), 8000);
 
+      // Auto-start ambient early (preloads the MP3 while location/quake data loads)
+      if (this.ambientEnabled && this.currentMood !== 'danger') {
+        startAmbientSound(this.ambientTrack || undefined);
+        setAmbientVolume(this.volumeLevel);
+        this.ambientActive = true;
+      }
+
       // Detect location then load
       document.getElementById('loadingText').textContent = 'Detecting location...';
       await this.detectLocation();
@@ -317,13 +324,6 @@ class JaviAlertApp {
       // Hide loading overlay (cancel safety timer first)
       clearTimeout(safetyTimer);
       this._dismissLoading();
-
-      // Auto-start ambient if enabled
-      if (this.ambientEnabled && this.currentMood !== 'danger') {
-        startAmbientSound(this.ambientTrack || undefined);
-        setAmbientVolume(this.volumeLevel);
-        this.ambientActive = true;
-      }
 
       // Unlock AudioContext on first user interaction (browsers block autoplay)
       this._unlockAudioOnce();

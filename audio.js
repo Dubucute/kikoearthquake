@@ -141,15 +141,40 @@ export function setAmbientVolume(vol) {
 }
 
 /**
+ * Preload ambient audio early so it's buffered by the time user taps.
+ * Call this as early as possible — creates the Audio element and starts loading.
+ * @param {string} [track] — optional specific track; default is opening file
+ */
+export function preloadAmbient(track) {
+  if (_ambientAudio) return; // already created
+  try {
+    _ambientAudio = new Audio();
+    _ambientAudio.preload = 'auto';
+    _ambientAudio.src = track || OPENING_FILE;
+    _ambientAudio.volume = _ambientVolume;
+    // Don't play — autoplay is blocked. Just let it buffer.
+  } catch (_) {}
+}
+
+/**
  * Start background music — opening track first, then shuffled ambient.
  * If a specific track is given, loops that track.
+ * If the audio element was already preloaded, reuses it.
  * @param {string} [track] — specific file path to loop, or empty for opening→shuffle
  */
 export function startAmbientSound(track) {
   try {
-    stopAmbientSound();
-    _ambientAudio = new Audio();
-    _ambientAudio.preload = 'auto';
+    // If already playing stop/clean up, BUT keep the audio element if preloaded
+    if (_ambientAudio) {
+      _ambientAudio.pause();
+      _ambientAudio.removeEventListener('ended', _playNextAmbient);
+      // Don't null it — if preloaded, we want to keep the buffer
+    }
+
+    if (!_ambientAudio) {
+      _ambientAudio = new Audio();
+      _ambientAudio.preload = 'auto';
+    }
     _ambientAudio.loop = (_playbackMode === 'loop-one');
 
     if (track) {
