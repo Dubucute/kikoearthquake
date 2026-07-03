@@ -312,6 +312,31 @@
             <span class="settings-toggle-knob"></span>
           </button>
         </div>
+        <!-- Music track picker -->
+        <div class="settings-row settings-row-track">
+          <div class="settings-row-label">
+            <i data-lucide="disc-3" aria-hidden="true"></i>
+            <span>Music Track</span>
+          </div>
+          <div class="track-picker" id="trackPicker">
+            <label class="track-option active" data-track="">
+              <input type="radio" name="ambientTrack" value="" checked hidden />
+              <span>All</span>
+            </label>
+            <label class="track-option" data-track="sounds/Alerto sa Sakuna.mp3">
+              <input type="radio" name="ambientTrack" value="sounds/Alerto sa Sakuna.mp3" hidden />
+              <span>Alerto</span>
+            </label>
+            <label class="track-option" data-track="sounds/Ligtas.mp3">
+              <input type="radio" name="ambientTrack" value="sounds/Ligtas.mp3" hidden />
+              <span>Ligtas</span>
+            </label>
+            <label class="track-option" data-track="sounds/Javilerto.mp3">
+              <input type="radio" name="ambientTrack" value="sounds/Javilerto.mp3" hidden />
+              <span>Javilerto</span>
+            </label>
+          </div>
+        </div>
         <!-- Auto-refresh -->
         <div class="settings-row">
           <div class="settings-row-label">

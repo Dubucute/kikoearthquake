@@ -1592,6 +1592,45 @@ body.dark-mode .s12 { animation-delay: 0.8s; }
 .settings-toggle.active .settings-toggle-knob {
   transform: translateX(20px);
 }
+/* Track picker — pill-style radio buttons */
+.settings-row-track {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.track-picker {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.track-option {
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 2px solid #ccc;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background .2s, border-color .2s, color .2s;
+  color: var(--text-muted);
+  background: transparent;
+  user-select: none;
+}
+.track-option.active {
+  background: #00b894;
+  border-color: #00a381;
+  color: white;
+}
+.track-option:active {
+  transform: scale(.94);
+}
+body.dark-mode .track-option {
+  border-color: #555;
+  color: #aaa;
+}
+body.dark-mode .track-option.active {
+  background: #00b894;
+  border-color: #00a381;
+  color: white;
+}
 /* Volume slider */
 .settings-row-vol {
   flex-direction: column;

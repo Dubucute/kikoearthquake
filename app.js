@@ -1,5 +1,5 @@
 import { JAVI_MESSAGES, JAVI_REACTIONS, SAFETY_TIPS, EMERGENCY_CONTACTS } from './messages.js';
-import { playAlertSound, startAmbientSound, stopAmbientSound, setAmbientVolume, resumeAmbient, playOpeningMusic } from './audio.js';
+import { playAlertSound, startAmbientSound, stopAmbientSound, setAmbientVolume, setAmbientTrack, resumeAmbient, playOpeningMusic } from './audio.js';
 import { API, CONFIG, timeSince, getCompassDir, getDistance, parsePlaceName, magClass } from './api-utils.js';
 
 class JaviAlertApp {
@@ -27,6 +27,7 @@ class JaviAlertApp {
       this.mapTiles = null;
       this.ambientEnabled = localStorage.getItem('javiAmbientEnabled') === 'true';
       this.ambientActive = false;
+      this.ambientTrack = localStorage.getItem('javiAmbientTrack') || '';
       this.volumeLevel = parseFloat(localStorage.getItem('javiVolume') || '0.5');
       this.autoRefresh = localStorage.getItem('javiAutoRefresh') !== 'false';
 
@@ -285,7 +286,7 @@ class JaviAlertApp {
 
       // Auto-start ambient if enabled
       if (this.ambientEnabled && this.currentMood !== 'danger') {
-        startAmbientSound();
+        startAmbientSound(this.ambientTrack || undefined);
         setAmbientVolume(this.volumeLevel);
         this.ambientActive = true;
       }
@@ -903,7 +904,7 @@ class JaviAlertApp {
         }
       } else {
         if (this.ambientEnabled && !this.ambientActive) {
-          startAmbientSound();
+          startAmbientSound(this.ambientTrack || undefined);
           setAmbientVolume(this.volumeLevel);
           this.ambientActive = true;
         }
@@ -2066,7 +2067,7 @@ class JaviAlertApp {
         this.ambientEnabled = !this.ambientEnabled;
         localStorage.setItem('javiAmbientEnabled', this.ambientEnabled);
         if (this.ambientEnabled) {
-          startAmbientSound();
+          startAmbientSound(this.ambientTrack || undefined);
           setAmbientVolume(this.volumeLevel);
           this.ambientActive = true;
         } else {
@@ -2074,6 +2075,19 @@ class JaviAlertApp {
           this.ambientActive = false;
         }
         this._updateSettingsUI();
+      });
+
+      // Track picker
+      document.querySelectorAll('.track-option').forEach(opt => {
+        opt.addEventListener('click', () => {
+          const track = opt.dataset.track || '';
+          this.ambientTrack = track;
+          localStorage.setItem('javiAmbientTrack', track);
+          if (this.ambientEnabled && this.ambientActive) {
+            setAmbientTrack(track);
+          }
+          this._updateSettingsUI();
+        });
       });
 
       // Auto-refresh toggle
@@ -2154,6 +2168,11 @@ class JaviAlertApp {
       // Auto-refresh toggle
       const art = document.getElementById('settingsAutoRefreshToggle');
       if (art) art.classList.toggle('active', this.autoRefresh);
+
+      // Track picker
+      document.querySelectorAll('.track-option').forEach(opt => {
+        opt.classList.toggle('active', (opt.dataset.track || '') === this.ambientTrack);
+      });
 
       // Volume slider + percentage
       const slider = document.getElementById('settingsVolumeSlider');

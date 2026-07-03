@@ -77,14 +77,25 @@ export function setAmbientVolume(vol) {
   if (_ambientAudio) _ambientAudio.volume = _ambientVolume;
 }
 
-export function startAmbientSound() {
+/**
+ * Start background music — plays either a specific track on loop or shuffled playlist.
+ * @param {string} [track] — specific file path to loop, or empty for shuffle all
+ */
+export function startAmbientSound(track) {
   try {
     stopAmbientSound();
-    _trackQueue = _shuffle(AMBIENT_FILES);
     _ambientAudio = new Audio();
     _ambientAudio.preload = 'auto';
-    _ambientAudio.addEventListener('ended', _playNextAmbient);
-    _playNextAmbient();
+    _ambientAudio.loop = !!track; // loop if a specific track is chosen
+    if (track) {
+      _ambientAudio.src = track;
+      _ambientAudio.volume = _ambientVolume;
+      _ambientAudio.play().catch(() => {});
+    } else {
+      _trackQueue = _shuffle(AMBIENT_FILES);
+      _ambientAudio.addEventListener('ended', _playNextAmbient);
+      _playNextAmbient();
+    }
   } catch (_) {}
 }
 
@@ -98,6 +109,19 @@ export function stopAmbientSound() {
     }
     _trackQueue = [];
   } catch (_) {}
+}
+
+/**
+ * Switch to a different ambient track while keeping music playing.
+ * @param {string} track — file path, or empty string for shuffle all
+ */
+export function setAmbientTrack(track) {
+  const wasPlaying = _ambientAudio && !_ambientAudio.paused;
+  const wasActive = !!_ambientAudio; // was running at all (even if paused by autoplay)
+  stopAmbientSound();
+  if (wasActive) {
+    startAmbientSound(track || undefined);
+  }
 }
 
 export function resumeAmbient() {
