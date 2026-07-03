@@ -1,5 +1,5 @@
 import { JAVI_MESSAGES, JAVI_REACTIONS, SAFETY_TIPS, EMERGENCY_CONTACTS } from './messages.js';
-import { playAlertSound, startAmbientSound, stopAmbientSound, setAmbientVolume } from './audio.js';
+import { playAlertSound, startAmbientSound, stopAmbientSound, setAmbientVolume, resumeAmbient } from './audio.js';
 import { API, CONFIG, timeSince, getCompassDir, getDistance, parsePlaceName, magClass } from './api-utils.js';
 
 class JaviAlertApp {
@@ -264,6 +264,9 @@ class JaviAlertApp {
         setAmbientVolume(this.volumeLevel);
         this.ambientActive = true;
       }
+
+      // Unlock AudioContext on first user interaction (browsers block autoplay)
+      this._unlockAudioOnce();
 
       // Scroll-to-top button visibility
       window.addEventListener('scroll', () => {
@@ -2089,6 +2092,23 @@ class JaviAlertApp {
       setTimeout(() => {
         overlay.classList.add('hidden');
       }, 500);
+    }
+
+    /** Resume ambient AudioContext on first click/tap — browser blocks autoplay */
+    _unlockAudioOnce() {
+      let unlocked = false;
+      const unlock = () => {
+        if (unlocked) return;
+        unlocked = true;
+        resumeAmbient();
+        // Remove all listeners after first interaction
+        document.removeEventListener('click', unlock);
+        document.removeEventListener('touchstart', unlock);
+        document.removeEventListener('keydown', unlock);
+      };
+      document.addEventListener('click', unlock);
+      document.addEventListener('touchstart', unlock);
+      document.addEventListener('keydown', unlock);
     }
 
     _showUpdateBanner(registration) {

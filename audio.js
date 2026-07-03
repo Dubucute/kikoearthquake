@@ -11,6 +11,11 @@ export function playAlertSound(type, soundEnabled, volume = 0.3) {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     const now = ctx.currentTime;
 
+    // Resume if browser suspended it (no user gesture yet)
+    if (ctx.state === 'suspended') {
+      ctx.resume();
+    }
+
     if (type === 'warning') {
       // Gentle two-tone alert: 660Hz then 880Hz, 0.15s each
       [660, 880].forEach((freq, i) => {
@@ -163,4 +168,15 @@ export function stopAmbientSound() {
     }
     _ambientGain = null;
   } catch (_) { /* ignore */ }
+}
+
+/**
+ * Resume the ambient AudioContext after a user gesture.
+ * Browsers block AudioContext until a user interaction (click/tap).
+ * Call this on first user interaction to unblock the melody.
+ */
+export function resumeAmbient() {
+  if (_ambientCtx && _ambientCtx.state === 'suspended') {
+    try { _ambientCtx.resume(); } catch (_) { /* ignore */ }
+  }
 }
