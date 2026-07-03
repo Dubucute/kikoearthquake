@@ -1,5 +1,5 @@
 import { JAVI_MESSAGES, JAVI_REACTIONS, SAFETY_TIPS, EMERGENCY_CONTACTS } from './messages.js';
-import { playAlertSound, startAmbientSound, stopAmbientSound } from './audio.js';
+import { playAlertSound, startAmbientSound, stopAmbientSound, setAmbientVolume } from './audio.js';
 import { API, CONFIG, timeSince, getCompassDir, getDistance, parsePlaceName, magClass } from './api-utils.js';
 
 class JaviAlertApp {
@@ -27,6 +27,7 @@ class JaviAlertApp {
       this.mapTiles = null;
       this.ambientEnabled = localStorage.getItem('javiAmbientEnabled') === 'true';
       this.ambientActive = false;
+      this.volumeLevel = parseFloat(localStorage.getItem('javiVolume') || '0.5');
 
       // Bind
       this.init = this.init.bind(this);
@@ -56,9 +57,9 @@ class JaviAlertApp {
       this._triggerServerPush = this._triggerServerPush.bind(this);
       this._initMap = this._initMap.bind(this);
       this._updateMapMarkers = this._updateMapMarkers.bind(this);
-      this.toggleAmbient = this.toggleAmbient.bind(this);
       this._showAnalysis = this._showAnalysis.bind(this);
       this._shareQuakeAsImage = this._shareQuakeAsImage.bind(this);
+      this._showSettings = this._showSettings.bind(this);
     }
 
     // ─── INIT ──────────────────────────────────────────────────
@@ -138,21 +139,17 @@ class JaviAlertApp {
       this.setupPagination();
       this.setupInstallPrompt();
 
-      // Dark mode
+      // Apply dark mode if previously set
       if (this.isDarkMode) {
         document.body.classList.add('dark-mode');
-        const icon = document.getElementById('darkModeIcon');
-        if (icon) icon.setAttribute('data-lucide', 'sun');
       }
-      document.getElementById('darkModeBtn').addEventListener('click', this.toggleDarkMode);
 
-      // Sound toggle
+      // Sound icon saved in localStorage
       this._updateSoundIcon();
-      document.getElementById('soundToggleBtn').addEventListener('click', this.toggleSound);
 
-      // Ambient sound toggle
-      this._updateAmbientIcon();
-      document.getElementById('ambientToggleBtn').addEventListener('click', this.toggleAmbient);
+      // Settings button
+      document.getElementById('settingsBtn').addEventListener('click', this._showSettings);
+      this._setupSettingsModal();
 
       // Am I Safe? analysis
       document.getElementById('pillAnalysisBtn').addEventListener('click', () => this._showAnalysis());
@@ -188,7 +185,7 @@ class JaviAlertApp {
       // Listen for postMessage from service worker (notification click → play sound)
       navigator.serviceWorker.addEventListener('message', (e) => {
         if (e.data && e.data.action === 'playAlertSound') {
-          playAlertSound(e.data.alertType, this.soundEnabled);
+          playAlertSound(e.data.alertType, this.soundEnabled, this.volumeLevel);
         }
       });
 
@@ -217,6 +214,7 @@ class JaviAlertApp {
       // Auto-start ambient if enabled
       if (this.ambientEnabled && this.currentMood !== 'danger') {
         startAmbientSound();
+        setAmbientVolume(this.volumeLevel);
         this.ambientActive = true;
       }
 
@@ -831,6 +829,7 @@ class JaviAlertApp {
       } else {
         if (this.ambientEnabled && !this.ambientActive) {
           startAmbientSound();
+          setAmbientVolume(this.volumeLevel);
           this.ambientActive = true;
         }
       }
@@ -994,7 +993,7 @@ class JaviAlertApp {
 
       // Play alert sound
       if (alertType) {
-        playAlertSound(alertType, this.soundEnabled);
+        playAlertSound(alertType, this.soundEnabled, this.volumeLevel);
       }
 
       // Haptic feedback on alert
@@ -1399,11 +1398,6 @@ class JaviAlertApp {
       this.isDarkMode = !this.isDarkMode;
       document.body.classList.toggle('dark-mode', this.isDarkMode);
       localStorage.setItem('javiDarkMode', this.isDarkMode);
-      const icon = document.getElementById('darkModeIcon');
-      if (icon) {
-        icon.setAttribute('data-lucide', this.isDarkMode ? 'sun' : 'moon');
-        try { lucide.createIcons(); } catch (_) { /* ignore */ }
-      }
 
       // Switch map tiles for dark mode
       this._switchMapTiles();
@@ -1433,11 +1427,7 @@ class JaviAlertApp {
       this._updateSoundIcon();
     }
     _updateSoundIcon() {
-      const icon = document.getElementById('soundToggleIcon');
-      if (icon) {
-        icon.setAttribute('data-lucide', this.soundEnabled ? 'volume-2' : 'volume-x');
-        try { lucide.createIcons(); } catch (_) { /* ignore */ }
-      }
+      // Sound state updates handled in _updateSettingsUI
     }
 
     // ─── PULL-TO-REFRSH ────────────────────────────────────────
@@ -1971,29 +1961,84 @@ class JaviAlertApp {
       });
     }
 
-    // ─── AMBIENT SOUND TOGGLE ─────────────────────────────────
-    toggleAmbient() {
-      this.ambientEnabled = !this.ambientEnabled;
-      localStorage.setItem('javiAmbientEnabled', this.ambientEnabled);
-      if (this.ambientEnabled) {
-        startAmbientSound();
-        this.ambientActive = true;
-      } else {
-        stopAmbientSound();
-        this.ambientActive = false;
-      }
-      this._updateAmbientIcon();
+    // ─── SETTINGS MODAL ───────────────────────────────────────
+    _setupSettingsModal() {
+      // Close buttons
+      document.getElementById('settingsModalClose').addEventListener('click', () => {
+        document.getElementById('settingsModal').classList.add('hidden');
+      });
+      document.getElementById('settingsModalGotIt').addEventListener('click', () => {
+        document.getElementById('settingsModal').classList.add('hidden');
+      });
+      document.getElementById('settingsModal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) e.currentTarget.classList.add('hidden');
+      });
+
+      // Dark mode toggle
+      document.getElementById('settingsDarkToggle').addEventListener('click', () => {
+        this.toggleDarkMode();
+        this._updateSettingsUI();
+      });
+
+      // Sound toggle
+      document.getElementById('settingsSoundToggle').addEventListener('click', () => {
+        this.toggleSound();
+        this._updateSettingsUI();
+      });
+
+      // Ambient toggle
+      document.getElementById('settingsAmbientToggle').addEventListener('click', () => {
+        this.ambientEnabled = !this.ambientEnabled;
+        localStorage.setItem('javiAmbientEnabled', this.ambientEnabled);
+        if (this.ambientEnabled) {
+          startAmbientSound();
+          setAmbientVolume(this.volumeLevel);
+          this.ambientActive = true;
+        } else {
+          stopAmbientSound();
+          this.ambientActive = false;
+        }
+        this._updateSettingsUI();
+      });
+
+      // Volume slider
+      const slider = document.getElementById('settingsVolumeSlider');
+      slider.value = this.volumeLevel;
+      slider.addEventListener('input', (e) => {
+        this.volumeLevel = parseFloat(e.target.value);
+        localStorage.setItem('javiVolume', this.volumeLevel);
+        setAmbientVolume(this.volumeLevel);
+        const pct = document.getElementById('settingsVolPct');
+        if (pct) pct.textContent = Math.round(this.volumeLevel * 100) + '%';
+      });
     }
-    _updateAmbientIcon() {
-      const btn = document.getElementById('ambientToggleBtn');
-      const icon = document.getElementById('ambientToggleIcon');
-      if (icon) {
-        icon.setAttribute('data-lucide', this.ambientEnabled ? 'wind' : 'wind');
-        try { lucide.createIcons(); } catch (_) { /* ignore */ }
-      }
-      if (btn) {
-        btn.classList.toggle('ambient-active', this.ambientEnabled);
-      }
+
+    _showSettings() {
+      this._updateSettingsUI();
+      document.getElementById('settingsModal').classList.remove('hidden');
+    }
+
+    _updateSettingsUI() {
+      // Dark mode toggle
+      const dt = document.getElementById('settingsDarkToggle');
+      dt.classList.toggle('active', this.isDarkMode);
+
+      // Sound toggle
+      const st = document.getElementById('settingsSoundToggle');
+      st.classList.toggle('active', this.soundEnabled);
+
+      // Ambient toggle
+      const at = document.getElementById('settingsAmbientToggle');
+      at.classList.toggle('active', this.ambientEnabled);
+
+      // Volume slider + percentage
+      const slider = document.getElementById('settingsVolumeSlider');
+      slider.value = this.volumeLevel;
+      const pct = document.getElementById('settingsVolPct');
+      if (pct) pct.textContent = Math.round(this.volumeLevel * 100) + '%';
+
+      // Update Lucide icons
+      try { lucide.createIcons(); } catch (_) { /* ignore */ }
     }
 
     // ─── AM I SAFE? ANALYSIS ──────────────────────────────────

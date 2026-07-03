@@ -2,8 +2,9 @@
  * Play an alert sound using the Web Audio API.
  * @param {'warning'|'danger'|null} type — alert severity
  * @param {boolean} soundEnabled — whether sound is allowed
+ * @param {number} [volume=0.3] — volume level (0-1)
  */
-export function playAlertSound(type, soundEnabled) {
+export function playAlertSound(type, soundEnabled, volume = 0.3) {
   if (!soundEnabled) return;
   if (!type) return;
   try {
@@ -17,7 +18,7 @@ export function playAlertSound(type, soundEnabled) {
         const gain = ctx.createGain();
         osc.type = 'sine';
         osc.frequency.value = freq;
-        gain.gain.setValueAtTime(0.3, now + i * 0.15);
+        gain.gain.setValueAtTime(volume * 0.7, now + i * 0.15);
         gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.15 + 0.15);
         osc.connect(gain);
         gain.connect(ctx.destination);
@@ -33,7 +34,7 @@ export function playAlertSound(type, soundEnabled) {
         const t = now + c * 0.35;
         osc.frequency.setValueAtTime(880, t);
         osc.frequency.exponentialRampToValueAtTime(440, t + 0.3);
-        gain.gain.setValueAtTime(0.35, t);
+        gain.gain.setValueAtTime(volume * 0.8, t);
         gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
         osc.connect(gain);
         gain.connect(ctx.destination);
@@ -44,15 +45,26 @@ export function playAlertSound(type, soundEnabled) {
   } catch (_) { /* audio not supported */ }
 }
 
-// ─── AMBIENT SOUND ──────────────────────────────────────────
+// ─── AMBIENT SOUND (Gentle Melody) ──────────────────────────
 let _ambientCtx = null;
 let _ambientGain = null;
-let _ambientNoise = null;
 let _ambientNodes = [];
+let _ambientVolume = 0.2; // default — louder on mobile
 
 /**
- * Start a gentle ambient wind-like sound.
- * Uses filtered pink noise for a subtle, calming effect.
+ * Update the ambient volume (0-1).
+ * @param {number} vol
+ */
+export function setAmbientVolume(vol) {
+  _ambientVolume = Math.max(0, Math.min(1, vol));
+  if (_ambientGain) {
+    _ambientGain.gain.setValueAtTime(_ambientVolume, _ambientCtx.currentTime);
+  }
+}
+
+/**
+ * Start a gentle music-box melody loop.
+ * Uses pentatonic scale with soft sine waves for a calming effect.
  */
 export function startAmbientSound() {
   try {
@@ -60,56 +72,79 @@ export function startAmbientSound() {
     stopAmbientSound();
 
     _ambientCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-    // Create pink noise buffer
     const sampleRate = _ambientCtx.sampleRate;
-    const duration = 4; // 4-second loop
-    const length = sampleRate * duration;
+
+    // Pentatonic melody: C4 D4 E4 G4 A4 C5 A4 G4 E4 D4 C4
+    const melody = [
+      { freq: 261.63, dur: 0.45 }, // C4
+      { freq: 293.66, dur: 0.35 }, // D4
+      { freq: 329.63, dur: 0.45 }, // E4
+      { freq: 392.00, dur: 0.35 }, // G4
+      { freq: 440.00, dur: 0.45 }, // A4
+      { freq: 523.25, dur: 0.55 }, // C5
+      { freq: 440.00, dur: 0.35 }, // A4
+      { freq: 392.00, dur: 0.35 }, // G4
+      { freq: 329.63, dur: 0.45 }, // E4
+      { freq: 293.66, dur: 0.35 }, // D4
+      { freq: 261.63, dur: 0.55 }, // C4
+      // Add a gentle rest/pause
+      { freq: null, dur: 0.30 },
+      // Repeat slightly varied — a soft higher phrase
+      { freq: 392.00, dur: 0.35 }, // G4
+      { freq: 440.00, dur: 0.45 }, // A4
+      { freq: 523.25, dur: 0.35 }, // C5
+      { freq: 587.33, dur: 0.45 }, // D5
+      { freq: 523.25, dur: 0.35 }, // C5
+      { freq: 440.00, dur: 0.45 }, // A4
+      { freq: 392.00, dur: 0.35 }, // G4
+      { freq: 329.63, dur: 0.55 }, // E4
+    ];
+
+    // Calculate total loop duration
+    const totalDur = melody.reduce((sum, n) => sum + n.dur, 0);
+    const length = Math.ceil(sampleRate * totalDur);
     const buffer = _ambientCtx.createBuffer(1, length, sampleRate);
     const data = buffer.getChannelData(0);
 
-    // Pink noise approximation (fill with random, then filter)
-    let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
-    for (let i = 0; i < length; i++) {
-      const white = Math.random() * 2 - 1;
-      b0 = 0.99886 * b0 + white * 0.0555179;
-      b1 = 0.99332 * b1 + white * 0.0750759;
-      b2 = 0.96900 * b2 + white * 0.1538520;
-      b3 = 0.86650 * b3 + white * 0.3104856;
-      b4 = 0.55000 * b4 + white * 0.5329522;
-      b5 = -0.7616 * b5 - white * 0.0168980;
-      data[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.05;
-      b6 = white * 0.115926;
-    }
+    // Render the melody into the buffer
+    let cursor = 0;
+    melody.forEach(note => {
+      if (note.freq) {
+        const period = sampleRate / note.freq;
+        const nsamples = Math.floor(sampleRate * note.dur);
+        // Soft attack (first 10ms) and release (last 30ms)
+        const attackSamples = Math.min(Math.floor(sampleRate * 0.01), nsamples);
+        const releaseSamples = Math.min(Math.floor(sampleRate * 0.03), nsamples);
+        for (let i = 0; i < nsamples && (cursor + i) < length; i++) {
+          // Sine wave with soft harmonic for warmth
+          let val = Math.sin(2 * Math.PI * i / period) * 0.45
+                  + Math.sin(2 * Math.PI * i / (period / 2)) * 0.12
+                  + Math.sin(2 * Math.PI * i / (period / 3)) * 0.05;
+          // Envelope: attack + sustain + release
+          let env = 1;
+          if (i < attackSamples) env = i / attackSamples;
+          else if (i > nsamples - releaseSamples) env = (nsamples - i) / releaseSamples;
+          data[cursor + i] = val * env * 0.35;
+        }
+      }
+      cursor += Math.floor(sampleRate * note.dur);
+    });
 
-    _ambientNoise = _ambientCtx.createBufferSource();
-    _ambientNoise.buffer = buffer;
-    _ambientNoise.loop = true;
+    // Create buffer source and loop
+    const source = _ambientCtx.createBufferSource();
+    source.buffer = buffer;
+    source.loop = true;
 
-    // Low-pass filter to make it sound like gentle wind
-    const filter = _ambientCtx.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.value = 600;
-    filter.Q.value = 0.5;
-
-    // Another bandpass to shape it
-    const filter2 = _ambientCtx.createBiquadFilter();
-    filter2.type = 'bandpass';
-    filter2.frequency.value = 200;
-    filter2.Q.value = 0.8;
-
-    // Master gain — very quiet
+    // Master gain
     _ambientGain = _ambientCtx.createGain();
-    _ambientGain.gain.value = 0.08;
+    _ambientGain.gain.value = _ambientVolume;
 
-    // Connect: noise → filter → filter2 → gain → destination
-    _ambientNoise.connect(filter);
-    filter.connect(filter2);
-    filter2.connect(_ambientGain);
+    // Connect and start
+    source.connect(_ambientGain);
     _ambientGain.connect(_ambientCtx.destination);
+    source.start();
 
-    _ambientNoise.start();
-    _ambientNodes = [_ambientNoise, filter, filter2, _ambientGain];
+    _ambientNodes = [source, _ambientGain];
   } catch (_) { /* ambient audio not supported */ }
 }
 
@@ -122,10 +157,6 @@ export function stopAmbientSound() {
       try { n.disconnect(); } catch (_) {}
     });
     _ambientNodes = [];
-    if (_ambientNoise) {
-      try { _ambientNoise.stop(); } catch (_) {}
-      _ambientNoise = null;
-    }
     if (_ambientCtx) {
       try { _ambientCtx.close(); } catch (_) {}
       _ambientCtx = null;

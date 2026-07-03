@@ -1135,12 +1135,6 @@ body.dark-mode .retry-btn { background: #333350; color: #e0e0e0; border-color: #
 /* ═══════════════════════════════════════════════════════════════
    AMBIENT SOUND TOGGLE ACTIVE
    ═══════════════════════════════════════════════════════════════ */
-.topbar-btn.ambient-active {
-  background: rgba(0, 200, 150, 0.5);
-  border-color: rgba(0, 200, 150, 0.8);
-  box-shadow: 0 0 12px rgba(0, 200, 150, 0.3);
-}
-
 /* ═══════════════════════════════════════════════════════════════
    ACTION BAR (3 columns now)
    ═══════════════════════════════════════════════════════════════ */
@@ -1535,6 +1529,124 @@ body.dark-mode .s12 { animation-delay: 0.8s; }
 @keyframes slideUpFade {
   0%   { opacity: 0; transform: translateY(16px); }
   100% { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SETTINGS MODAL — toggles & volume slider
+   ═══════════════════════════════════════════════════════════════ */
+.settings-modal-card {
+  max-width: 360px;
+}
+.settings-body {
+  padding: 6px 14px 10px;
+}
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1.5px solid rgba(0,0,0,.08);
+}
+.settings-row:last-child { border-bottom: none; }
+.settings-row-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+.settings-row-label i { width: 18px; height: 18px; }
+.settings-vol-pct {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-muted);
+  min-width: 36px;
+  text-align: right;
+}
+/* Toggle switch */
+.settings-toggle {
+  width: 44px; height: 24px;
+  border-radius: 14px;
+  background: #ccc;
+  border: 2px solid #bbb;
+  cursor: pointer;
+  position: relative;
+  transition: background .25s, border-color .25s;
+  padding: 0;
+  flex-shrink: 0;
+}
+.settings-toggle.active {
+  background: #00b894;
+  border-color: #00a381;
+}
+.settings-toggle-knob {
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0,0,0,.25);
+  transition: transform .25s ease;
+}
+.settings-toggle.active .settings-toggle-knob {
+  transform: translateX(20px);
+}
+/* Volume slider */
+.settings-row-vol {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+.settings-slider-wrap {
+  padding: 0 2px;
+}
+.settings-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: #dfe6e9;
+  outline: none;
+  border: 1px solid #ccc;
+}
+.settings-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: #00b894;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,.3);
+  cursor: pointer;
+  transition: transform .15s;
+}
+.settings-slider::-webkit-slider-thumb:active {
+  transform: scale(1.15);
+}
+.settings-slider::-moz-range-thumb {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: #00b894;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,.3);
+  cursor: pointer;
+}
+body.dark-mode .settings-row {
+  border-bottom-color: rgba(255,255,255,.1);
+}
+body.dark-mode .settings-toggle {
+  background: #444;
+  border-color: #555;
+}
+body.dark-mode .settings-toggle.active {
+  background: #00b894;
+  border-color: #00a381;
+}
+body.dark-mode .settings-slider {
+  background: #444;
+  border-color: #555;
 }
 
 /* ═══════════════════════════════════════════════════════════════
