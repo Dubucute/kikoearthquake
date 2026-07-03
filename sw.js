@@ -1,4 +1,4 @@
-const CACHE = 'quake-buddy-v22';
+const CACHE = 'quake-buddy-v23';
 const ASSETS = [
   '/', '/index.html', '/manifest.json',
   '/style.css', '/app.js',
@@ -12,7 +12,8 @@ const ASSETS = [
   '/sounds/Alerto sa Sakuna.mp3',
   '/sounds/Ligtas.mp3',
   '/sounds/Javilerto.mp3',
-  '/sounds/Sabay_sabay_Tayong_Bida.mp3'
+  '/sounds/Sabay_sabay_Tayong_Bida.mp3',
+  '/sounds/NDRRMC-Alert.mp3'
 ];
 
 self.addEventListener('install', e => {
