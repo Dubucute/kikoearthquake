@@ -62,73 +62,14 @@ class JaviAlertApp {
       this._showAnalysis = this._showAnalysis.bind(this);
       this._shareQuakeAsImage = this._shareQuakeAsImage.bind(this);
       this._showSettings = this._showSettings.bind(this);
+      this._registerServiceWorker = this._registerServiceWorker.bind(this);
     }
 
     // ─── INIT ──────────────────────────────────────────────────
     async init() {
-      // Register SW with auto-update during loading screen
-      if ('serviceWorker' in navigator) {
-        try {
-          const registration = await navigator.serviceWorker.register('sw.js');
-          const hadController = !!navigator.serviceWorker.controller;
-
-          // Cooldown flag — prevents infinite reload loop after auto-update
-          const justUpdated = localStorage.getItem('javiJustUpdated');
-          const recentUpdate = justUpdated && (Date.now() - parseInt(justUpdated, 10)) < 300000;
-          if (justUpdated && !recentUpdate) {
-            localStorage.removeItem('javiJustUpdated');
-          }
-
-          // Reload when a new SW takes over (auto-update via skipWaiting in SW install)
-          let refreshing = false;
-          navigator.serviceWorker.addEventListener('controllerchange', () => {
-            if (refreshing) return;
-            refreshing = true;
-            localStorage.setItem('javiJustUpdated', Date.now());
-            window.location.reload();
-          });
-
-          // Helper: trigger auto-update by activating the waiting SW
-          const autoUpdate = (sw) => {
-            if (!sw) return;
-            // Live cooldown check (in case updatefound fires much later)
-            const justUpdated = localStorage.getItem('javiJustUpdated');
-            if (justUpdated && (Date.now() - parseInt(justUpdated, 10)) < 300000) return;
-            document.getElementById('loadingText').textContent = 'Updating app...';
-            sw.postMessage({ action: 'skipWaiting' });
-          };
-
-          // Case 1: A new SW is already waiting (e.g. previous update found but not activated)
-          if (registration.waiting && hadController && !recentUpdate) {
-            autoUpdate(registration.waiting);
-            return; // controllerchange will reload
-          }
-
-          // Case 2: A new SW is currently installing (mid-update when register resolved)
-          if (registration.installing && hadController && !recentUpdate) {
-            document.getElementById('loadingText').textContent = 'Updating app...';
-            registration.installing.addEventListener('statechange', () => {
-              if (registration.waiting) autoUpdate(registration.waiting);
-            });
-          }
-
-          // Case 3: Future update detected while app runs
-          registration.addEventListener('updatefound', () => {
-            const newSW = registration.installing;
-            if (!newSW || !hadController) return;
-            // Ignore if cooldown is still active
-            const stillRecent = localStorage.getItem('javiJustUpdated') &&
-              (Date.now() - parseInt(localStorage.getItem('javiJustUpdated'), 10)) < 300000;
-            if (stillRecent) return;
-            document.getElementById('loadingText').textContent = 'Updating app...';
-            newSW.addEventListener('statechange', () => {
-              if (newSW.state === 'installed' && registration.waiting) {
-                autoUpdate(registration.waiting);
-              }
-            });
-          });
-        } catch (_) { /* SW not supported */ }
-      }
+      // Register SW in background (non-blocking) — in-app browsers like Messenger's
+      // WebView often hang on SW registration; we don't want that to block startup.
+      this._registerServiceWorker();
 
       // Request notification permission + setup push
       if ('Notification' in window && Notification.permission === 'default') {
@@ -288,11 +229,13 @@ class JaviAlertApp {
       }
 
       // Listen for postMessage from service worker (notification click → play sound)
-      navigator.serviceWorker.addEventListener('message', (e) => {
-        if (e.data && e.data.action === 'playAlertSound') {
-          playAlertSound(e.data.alertType, this.soundEnabled, this.volumeLevel);
-        }
-      });
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.addEventListener('message', (e) => {
+          if (e.data && e.data.action === 'playAlertSound') {
+            playAlertSound(e.data.alertType, this.soundEnabled, this.volumeLevel);
+          }
+        });
+      }
 
       // Pull-to-refresh (mobile)
       this._setupPullToRefresh();
@@ -2171,6 +2114,76 @@ class JaviAlertApp {
         const pct = document.getElementById('settingsVolPct');
         if (pct) pct.textContent = Math.round(this.volumeLevel * 100) + '%';
       });
+    }
+
+    /** Register Service Worker in background — doesn't block startup */
+    _registerServiceWorker() {
+      if (!('serviceWorker' in navigator)) return;
+      // Run async but DON'T await — in-app browsers (Messenger, etc.) can hang
+      const doRegister = async () => {
+        try {
+          const registration = await navigator.serviceWorker.register('sw.js');
+          const hadController = !!navigator.serviceWorker.controller;
+
+          // Cooldown flag — prevents infinite reload loop after auto-update
+          const justUpdated = localStorage.getItem('javiJustUpdated');
+          const recentUpdate = justUpdated && (Date.now() - parseInt(justUpdated, 10)) < 300000;
+          if (justUpdated && !recentUpdate) {
+            localStorage.removeItem('javiJustUpdated');
+          }
+
+          // Reload when a new SW takes over
+          let refreshing = false;
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (refreshing) return;
+            refreshing = true;
+            localStorage.setItem('javiJustUpdated', Date.now());
+            window.location.reload();
+          });
+
+          // Helper: trigger auto-update by activating the waiting SW
+          const autoUpdate = (sw) => {
+            if (!sw) return;
+            const justUpdated = localStorage.getItem('javiJustUpdated');
+            if (justUpdated && (Date.now() - parseInt(justUpdated, 10)) < 300000) return;
+            const lt = document.getElementById('loadingText');
+            if (lt) lt.textContent = 'Updating app...';
+            sw.postMessage({ action: 'skipWaiting' });
+          };
+
+          // Case 1: A new SW is already waiting
+          if (registration.waiting && hadController && !recentUpdate) {
+            autoUpdate(registration.waiting);
+            return;
+          }
+
+          // Case 2: A new SW is currently installing
+          if (registration.installing && hadController && !recentUpdate) {
+            const lt = document.getElementById('loadingText');
+            if (lt) lt.textContent = 'Updating app...';
+            registration.installing.addEventListener('statechange', () => {
+              if (registration.waiting) autoUpdate(registration.waiting);
+            });
+          }
+
+          // Case 3: Future update detected
+          registration.addEventListener('updatefound', () => {
+            const newSW = registration.installing;
+            if (!newSW || !hadController) return;
+            const stillRecent = localStorage.getItem('javiJustUpdated') &&
+              (Date.now() - parseInt(localStorage.getItem('javiJustUpdated'), 10)) < 300000;
+            if (stillRecent) return;
+            const lt = document.getElementById('loadingText');
+            if (lt) lt.textContent = 'Updating app...';
+            newSW.addEventListener('statechange', () => {
+              if (newSW.state === 'installed' && registration.waiting) {
+                autoUpdate(registration.waiting);
+              }
+            });
+          });
+        } catch (_) { /* SW not supported — proceed without it */ }
+      };
+      doRegister();
     }
 
     _showSettings() {
