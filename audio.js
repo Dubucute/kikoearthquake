@@ -36,9 +36,10 @@ const OPENING_FILE = 'sounds/Sabay_sabay_Tayong_Bida.mp3';
 /** Pretty name for track display */
 function _trackLabel(path) {
   if (!path) return '—';
-  // Extract "Alerto sa Sakuna" from "sounds/Alerto sa Sakuna.mp3"
-  const name = path.split('/').pop().replace(/\.mp3$/i, '');
-  return name;
+  // Decode URL-encoded chars (%20 → space) and extract the song name
+  // "sounds/Alerto%20sa%20Sakuna.mp3" → "Alerto sa Sakuna"
+  const name = decodeURIComponent(path).split('/').pop().replace(/\.mp3$/i, '');
+  return name + '  • JaviAlert';
 }
 
 // Callback when track changes — set by app.js for "Now Playing" UI
@@ -48,7 +49,7 @@ export function setOnTrackChange(fn) {
 }
 
 function _notifyTrack(path) {
-  if (_trackChangeCallback) _trackChangeCallback(path || '');
+  if (_trackChangeCallback) _trackChangeCallback(path ? _trackLabel(path) : '');
 }
 
 function _shuffle(arr) {

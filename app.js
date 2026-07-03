@@ -219,9 +219,8 @@ class JaviAlertApp {
           el.classList.add('hidden');
           textEl.textContent = 'Now Playing: —';
         } else {
-          // Extract pretty name from path: "sounds/Alerto sa Sakuna.mp3" → "Alerto sa Sakuna"
-          const name = trackPath.split('/').pop().replace(/\.mp3$/i, '');
-          textEl.textContent = '♫ ' + name;
+          // trackPath already comes cleaned from audio.js _trackLabel
+          textEl.textContent = '♫ ' + trackPath;
           el.classList.remove('hidden');
           // Sync play/pause icon
           const icon = document.querySelector('#npPlayPauseIcon');
