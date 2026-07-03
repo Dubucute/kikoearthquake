@@ -58,8 +58,15 @@
 
   <!-- Now playing bar (hidden when no music) -->
   <div class="now-playing hidden" id="nowPlaying">
-    <span class="now-playing-icon" aria-hidden="true">🎵</span>
     <span class="now-playing-text" id="nowPlayingText">Now Playing: —</span>
+    <div class="now-playing-controls">
+      <button class="np-btn" id="npPlaybackMode" aria-label="Change playback mode" title="Playback mode">
+        <i data-lucide="shuffle" id="npModeIcon" width="14" height="14" aria-hidden="true"></i>
+      </button>
+      <button class="np-btn" id="npNext" aria-label="Next track" title="Next track">
+        <i data-lucide="skip-forward" width="14" height="14" aria-hidden="true"></i>
+      </button>
+    </div>
   </div>
 
   <div class="loc-bar" role="region" aria-label="Your location">

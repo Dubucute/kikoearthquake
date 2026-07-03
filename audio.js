@@ -48,6 +48,7 @@ export function playAlertSound(type, soundEnabled, volume = 0.3) {
 let _ambientAudio = null;
 let _ambientVolume = 0.2;
 let _trackQueue = [];
+let _playbackMode = localStorage.getItem('javiPlaybackMode') || 'shuffle-all'; // 'loop-one' | 'play-once' | 'shuffle-all'
 
 const AMBIENT_FILES = [
   'sounds/Alerto sa Sakuna.mp3',
@@ -88,8 +89,49 @@ function _playNextAmbient() {
   const track = _trackQueue.pop();
   _ambientAudio.src = track;
   _ambientAudio.volume = _ambientVolume;
+  _ambientAudio.loop = (_playbackMode === 'loop-one');
   _ambientAudio.play().catch(() => {});
   _notifyTrack(track);
+}
+
+function _applyPlaybackMode() {
+  if (!_ambientAudio) return;
+  if (_playbackMode === 'loop-one') {
+    _ambientAudio.loop = true;
+    _ambientAudio.removeEventListener('ended', _playNextAmbient);
+  } else if (_playbackMode === 'play-once') {
+    _ambientAudio.loop = false;
+    _ambientAudio.removeEventListener('ended', _playNextAmbient);
+  } else { // shuffle-all
+    _ambientAudio.loop = false;
+    // Avoid duplicate listeners
+    _ambientAudio.removeEventListener('ended', _playNextAmbient);
+    _ambientAudio.addEventListener('ended', _playNextAmbient);
+  }
+}
+
+export function getPlaybackMode() {
+  return _playbackMode;
+}
+
+export function setPlaybackMode(mode) {
+  _playbackMode = mode;
+  localStorage.setItem('javiPlaybackMode', mode);
+  _applyPlaybackMode();
+}
+
+export function nextTrack() {
+  if (!_ambientAudio) return;
+  if (_playbackMode === 'shuffle-all') {
+    // Skip to next track in the shuffled queue
+    _ambientAudio.removeEventListener('ended', _playNextAmbient);
+    _playNextAmbient();
+    _ambientAudio.addEventListener('ended', _playNextAmbient);
+  } else {
+    // Restart current track
+    _ambientAudio.currentTime = 0;
+    _ambientAudio.play().catch(() => {});
+  }
 }
 
 export function setAmbientVolume(vol) {
@@ -99,26 +141,30 @@ export function setAmbientVolume(vol) {
 
 /**
  * Start background music — plays either a specific track on loop or shuffled playlist.
- * Also stops any opening music since ambient takes over.
+ * Does NOT stop opening music — opening plays on first user tap, then transitions here.
  * @param {string} [track] — specific file path to loop, or empty for shuffle all
  */
 export function startAmbientSound(track) {
   try {
     stopAmbientSound();
-    // Stop opening music — ambient is taking over
-    stopOpeningMusic();
+    // Don't stop opening music! It plays on first user tap, then transitions here.
     _ambientAudio = new Audio();
     _ambientAudio.preload = 'auto';
-    _ambientAudio.loop = !!track; // loop if a specific track is chosen
+    _ambientAudio.loop = (_playbackMode === 'loop-one');
     if (track) {
       _ambientAudio.src = track;
       _ambientAudio.volume = _ambientVolume;
       _ambientAudio.play().catch(() => {});
-      _notifyTrack(track);
+      _applyPlaybackMode();
+      // Don't notify track — opening music plays first on tap
     } else {
       _trackQueue = _shuffle(AMBIENT_FILES);
-      _ambientAudio.addEventListener('ended', _playNextAmbient);
-      _playNextAmbient();
+      // Set first track without notifying — opening plays first
+      const firstTrack = _trackQueue.pop();
+      _ambientAudio.src = firstTrack;
+      _ambientAudio.volume = _ambientVolume;
+      _ambientAudio.play().catch(() => {});
+      _applyPlaybackMode();
     }
   } catch (_) {}
 }
@@ -160,6 +206,7 @@ export function resumeAmbient() {
   if (_openingAudio && _openingAudio.src && _openingAudio.paused) {
     // Opening never played (autoplay blocked) — play it now
     _openingAudio.play().catch(() => {});
+    _notifyTrack(OPENING_FILE);
     // When opening ends, start ambient (if it was created)
     _openingAudio.onended = () => {
       try { _openingAudio = null; } catch (_) {}

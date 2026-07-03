@@ -1,5 +1,5 @@
 import { JAVI_MESSAGES, JAVI_REACTIONS, SAFETY_TIPS, EMERGENCY_CONTACTS } from './messages.js';
-import { playAlertSound, startAmbientSound, stopAmbientSound, setAmbientVolume, setAmbientTrack, resumeAmbient, playOpeningMusic, setOnTrackChange } from './audio.js';
+import { playAlertSound, startAmbientSound, stopAmbientSound, setAmbientVolume, setAmbientTrack, resumeAmbient, playOpeningMusic, setOnTrackChange, getPlaybackMode, setPlaybackMode, nextTrack } from './audio.js';
 import { API, CONFIG, timeSince, getCompassDir, getDistance, parsePlaceName, magClass } from './api-utils.js';
 
 class JaviAlertApp {
@@ -225,6 +225,27 @@ class JaviAlertApp {
           el.classList.remove('hidden');
         }
       });
+
+      // Now Playing controls
+      document.getElementById('npPlaybackMode').addEventListener('click', () => {
+        const modes = ['shuffle-all', 'loop-one', 'play-once'];
+        const labels = ['shuffle', 'repeat', 'play'];
+        const current = getPlaybackMode();
+        const idx = (modes.indexOf(current) + 1) % modes.length;
+        setPlaybackMode(modes[idx]);
+        const icon = document.querySelector('#npModeIcon');
+        if (icon) icon.setAttribute('data-lucide', labels[idx]);
+        try { lucide.createIcons(); } catch (_) {}
+      });
+      document.getElementById('npNext').addEventListener('click', nextTrack);
+
+      // Initial playback mode icon
+      const modeMap = { 'shuffle-all': 'shuffle', 'loop-one': 'repeat', 'play-once': 'play' };
+      const modeIcon = document.querySelector('#npModeIcon');
+      if (modeIcon) {
+        modeIcon.setAttribute('data-lucide', modeMap[getPlaybackMode()] || 'shuffle');
+        try { lucide.createIcons(); } catch (_) {}
+      }
 
       // Am I Safe? analysis
       document.getElementById('pillAnalysisBtn').addEventListener('click', () => this._showAnalysis());
