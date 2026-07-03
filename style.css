@@ -1650,6 +1650,133 @@ body.dark-mode .settings-slider {
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   UPDATE BANNER — new version available
+   ═══════════════════════════════════════════════════════════════ */
+.update-banner {
+  background: #00b894;
+  color: white;
+  text-align: center;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 2.5px solid #00856a;
+  box-shadow: 3px 3px 0px #00856a;
+  animation: bounceIn .4s ease;
+}
+.update-banner i {
+  width: 16px; height: 16px;
+  flex-shrink: 0;
+}
+.update-banner-text {
+  flex: 1;
+  text-align: left;
+}
+.update-banner-btn {
+  background: white;
+  color: #00856a;
+  border: 2px solid #00856a;
+  border-radius: 8px;
+  padding: 4px 14px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform .15s;
+}
+.update-banner-btn:active {
+  transform: scale(.92);
+}
+body.dark-mode .update-banner {
+  background: #00a381;
+  border-color: #006b54;
+  box-shadow: 3px 3px 0px #006b54;
+}
+body.dark-mode .update-banner-btn {
+  color: #006b54;
+  border-color: #006b54;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   LOADING OVERLAY — splash screen on first load
+   ═══════════════════════════════════════════════════════════════ */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: linear-gradient(135deg, #87CEEB 0%, #b2dffa 50%, #e8f4fd 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity .5s ease;
+}
+.loading-overlay.fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+.loading-overlay.updating {
+  opacity: 1;
+  pointer-events: auto;
+}
+.loading-overlay-content {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.loading-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  animation: float 2.5s ease-in-out infinite;
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.loading-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #2d3436;
+  font-family: 'Fredoka', sans-serif;
+}
+.loading-spinner {
+  width: 32px; height: 32px;
+  border: 3.5px solid rgba(0,0,0,.12);
+  border-top-color: #00b894;
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+  margin-top: 6px;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.loading-text {
+  font-size: 14px;
+  color: #636e72;
+  font-weight: 500;
+}
+body.dark-mode .loading-overlay {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+}
+body.dark-mode .loading-title {
+  color: #e0e0e0;
+}
+body.dark-mode .loading-text {
+  color: #b0b0b0;
+}
+body.dark-mode .loading-spinner {
+  border-color: rgba(255,255,255,.15);
+  border-top-color: #00b894;
+}
+
+/* ═══════════════════════════════════════════════════════════════
    SCROLL TO TOP — floating button
    ═══════════════════════════════════════════════════════════════ */
 .scroll-top-btn {

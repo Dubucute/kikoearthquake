@@ -28,6 +28,7 @@ class JaviAlertApp {
       this.ambientEnabled = localStorage.getItem('javiAmbientEnabled') === 'true';
       this.ambientActive = false;
       this.volumeLevel = parseFloat(localStorage.getItem('javiVolume') || '0.5');
+      this.autoRefresh = localStorage.getItem('javiAutoRefresh') !== 'false';
 
       // Bind
       this.init = this.init.bind(this);
@@ -64,12 +65,53 @@ class JaviAlertApp {
 
     // ─── INIT ──────────────────────────────────────────────────
     async init() {
-      // Register SW
+      // Register SW with update detection
       if ('serviceWorker' in navigator) {
         try {
-          await navigator.serviceWorker.register('sw.js');
+          const registration = await navigator.serviceWorker.register('sw.js');
+
+          // Check if there's a waiting SW (new version already installed)
+          if (registration.waiting) {
+            this._showUpdateBanner(registration);
+          }
+
+          // Listen for new SW updates
+          registration.addEventListener('updatefound', () => {
+            const newSW = registration.installing;
+            if (newSW) {
+              newSW.addEventListener('statechange', () => {
+                if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+                  // New version installed and ready
+                  this._showUpdateBanner(registration);
+                }
+              });
+            }
+          });
+
+          // Detect controller change (SW updated)
+          let refreshing = false;
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (refreshing) return;
+            refreshing = true;
+            window.location.reload();
+          });
         } catch (_) { /* ignore */ }
       }
+
+      // Update banner button
+      document.getElementById('updateBannerBtn').addEventListener('click', () => {
+        const overlay = document.getElementById('loadingOverlay');
+        if (overlay) {
+          overlay.classList.add('updating');
+          document.getElementById('loadingText').textContent = 'Updating...';
+        }
+        // Post message to skip waiting and activate new SW
+        if (navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage({ action: 'skipWaiting' });
+        } else {
+          window.location.reload();
+        }
+      });
 
       // Request notification permission + setup push
       if ('Notification' in window && Notification.permission === 'default') {
@@ -208,8 +250,13 @@ class JaviAlertApp {
       // Init map (needs userLat/Lon from location)
       this._initMap();
 
-      // Auto-refresh
-      this.refreshTimer = setInterval(() => this.loadData(), CONFIG.AUTO_REFRESH_MS);
+      // Auto-refresh (respect setting)
+      if (this.autoRefresh) {
+        this.refreshTimer = setInterval(() => this.loadData(), CONFIG.AUTO_REFRESH_MS);
+      }
+
+      // Hide loading overlay
+      this._dismissLoading();
 
       // Auto-start ambient if enabled
       if (this.ambientEnabled && this.currentMood !== 'danger') {
@@ -2001,6 +2048,23 @@ class JaviAlertApp {
         this._updateSettingsUI();
       });
 
+      // Auto-refresh toggle
+      document.getElementById('settingsAutoRefreshToggle').addEventListener('click', () => {
+        this.autoRefresh = !this.autoRefresh;
+        localStorage.setItem('javiAutoRefresh', this.autoRefresh);
+        if (this.autoRefresh) {
+          if (!this.refreshTimer) {
+            this.refreshTimer = setInterval(() => this.loadData(), CONFIG.AUTO_REFRESH_MS);
+          }
+        } else {
+          if (this.refreshTimer) {
+            clearInterval(this.refreshTimer);
+            this.refreshTimer = null;
+          }
+        }
+        this._updateSettingsUI();
+      });
+
       // Volume slider
       const slider = document.getElementById('settingsVolumeSlider');
       slider.value = this.volumeLevel;
@@ -2018,22 +2082,43 @@ class JaviAlertApp {
       document.getElementById('settingsModal').classList.remove('hidden');
     }
 
+    _dismissLoading() {
+      const overlay = document.getElementById('loadingOverlay');
+      if (!overlay) return;
+      overlay.classList.add('fade-out');
+      setTimeout(() => {
+        overlay.classList.add('hidden');
+      }, 500);
+    }
+
+    _showUpdateBanner(registration) {
+      const banner = document.getElementById('updateBanner');
+      if (banner) {
+        banner.classList.remove('hidden');
+        banner._registration = registration;
+      }
+    }
+
     _updateSettingsUI() {
       // Dark mode toggle
       const dt = document.getElementById('settingsDarkToggle');
-      dt.classList.toggle('active', this.isDarkMode);
+      if (dt) dt.classList.toggle('active', this.isDarkMode);
 
       // Sound toggle
       const st = document.getElementById('settingsSoundToggle');
-      st.classList.toggle('active', this.soundEnabled);
+      if (st) st.classList.toggle('active', this.soundEnabled);
 
       // Ambient toggle
       const at = document.getElementById('settingsAmbientToggle');
-      at.classList.toggle('active', this.ambientEnabled);
+      if (at) at.classList.toggle('active', this.ambientEnabled);
+
+      // Auto-refresh toggle
+      const art = document.getElementById('settingsAutoRefreshToggle');
+      if (art) art.classList.toggle('active', this.autoRefresh);
 
       // Volume slider + percentage
       const slider = document.getElementById('settingsVolumeSlider');
-      slider.value = this.volumeLevel;
+      if (slider) slider.value = this.volumeLevel;
       const pct = document.getElementById('settingsVolPct');
       if (pct) pct.textContent = Math.round(this.volumeLevel * 100) + '%';
 

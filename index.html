@@ -41,6 +41,13 @@
     No connection — showing last data
   </div>
 
+  <!-- Update available banner -->
+  <div class="update-banner hidden" id="updateBanner" role="alert">
+    <i data-lucide="refresh-cw" aria-hidden="true"></i>
+    <span class="update-banner-text">New version available!</span>
+    <button class="update-banner-btn" id="updateBannerBtn">Update</button>
+  </div>
+
   <div class="topbar">
     <div class="app-name">
       <img src="icons/javi-icon.png" alt="" class="app-icon" aria-hidden="true">
@@ -312,6 +319,16 @@
             <span class="settings-toggle-knob"></span>
           </button>
         </div>
+        <!-- Auto-refresh -->
+        <div class="settings-row">
+          <div class="settings-row-label">
+            <i data-lucide="refresh-cw" aria-hidden="true"></i>
+            <span>Auto-refresh</span>
+          </div>
+          <button class="settings-toggle active" id="settingsAutoRefreshToggle" aria-label="Toggle auto-refresh">
+            <span class="settings-toggle-knob"></span>
+          </button>
+        </div>
         <!-- Volume slider -->
         <div class="settings-row settings-row-vol">
           <div class="settings-row-label">
@@ -373,6 +390,16 @@
     Made with <i data-lucide="heart" aria-hidden="true"></i> by Dubu
   </div>
   <div class="last-update" id="lastUpdate"></div>
+
+  <!-- Loading overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-overlay-content">
+      <img src="icons/javi-icon.png" alt="" class="loading-icon" aria-hidden="true">
+      <div class="loading-title">JaviAlert</div>
+      <div class="loading-spinner"></div>
+      <div class="loading-text" id="loadingText">Loading...</div>
+    </div>
+  </div>
 
   <!-- Scroll to top -->
   <button class="scroll-top-btn hidden" id="scrollTopBtn" aria-label="Scroll to top">

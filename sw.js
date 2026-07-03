@@ -1,4 +1,4 @@
-const CACHE = 'quake-buddy-v7';
+const CACHE = 'quake-buddy-v8';
 const ASSETS = [
   '/', '/index.html', '/manifest.json',
   '/style.css', '/app.js',
@@ -20,6 +20,13 @@ self.addEventListener('activate', e => {
     Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
   ));
   self.clients.claim();
+});
+
+// Listen for skipWaiting message from the app
+self.addEventListener('message', e => {
+  if (e.data && e.data.action === 'skipWaiting') {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener('fetch', e => {
