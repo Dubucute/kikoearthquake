@@ -1,5 +1,5 @@
 import { JAVI_MESSAGES, JAVI_REACTIONS, SAFETY_TIPS, EMERGENCY_CONTACTS } from './messages.js';
-import { playAlertSound, startAmbientSound, stopAmbientSound, setAmbientVolume, setAmbientTrack, resumeAmbient, setOnTrackChange, getPlaybackMode, setPlaybackMode, nextTrack } from './audio.js';
+import { playAlertSound, startAmbientSound, stopAmbientSound, setAmbientVolume, setAmbientTrack, resumeAmbient, setOnTrackChange, getPlaybackMode, setPlaybackMode, nextTrack, toggleAmbient, isAmbientPlaying } from './audio.js';
 import { API, CONFIG, timeSince, getCompassDir, getDistance, parsePlaceName, magClass } from './api-utils.js';
 
 class JaviAlertApp {
@@ -223,6 +223,10 @@ class JaviAlertApp {
           const name = trackPath.split('/').pop().replace(/\.mp3$/i, '');
           textEl.textContent = '♫ ' + name;
           el.classList.remove('hidden');
+          // Sync play/pause icon
+          const icon = document.querySelector('#npPlayPauseIcon');
+          if (icon) icon.setAttribute('data-lucide', isAmbientPlaying() ? 'pause' : 'play');
+          try { lucide.createIcons(); } catch (_) {}
         }
       });
 
@@ -238,6 +242,12 @@ class JaviAlertApp {
         try { lucide.createIcons(); } catch (_) {}
       });
       document.getElementById('npNext').addEventListener('click', nextTrack);
+      document.getElementById('npPlayPause').addEventListener('click', () => {
+        const playing = toggleAmbient();
+        const icon = document.querySelector('#npPlayPauseIcon');
+        if (icon) icon.setAttribute('data-lucide', playing ? 'pause' : 'play');
+        try { lucide.createIcons(); } catch (_) {}
+      });
 
       // Initial playback mode icon
       const modeMap = { 'shuffle-all': 'shuffle', 'loop-one': 'repeat', 'play-once': 'play' };

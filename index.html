@@ -58,6 +58,9 @@
 
   <!-- Now playing bar (hidden when no music) -->
   <div class="now-playing hidden" id="nowPlaying">
+    <button class="np-btn np-play-btn" id="npPlayPause" aria-label="Pause" title="Pause">
+      <i data-lucide="pause" id="npPlayPauseIcon" width="14" height="14" aria-hidden="true"></i>
+    </button>
     <span class="now-playing-text" id="nowPlayingText">Now Playing: —</span>
     <div class="now-playing-controls">
       <button class="np-btn" id="npPlaybackMode" aria-label="Change playback mode" title="Playback mode">

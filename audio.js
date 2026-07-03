@@ -230,7 +230,24 @@ export function setAmbientTrack(track) {
 export function resumeAmbient() {
   if (_ambientAudio && _ambientAudio.paused && _ambientAudio.src) {
     _ambientAudio.play().catch(() => {});
-    // Show what's now playing
     _notifyTrack(_ambientAudio.src);
   }
+}
+
+/** Pause or resume the current ambient track. Returns true if now playing, false if now paused. */
+export function toggleAmbient() {
+  if (!_ambientAudio || !_ambientAudio.src) return false;
+  if (_ambientAudio.paused) {
+    _ambientAudio.play().catch(() => {});
+    _notifyTrack(_ambientAudio.src);
+    return true;
+  } else {
+    _ambientAudio.pause();
+    return false;
+  }
+}
+
+/** Check if ambient audio exists and is currently playing */
+export function isAmbientPlaying() {
+  return _ambientAudio && !_ambientAudio.paused && !!_ambientAudio.src;
 }

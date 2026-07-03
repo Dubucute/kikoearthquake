@@ -125,6 +125,10 @@ body.danger {
 }
 .np-btn:hover { background: rgba(255,255,255,.3); }
 .np-btn:active { transform: scale(.9); }
+.np-play-btn {
+  flex-shrink: 0;
+  padding: 2px 5px;
+}
 body.dark-mode .now-playing {
   color: rgba(255,255,255,.6);
 }
