@@ -764,15 +764,19 @@ class JaviAlertApp {
       document.getElementById('statNearest').textContent = nearestDist ? nearestDist + ' km' : '--';
       this._updateLastSignificant(quakes);
 
-      // Determine mood
+      // Determine mood — factors magnitude, recency, AND distance
       let mood = 'safe';
       const now = Date.now();
       for (const q of quakes) {
-        if (q.mag >= CONFIG.DANGER_THRESHOLD && (now - q.time.getTime()) < CONFIG.DANGER_WINDOW_MS) {
+        const isRecent = (now - q.time.getTime());
+        // Danger: strong quake recently OR moderate quake very near
+        if ((q.mag >= CONFIG.DANGER_THRESHOLD && isRecent < CONFIG.DANGER_WINDOW_MS) ||
+            (q.mag >= 3.5 && q.dist <= CONFIG.DANGER_DIST_KM && isRecent < CONFIG.DANGER_WINDOW_MS)) {
           mood = 'danger';
           break;
         }
-        if (q.mag >= CONFIG.WARNING_THRESHOLD && (now - q.time.getTime()) < CONFIG.WARNING_WINDOW_MS) {
+        // Warning: any quake above threshold within window
+        if (q.mag >= CONFIG.WARNING_THRESHOLD && isRecent < CONFIG.WARNING_WINDOW_MS) {
           mood = 'warning';
         }
       }
