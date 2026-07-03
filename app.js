@@ -999,17 +999,17 @@ class JaviAlertApp {
         const features = await this.fetchEarthquakeData();
         const data = this.processQuakeData(features);
 
-        // Detect new earthquakes
-        const newQuakes = this._detectNewQuakes(data.quakes);
-        if (newQuakes.length > 0) {
-          this._alertNewQuakes(newQuakes);
-        }
-
         // Update known IDs
         this._saveKnownQuakeIds(data.quakes);
 
         this._lastFetchTime = Date.now();
         await this.updateUI(data);
+
+        // Alert AFTER mood is determined — only fire if mood is warning/danger
+        const newQuakes = this._detectNewQuakes(data.quakes);
+        if (newQuakes.length > 0 && this.currentMood !== 'safe') {
+          this._alertNewQuakes(newQuakes);
+        }
       } catch (err) {
         bubble.className = 'bubble';
         bubble.innerHTML = '<i data-lucide="alert-circle" aria-hidden="true"></i> Could not load data. Check your connection.';
