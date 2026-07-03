@@ -2290,6 +2290,8 @@ class JaviAlertApp {
       let nearestDist = Infinity;
       let nearestMag = 0;
       let strongestMag = 0;
+      let strongestRawMag = 0;
+      let strongestDepth = null;
       let strongestDist = Infinity;
       let recentCount = 0;
       let dangerCount = 0;
@@ -2321,6 +2323,8 @@ class JaviAlertApp {
         // Strongest by effective magnitude (depth-adjusted)
         if (effectiveMag > strongestMag) {
           strongestMag = effectiveMag;
+          strongestRawMag = mag;
+          strongestDepth = q.depth;
           strongestDist = dist;
         }
 
@@ -2369,10 +2373,13 @@ class JaviAlertApp {
         });
       }
       if (strongestMag > 0 && strongestDist < Infinity) {
+        const depthNote = strongestDepth !== null
+          ? (strongestDepth < CONFIG.SHALLOW_DEPTH_KM ? ' (shallow)' : strongestDepth > CONFIG.DEEP_DEPTH_KM ? ' (deep)' : '')
+          : '';
         factors.push({
           icon: strongestMag >= CONFIG.DANGER_THRESHOLD ? 'danger' : strongestMag >= CONFIG.WARNING_THRESHOLD ? 'warning' : 'safe',
           label: 'Strongest quake (7d)',
-          detail: strongestMag.toFixed(1) + ' mag at ' + strongestDist.toFixed(1) + ' km away'
+          detail: strongestRawMag.toFixed(1) + ' mag at ' + strongestDist.toFixed(1) + ' km away' + depthNote
         });
       }
       if (nearestDist === Infinity) {
