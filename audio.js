@@ -55,6 +55,7 @@ const AMBIENT_FILES = [
   'sounds/Ligtas.mp3',
   'sounds/Javilerto.mp3'
 ];
+const OPENING_FILE = 'sounds/Sabay_sabay_Tayong_Bida.mp3';
 
 /** Pretty name for track display */
 function _trackLabel(path) {
@@ -140,39 +141,39 @@ export function setAmbientVolume(vol) {
 }
 
 /**
- * Start background music — plays either a specific track on loop or shuffled playlist.
- * Does NOT stop opening music — opening plays on first user tap, then transitions here.
- * @param {string} [track] — specific file path to loop, or empty for shuffle all
+ * Start background music — opening track first, then shuffled ambient.
+ * If a specific track is given, loops that track.
+ * @param {string} [track] — specific file path to loop, or empty for opening→shuffle
  */
 export function startAmbientSound(track) {
   try {
     stopAmbientSound();
-    // Don't stop opening music! It plays on first user tap, then transitions here.
     _ambientAudio = new Audio();
     _ambientAudio.preload = 'auto';
     _ambientAudio.loop = (_playbackMode === 'loop-one');
 
-    let firstTrack = track;
-    if (!firstTrack) {
+    if (track) {
+      // Specific track chosen — loop it
+      _ambientAudio.src = track;
+      _ambientAudio.volume = _ambientVolume;
+      _ambientAudio.play().catch(() => {});
+      _applyPlaybackMode();
+      _notifyTrack(track);
+    } else {
+      // No specific track — opening first, then shuffled ambient
       _trackQueue = _shuffle(AMBIENT_FILES);
-      firstTrack = _trackQueue.pop();
-    }
-    _ambientAudio.src = firstTrack;
-    _ambientAudio.volume = _ambientVolume;
-    _ambientAudio.play().catch(() => {});
-    _applyPlaybackMode();
-
-    // If opening music is queued (paused, awaiting first gesture), don't notify yet
-    const openingQueued = _openingAudio && _openingAudio.src && _openingAudio.paused;
-    if (!openingQueued) {
-      _notifyTrack(firstTrack);
+      _ambientAudio.src = OPENING_FILE;
+      _ambientAudio.volume = _ambientVolume;
+      _ambientAudio.play().catch(() => {});
+      // When opening ends, play shuffled ambient
+      _ambientAudio.addEventListener('ended', _playNextAmbient);
+      _applyPlaybackMode();
     }
   } catch (_) {}
 }
 
 export function stopAmbientSound() {
   try {
-    // Don't stop opening music! It may be queued for first user tap.
     if (_ambientAudio) {
       _ambientAudio.pause();
       _ambientAudio.removeEventListener('ended', _playNextAmbient);
@@ -199,66 +200,12 @@ export function setAmbientTrack(track) {
 
 /**
  * Resume audio after first user gesture (browsers block autoplay).
- * If ambient is enabled, play opening music first then transition to ambient.
- * If ambient is off, do nothing — no music at all.
+ * Only one audio element exists — just play it.
  */
 export function resumeAmbient() {
-  // First user gesture — now audio can play
-  if (_openingAudio && _openingAudio.src && _openingAudio.paused) {
-    // Opening never played (autoplay blocked) — play it now
-    _openingAudio.play().catch(() => {});
-    _notifyTrack(OPENING_FILE);
-    // When opening ends, start ambient (if it was created)
-    _openingAudio.onended = () => {
-      try { _openingAudio = null; } catch (_) {}
-      if (_ambientAudio && _ambientAudio.paused && _ambientAudio.src) {
-        _ambientAudio.play().catch(() => {});
-        _notifyTrack(_ambientAudio.src);
-      }
-    };
-    return;
-  }
-  // Opening already playing — just queue ambient after it ends
-  if (_openingAudio && _openingAudio.src) {
-    _openingAudio.onended = () => {
-      try { _openingAudio = null; } catch (_) {}
-      if (_ambientAudio && _ambientAudio.paused && _ambientAudio.src) {
-        _ambientAudio.play().catch(() => {});
-        _notifyTrack(_ambientAudio.src);
-      }
-    };
-    return;
-  }
-  // No opening music — just resume ambient
   if (_ambientAudio && _ambientAudio.paused && _ambientAudio.src) {
     _ambientAudio.play().catch(() => {});
+    // Show what's now playing
     _notifyTrack(_ambientAudio.src);
   }
-}
-
-// ─── OPENING (LOADING SCREEN) MUSIC ─────────────────────────
-let _openingAudio = null;
-const OPENING_FILE = 'sounds/Sabay_sabay_Tayong_Bida.mp3';
-
-export function playOpeningMusic() {
-  try {
-    stopOpeningMusic();
-    _openingAudio = new Audio();
-    _openingAudio.preload = 'auto';
-    _openingAudio.src = OPENING_FILE;
-    _openingAudio.volume = 0.35;
-    _openingAudio.play().catch(() => {});
-    _notifyTrack('Sabay_sabay_Tayong_Bida');
-  } catch (_) {}
-}
-
-export function stopOpeningMusic() {
-  try {
-    if (_openingAudio) {
-      _openingAudio.pause();
-      _openingAudio.src = '';
-      _openingAudio = null;
-    }
-    // Don't clear now-playing here — ambient may be queued
-  } catch (_) {}
 }
