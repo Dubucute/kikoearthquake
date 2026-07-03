@@ -764,14 +764,21 @@ class JaviAlertApp {
       document.getElementById('statNearest').textContent = nearestDist ? nearestDist + ' km' : '--';
       this._updateLastSignificant(quakes);
 
-      // Determine mood — factors magnitude, recency, AND distance
+      // Determine mood — factors magnitude, recency, distance, AND depth
       let mood = 'safe';
       const now = Date.now();
       for (const q of quakes) {
-        const isRecent = (now - q.time.getTime());
-        // Danger: strong quake recently OR moderate quake very near
-        if ((q.mag >= CONFIG.DANGER_THRESHOLD && isRecent < CONFIG.DANGER_WINDOW_MS) ||
-            (q.mag >= 3.5 && q.dist <= CONFIG.DANGER_DIST_KM && isRecent < CONFIG.DANGER_WINDOW_MS)) {
+        const isRecent = now - q.time.getTime();
+        // Adjust effective magnitude based on depth
+        // Shallow (< 70km) feels stronger; deep (> 150km) feels weaker
+        let effectiveMag = q.mag;
+        if (q.depth !== null) {
+          if (q.depth < CONFIG.SHALLOW_DEPTH_KM) effectiveMag += 0.5;
+          else if (q.depth > CONFIG.DEEP_DEPTH_KM) effectiveMag -= 0.5;
+        }
+        // Danger: strong quake recently OR moderate shallow quake very near
+        if ((effectiveMag >= CONFIG.DANGER_THRESHOLD && isRecent < CONFIG.DANGER_WINDOW_MS) ||
+            (effectiveMag >= 3.5 && q.dist <= CONFIG.DANGER_DIST_KM && isRecent < CONFIG.DANGER_WINDOW_MS)) {
           mood = 'danger';
           break;
         }
@@ -2295,6 +2302,13 @@ class JaviAlertApp {
         const mag = q.mag || 0;
         const age = now - new Date(q.time).getTime();
 
+        // Effective magnitude adjusted by depth
+        let effectiveMag = mag;
+        if (q.depth !== null) {
+          if (q.depth < CONFIG.SHALLOW_DEPTH_KM) effectiveMag += 0.5;
+          else if (q.depth > CONFIG.DEEP_DEPTH_KM) effectiveMag -= 0.5;
+        }
+
         // Skip quakes older than the analysis window
         if (age > ANALYSIS_WINDOW) return;
 
@@ -2304,17 +2318,17 @@ class JaviAlertApp {
           nearestMag = mag;
         }
 
-        // Strongest (only within window)
-        if (mag > strongestMag) {
-          strongestMag = mag;
+        // Strongest by effective magnitude (depth-adjusted)
+        if (effectiveMag > strongestMag) {
+          strongestMag = effectiveMag;
           strongestDist = dist;
         }
 
-        // Recent (last 24h)
+        // Recent (last 24h) — use effective magnitude for thresholds
         if (age < 86400000) {
           recentCount++;
-          if (mag >= CONFIG.DANGER_THRESHOLD) dangerCount++;
-          else if (mag >= CONFIG.WARNING_THRESHOLD) warningCount++;
+          if (effectiveMag >= CONFIG.DANGER_THRESHOLD) dangerCount++;
+          else if (effectiveMag >= CONFIG.WARNING_THRESHOLD) warningCount++;
         }
       });
 
