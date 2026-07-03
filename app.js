@@ -260,8 +260,10 @@ class JaviAlertApp {
       // Lucide
       try { lucide.createIcons(); } catch (_) { /* ignore */ }
 
-      // Play opening theme during loading screen
-      playOpeningMusic();
+      // Play opening theme during loading screen (only if background music is enabled)
+      if (this.ambientEnabled) {
+        playOpeningMusic();
+      }
 
       // Safety timeout — dismiss loading after 8s no matter what
       const safetyTimer = setTimeout(() => this._dismissLoading(), 8000);
