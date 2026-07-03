@@ -30,6 +30,7 @@ class JaviAlertApp {
       this.ambientTrack = localStorage.getItem('javiAmbientTrack') || '';
       this.volumeLevel = parseFloat(localStorage.getItem('javiVolume') || '0.5');
       this.autoRefresh = localStorage.getItem('javiAutoRefresh') !== 'false';
+      this._lastFetchTime = 0;
 
       // Bind
       this.init = this.init.bind(this);
@@ -294,7 +295,7 @@ class JaviAlertApp {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       });
 
-      // Throttle safety tip rotation when tab is hidden
+      // Refresh data when returning to app (e.g. from a notification)
       document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
           // Tab hidden — pause tip rotation
@@ -303,7 +304,12 @@ class JaviAlertApp {
             this._tipInterval = null;
           }
         } else {
-          // Tab visible again — resume tip rotation
+          // Tab visible again — refresh data if stale (>2 min since last fetch)
+          const stale = Date.now() - this._lastFetchTime > 120000;
+          if (stale) {
+            this.loadData();
+          }
+          // Resume tip rotation
           if (this.currentMood !== 'safe') {
             this.showSafetyTip();
           }
@@ -313,7 +319,7 @@ class JaviAlertApp {
 
     // ─── LOCATION DETECTION (improved) ─────────────────────────
     async detectLocation() {
-      const LOCATION_TTL_MS = 24 * 60 * 60 * 1000; // re-check once a day
+      const LOCATION_TTL_MS = 60 * 60 * 1000; // re-check once per hour
 
       // 1) Try cached location, but only trust it if still fresh
       const stored = this._readStoredLocation();
@@ -992,6 +998,7 @@ class JaviAlertApp {
         // Update known IDs
         this._saveKnownQuakeIds(data.quakes);
 
+        this._lastFetchTime = Date.now();
         await this.updateUI(data);
       } catch (err) {
         bubble.className = 'bubble';
