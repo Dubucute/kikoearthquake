@@ -1,5 +1,5 @@
 import { JAVI_MESSAGES, JAVI_REACTIONS, SAFETY_TIPS, EMERGENCY_CONTACTS } from './messages.js';
-import { playAlertSound, startAmbientSound, stopAmbientSound, setAmbientVolume, resumeAmbient } from './audio.js';
+import { playAlertSound, startAmbientSound, stopAmbientSound, setAmbientVolume, resumeAmbient, playOpeningMusic, stopOpeningMusic } from './audio.js';
 import { API, CONFIG, timeSince, getCompassDir, getDistance, parsePlaceName, magClass } from './api-utils.js';
 
 class JaviAlertApp {
@@ -258,6 +258,9 @@ class JaviAlertApp {
 
       // Lucide
       try { lucide.createIcons(); } catch (_) { /* ignore */ }
+
+      // Play opening theme during loading screen
+      playOpeningMusic();
 
       // Safety timeout — dismiss loading after 8s no matter what
       const safetyTimer = setTimeout(() => this._dismissLoading(), 8000);
@@ -2110,6 +2113,7 @@ class JaviAlertApp {
     _dismissLoading() {
       const overlay = document.getElementById('loadingOverlay');
       if (!overlay || overlay.classList.contains('fade-out')) return; // already dismissing
+      stopOpeningMusic();
       overlay.classList.add('fade-out');
       setTimeout(() => {
         overlay.classList.add('hidden');

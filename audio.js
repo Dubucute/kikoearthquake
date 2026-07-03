@@ -10,14 +10,9 @@ export function playAlertSound(type, soundEnabled, volume = 0.3) {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     const now = ctx.currentTime;
-
-    // Resume if browser suspended it (no user gesture yet)
-    if (ctx.state === 'suspended') {
-      ctx.resume();
-    }
+    if (ctx.state === 'suspended') ctx.resume();
 
     if (type === 'warning') {
-      // Gentle two-tone alert: 660Hz then 880Hz, 0.15s each
       [660, 880].forEach((freq, i) => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
@@ -31,7 +26,6 @@ export function playAlertSound(type, soundEnabled, volume = 0.3) {
         osc.stop(now + i * 0.15 + 0.15);
       });
     } else if (type === 'danger') {
-      // Urgent descending siren: 880Hz → 440Hz sweep, 4 cycles, sawtooth for harshness
       for (let c = 0; c < 4; c++) {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
@@ -50,133 +44,89 @@ export function playAlertSound(type, soundEnabled, volume = 0.3) {
   } catch (_) { /* audio not supported */ }
 }
 
-// ─── AMBIENT SOUND (Gentle Melody) ──────────────────────────
-let _ambientCtx = null;
-let _ambientGain = null;
-let _ambientNodes = [];
-let _ambientVolume = 0.2; // default — louder on mobile
+// ─── AMBIENT (BACKGROUND) MUSIC — MP3 PLAYLIST ──────────────
+let _ambientAudio = null;
+let _ambientVolume = 0.2;
+let _trackQueue = [];
 
-/**
- * Update the ambient volume (0-1).
- * @param {number} vol
- */
+const AMBIENT_FILES = [
+  'sounds/Alerto sa Sakuna.mp3',
+  'sounds/Ligtas.mp3',
+  'sounds/Javilerto.mp3'
+];
+
+function _shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function _playNextAmbient() {
+  if (!_ambientAudio) return;
+  if (_trackQueue.length === 0) _trackQueue = _shuffle(AMBIENT_FILES);
+  _ambientAudio.src = _trackQueue.pop();
+  _ambientAudio.volume = _ambientVolume;
+  _ambientAudio.play().catch(() => {});
+}
+
 export function setAmbientVolume(vol) {
   _ambientVolume = Math.max(0, Math.min(1, vol));
-  if (_ambientGain) {
-    _ambientGain.gain.setValueAtTime(_ambientVolume, _ambientCtx.currentTime);
-  }
+  if (_ambientAudio) _ambientAudio.volume = _ambientVolume;
 }
 
-/**
- * Start a gentle music-box melody loop.
- * Uses pentatonic scale with soft sine waves for a calming effect.
- */
 export function startAmbientSound() {
   try {
-    // Clean up any existing ambient
     stopAmbientSound();
-
-    _ambientCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const sampleRate = _ambientCtx.sampleRate;
-
-    // Pentatonic melody: C4 D4 E4 G4 A4 C5 A4 G4 E4 D4 C4
-    const melody = [
-      { freq: 261.63, dur: 0.45 }, // C4
-      { freq: 293.66, dur: 0.35 }, // D4
-      { freq: 329.63, dur: 0.45 }, // E4
-      { freq: 392.00, dur: 0.35 }, // G4
-      { freq: 440.00, dur: 0.45 }, // A4
-      { freq: 523.25, dur: 0.55 }, // C5
-      { freq: 440.00, dur: 0.35 }, // A4
-      { freq: 392.00, dur: 0.35 }, // G4
-      { freq: 329.63, dur: 0.45 }, // E4
-      { freq: 293.66, dur: 0.35 }, // D4
-      { freq: 261.63, dur: 0.55 }, // C4
-      // Add a gentle rest/pause
-      { freq: null, dur: 0.30 },
-      // Repeat slightly varied — a soft higher phrase
-      { freq: 392.00, dur: 0.35 }, // G4
-      { freq: 440.00, dur: 0.45 }, // A4
-      { freq: 523.25, dur: 0.35 }, // C5
-      { freq: 587.33, dur: 0.45 }, // D5
-      { freq: 523.25, dur: 0.35 }, // C5
-      { freq: 440.00, dur: 0.45 }, // A4
-      { freq: 392.00, dur: 0.35 }, // G4
-      { freq: 329.63, dur: 0.55 }, // E4
-    ];
-
-    // Calculate total loop duration
-    const totalDur = melody.reduce((sum, n) => sum + n.dur, 0);
-    const length = Math.ceil(sampleRate * totalDur);
-    const buffer = _ambientCtx.createBuffer(1, length, sampleRate);
-    const data = buffer.getChannelData(0);
-
-    // Render the melody into the buffer
-    let cursor = 0;
-    melody.forEach(note => {
-      if (note.freq) {
-        const period = sampleRate / note.freq;
-        const nsamples = Math.floor(sampleRate * note.dur);
-        // Soft attack (first 10ms) and release (last 30ms)
-        const attackSamples = Math.min(Math.floor(sampleRate * 0.01), nsamples);
-        const releaseSamples = Math.min(Math.floor(sampleRate * 0.03), nsamples);
-        for (let i = 0; i < nsamples && (cursor + i) < length; i++) {
-          // Sine wave with soft harmonic for warmth
-          let val = Math.sin(2 * Math.PI * i / period) * 0.45
-                  + Math.sin(2 * Math.PI * i / (period / 2)) * 0.12
-                  + Math.sin(2 * Math.PI * i / (period / 3)) * 0.05;
-          // Envelope: attack + sustain + release
-          let env = 1;
-          if (i < attackSamples) env = i / attackSamples;
-          else if (i > nsamples - releaseSamples) env = (nsamples - i) / releaseSamples;
-          data[cursor + i] = val * env * 0.35;
-        }
-      }
-      cursor += Math.floor(sampleRate * note.dur);
-    });
-
-    // Create buffer source and loop
-    const source = _ambientCtx.createBufferSource();
-    source.buffer = buffer;
-    source.loop = true;
-
-    // Master gain
-    _ambientGain = _ambientCtx.createGain();
-    _ambientGain.gain.value = _ambientVolume;
-
-    // Connect and start
-    source.connect(_ambientGain);
-    _ambientGain.connect(_ambientCtx.destination);
-    source.start();
-
-    _ambientNodes = [source, _ambientGain];
-  } catch (_) { /* ambient audio not supported */ }
+    _trackQueue = _shuffle(AMBIENT_FILES);
+    _ambientAudio = new Audio();
+    _ambientAudio.addEventListener('ended', _playNextAmbient);
+    _playNextAmbient();
+  } catch (_) {}
 }
 
-/**
- * Stop the ambient sound.
- */
 export function stopAmbientSound() {
   try {
-    _ambientNodes.forEach(n => {
-      try { n.disconnect(); } catch (_) {}
-    });
-    _ambientNodes = [];
-    if (_ambientCtx) {
-      try { _ambientCtx.close(); } catch (_) {}
-      _ambientCtx = null;
+    if (_ambientAudio) {
+      _ambientAudio.pause();
+      _ambientAudio.removeEventListener('ended', _playNextAmbient);
+      _ambientAudio.src = '';
+      _ambientAudio = null;
     }
-    _ambientGain = null;
-  } catch (_) { /* ignore */ }
+    _trackQueue = [];
+  } catch (_) {}
 }
 
-/**
- * Resume the ambient AudioContext after a user gesture.
- * Browsers block AudioContext until a user interaction (click/tap).
- * Call this on first user interaction to unblock the melody.
- */
 export function resumeAmbient() {
-  if (_ambientCtx && _ambientCtx.state === 'suspended') {
-    try { _ambientCtx.resume(); } catch (_) { /* ignore */ }
+  if (_ambientAudio && _ambientAudio.paused && _ambientAudio.src) {
+    _ambientAudio.play().catch(() => {});
   }
+  if (_openingAudio && _openingAudio.paused && _openingAudio.src) {
+    _openingAudio.play().catch(() => {});
+  }
+}
+
+// ─── OPENING (LOADING SCREEN) MUSIC ─────────────────────────
+let _openingAudio = null;
+const OPENING_FILE = 'sounds/Sabay_sabay_Tayong_Bida.mp3';
+
+export function playOpeningMusic() {
+  try {
+    stopOpeningMusic();
+    _openingAudio = new Audio(OPENING_FILE);
+    _openingAudio.volume = 0.35;
+    _openingAudio.play().catch(() => {});
+  } catch (_) {}
+}
+
+export function stopOpeningMusic() {
+  try {
+    if (_openingAudio) {
+      _openingAudio.pause();
+      _openingAudio.src = '';
+      _openingAudio = null;
+    }
+  } catch (_) {}
 }
