@@ -2053,18 +2053,23 @@ class JaviAlertApp {
       let dangerCount = 0;
       let warningCount = 0;
 
+      const ANALYSIS_WINDOW = 7 * 86400000; // 7 days — ignore ancient history
+
       quakes.forEach(q => {
         const dist = q.dist || 0;
         const mag = q.mag || 0;
         const age = now - new Date(q.time).getTime();
 
-        // Nearest
+        // Skip quakes older than the analysis window
+        if (age > ANALYSIS_WINDOW) return;
+
+        // Nearest (only within window)
         if (dist < nearestDist) {
           nearestDist = dist;
           nearestMag = mag;
         }
 
-        // Strongest
+        // Strongest (only within window)
         if (mag > strongestMag) {
           strongestMag = mag;
           strongestDist = dist;
@@ -2110,18 +2115,27 @@ class JaviAlertApp {
       if (nearestDist < Infinity) {
         factors.push({
           icon: nearestDist < 50 ? (nearestMag >= CONFIG.DANGER_THRESHOLD ? 'danger' : nearestMag >= CONFIG.WARNING_THRESHOLD ? 'warning' : 'safe') : 'safe',
-          label: 'Nearest quake',
+          label: 'Nearest quake (7d)',
           detail: nearestDist.toFixed(1) + ' km away at ' + nearestMag.toFixed(1) + ' mag'
         });
       }
-      factors.push({
-        icon: strongestMag >= CONFIG.DANGER_THRESHOLD ? 'danger' : strongestMag >= CONFIG.WARNING_THRESHOLD ? 'warning' : 'safe',
-        label: 'Strongest quake',
-        detail: strongestMag.toFixed(1) + ' mag at ' + strongestDist.toFixed(1) + ' km away'
-      });
+      if (strongestMag > 0 && strongestDist < Infinity) {
+        factors.push({
+          icon: strongestMag >= CONFIG.DANGER_THRESHOLD ? 'danger' : strongestMag >= CONFIG.WARNING_THRESHOLD ? 'warning' : 'safe',
+          label: 'Strongest quake (7d)',
+          detail: strongestMag.toFixed(1) + ' mag at ' + strongestDist.toFixed(1) + ' km away'
+        });
+      }
+      if (nearestDist === Infinity) {
+        factors.push({
+          icon: 'safe',
+          label: 'Recent activity',
+          detail: 'No significant quakes in the past 7 days'
+        });
+      }
       factors.push({
         icon: dangerCount > 0 ? 'danger' : warningCount > 0 ? 'warning' : 'safe',
-        label: 'Recent activity',
+        label: 'Recent activity (24h)',
         detail: recentCount + ' quake' + (recentCount !== 1 ? 's' : '') + ' in 24h' +
           (dangerCount > 0 ? ' (' + dangerCount + ' dangerous)' : '')
       });
