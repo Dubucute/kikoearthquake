@@ -1372,8 +1372,20 @@ class JaviAlertApp {
       questionLabel.textContent = 'Question ' + (current + 1) + ' of ' + total;
       progressFill.style.width = Math.round((current / total) * 100) + '%';
       questionText.textContent = question.question;
-      options.innerHTML = question.choices.map((choice, index) =>
-        '<button class="quiz-option" type="button" data-index="' + index + '">' + choice + '</button>'
+
+      const shuffledChoices = question.choices.map((choice, index) => ({
+        text: choice,
+        originalIndex: index
+      }));
+
+      for (let i = shuffledChoices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledChoices[i], shuffledChoices[j]] = [shuffledChoices[j], shuffledChoices[i]];
+      }
+
+      this.quizState.currentChoices = shuffledChoices;
+      options.innerHTML = shuffledChoices.map((choice) =>
+        '<button class="quiz-option" type="button" data-index="' + choice.originalIndex + '">' + choice.text + '</button>'
       ).join('');
 
       this.quizState.selected = null;
