@@ -1811,6 +1811,16 @@ body.dark-mode .s12 { animation-delay: 0.8s; }
   border-bottom: 1.5px solid rgba(0,0,0,.08);
 }
 .settings-row:last-child { border-bottom: none; }
+.settings-row-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0 10px 0;
+  font-size: 13px;
+  color: #e17055;
+  line-height: 1.4;
+}
+.settings-row-hint i { width: 16px; height: 16px; flex-shrink: 0; }
 .settings-row-label {
   display: flex;
   align-items: center;
@@ -1906,6 +1916,15 @@ body.dark-mode .s12 { animation-delay: 0.8s; }
 .settings-toggle.active {
   background: #00b894;
   border-color: #00a381;
+}
+.settings-toggle.denied {
+  background: #e17055;
+  border-color: #d63031;
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.settings-toggle.denied .settings-toggle-knob {
+  transform: translateX(20px);
 }
 .settings-toggle-knob {
   position: absolute;
@@ -2009,6 +2028,13 @@ body.dark-mode .settings-toggle {
 body.dark-mode .settings-toggle.active {
   background: #00b894;
   border-color: #00a381;
+}
+body.dark-mode .settings-toggle.denied {
+  background: #c0392b;
+  border-color: #e74c3c;
+}
+body.dark-mode .settings-row-hint {
+  color: #ff7675;
 }
 body.dark-mode .settings-slider {
   background: #444;

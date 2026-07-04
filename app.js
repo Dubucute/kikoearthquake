@@ -2346,11 +2346,18 @@ class JaviAlertApp {
           // Already granted — toggle not really applicable, but show current state
           return;
         }
+        if (Notification.permission === 'denied') {
+          // Permission permanently blocked by browser — can't re-prompt
+          this._showNotifBlockedHelp();
+          return;
+        }
         try {
           const result = await Notification.requestPermission();
           if (result === 'granted') {
             await this._setupPushNotifications();
             this._updateSettingsUI();
+          } else if (result === 'denied') {
+            this._showNotifBlockedHelp();
           }
         } catch (_) { /* permission request failed */ }
       });
@@ -2578,7 +2585,15 @@ class JaviAlertApp {
 
       // Notification toggle
       const nt = document.getElementById('settingsNotifToggle');
-      if (nt) nt.classList.toggle('active', 'Notification' in window && Notification.permission === 'granted');
+      if (nt) {
+        nt.classList.toggle('active', 'Notification' in window && Notification.permission === 'granted');
+        nt.classList.toggle('denied', 'Notification' in window && Notification.permission === 'denied');
+      }
+      // Notification blocked help text
+      const blockedHelp = document.getElementById('notifBlockedHelp');
+      if (blockedHelp) {
+        blockedHelp.classList.toggle('hidden', !('Notification' in window) || Notification.permission !== 'denied');
+      }
 
       // Auto-refresh toggle
       const art = document.getElementById('settingsAutoRefreshToggle');
@@ -2883,6 +2898,27 @@ class JaviAlertApp {
         toast.classList.remove('toast-show');
         setTimeout(() => toast.classList.add('hidden'), 400);
       }, 6000);
+    }
+
+    _showNotifBlockedHelp() {
+      const toast = document.getElementById('notifToast');
+      if (!toast) return;
+      const titleEl = document.getElementById('notifToastTitle');
+      const bodyEl = document.getElementById('notifToastBody');
+      const iconEl = document.getElementById('notifToastIcon');
+      if (!titleEl || !bodyEl) return;
+      if (iconEl) iconEl.textContent = '🔕';
+      titleEl.textContent = 'Notifications blocked';
+      bodyEl.textContent = 'Please enable notifications in your browser or device settings. On Chrome: tap the lock icon next to the URL, find "Notifications", and set to "Allow".';
+      toast.classList.remove('hidden');
+      toast.classList.remove('toast-show');
+      void toast.offsetWidth;
+      toast.classList.add('toast-show');
+      if (this._toastTimer) clearTimeout(this._toastTimer);
+      this._toastTimer = setTimeout(() => {
+        toast.classList.remove('toast-show');
+        setTimeout(() => toast.classList.add('hidden'), 400);
+      }, 8000);
     }
 
     // ─── SPAWN SPARKLES ON JAVI TAP ──────────────────────────
