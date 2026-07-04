@@ -2315,6 +2315,18 @@ class JaviAlertApp {
         document.getElementById('updateLogsModal').classList.remove('hidden');
       });
 
+      // Language picker
+      document.querySelectorAll('.lang-option').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const lang = btn.dataset.lang || 'tl';
+          try { localStorage.setItem('javiLang', lang); } catch(_) {}
+          // mark selection immediately
+          document.querySelectorAll('.lang-option').forEach(b => b.classList.toggle('active', (b.dataset.lang || '') === lang));
+          // reload to apply language (messages.js reads localStorage at module load)
+          setTimeout(() => window.location.reload(), 180);
+        });
+      });
+
       // Update Logs modal close
       document.getElementById('updateLogsClose').addEventListener('click', () => {
         document.getElementById('updateLogsModal').classList.add('hidden');
@@ -2461,6 +2473,12 @@ class JaviAlertApp {
 
       // Update Lucide icons
       try { lucide.createIcons(); } catch (_) { /* ignore */ }
+
+      // Reflect chosen language in settings UI
+      try {
+        const curLang = (localStorage.getItem('javiLang') || 'tl');
+        document.querySelectorAll('.lang-option').forEach(b => b.classList.toggle('active', (b.dataset.lang || '') === curLang));
+      } catch (_) {}
     }
 
     // ─── AM I SAFE? ANALYSIS ──────────────────────────────────

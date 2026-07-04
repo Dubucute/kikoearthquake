@@ -1,5 +1,5 @@
 // ─── JAVI MESSAGES ───────────────────────────────────────────
-export const JAVI_MESSAGES = {
+export const JAVI_MESSAGES_TL = {
   safe: [
     "Safe tayo dito, walang malakas na lindol sa paligid natin.",
     "Okay lang dito sa area natin, walang malakas na pagyanig.",
@@ -68,7 +68,7 @@ export const JAVI_MESSAGES = {
   ]
 };
 
-export const SAFETY_TIPS = [
+export const SAFETY_TIPS_TL = [
   "DROP, COVER, and HOLD ON! Dapa, sumilong sa ilalim ng matibay na mesa, at hawakan ito.",
   "Lumayo sa mga bintana, salamin, at mga pwedeng mahulog na bagay.",
   "Kung nasa loob ng bahay, manatili sa loob. Huwag tumakbo sa labas habang umuuga.",
@@ -134,7 +134,7 @@ export const CHANGELOG = [
   ]}
 ];
 
-export const JAVI_REACTIONS = [
+export const JAVI_REACTIONS_TL = [
   "Hoy! 'wag mo 'kong pindot-pindot! 😤",
   "Aray! Masakit yun! 🥲",
   "Haha, ano 'yun? 😄",
@@ -458,3 +458,10 @@ export const JAVI_REACTIONS_CEB = [
   "Amping pirmi.",
   "Salamat sa pag-check — andam ta."
 ];
+
+// Choose active language at module load time (reload on change)
+const _lang = (typeof localStorage !== 'undefined') ? (localStorage.getItem('javiLang') || 'tl') : 'tl';
+
+export const JAVI_MESSAGES = _lang === 'en' ? JAVI_MESSAGES_EN : _lang === 'ceb' ? JAVI_MESSAGES_CEB : JAVI_MESSAGES_TL;
+export const SAFETY_TIPS = _lang === 'en' ? SAFETY_TIPS_EN : _lang === 'ceb' ? SAFETY_TIPS_CEB : SAFETY_TIPS_TL;
+export const JAVI_REACTIONS = _lang === 'en' ? JAVI_REACTIONS_EN : _lang === 'ceb' ? JAVI_REACTIONS_CEB : JAVI_REACTIONS_TL;
