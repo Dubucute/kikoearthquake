@@ -86,9 +86,6 @@ export default async function handler(req, res) {
       ...messages.slice(-8),
     ];
 
-    // Log what we're sending (without full system prompt)
-    console.log('Sending to HF:', JSON.stringify({ model: MODEL, msgCount: chatMessages.length }).slice(0, 200));
-
     // Try each model in order until one works
     let lastError = null;
     let reply = null;
