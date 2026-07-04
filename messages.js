@@ -93,9 +93,13 @@ export const SAFETY_TIPS_TL = [
 
 // ─── CHANGELOG ───────────────────────────────────────────────
 export const CHANGELOG = [
+  { ver: 'v1.15', date: '2026-07-04', items: [
+    'New: Language selector dropdown in Settings (English / Tagalog / Cebuano)',
+    'Fix: Language dropdown now styled to match app theme',
+    'Updated: Service worker cache version bumped to v1.15'
+  ]},
   { ver: 'v1.14', date: '2026-07-04', items: [
     'Fix: CSS wrapping for translated text in modals and quiz options',
-    'New: Visible language selector in Settings (English / Tagalog / Cebuano)',
     'Updated: Service worker cache version bumped to v1.14 for fresh asset caching'
   ]},
   { ver: 'v1.13', date: '2026-07-04', items: [
