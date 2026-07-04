@@ -32,11 +32,11 @@
   <!-- Pull-to-refresh indicator (at the very top) -->
   <div class="pull-indicator" id="pullIndicator">
     <i data-lucide="chevron-down" aria-hidden="true"></i>
-    <span class="pull-text" id="pullText">Pull to refresh</span>
+    <span class="pull-text" id="pullText" data-i18n="pullToRefresh">Pull to refresh</span>
   </div>
 
   <!-- Offline banner -->
-  <div class="offline-banner hidden" id="offlineBanner">
+  <div class="offline-banner hidden" id="offlineBanner" data-i18n="offlineBanner">
     <i data-lucide="wifi-off" aria-hidden="true"></i>
     No connection — showing last data
   </div>
@@ -86,8 +86,8 @@
 
   <div class="loc-bar" role="region" aria-label="Your location">
     <i data-lucide="map-pin" aria-hidden="true"></i>
-    <input type="text" id="locInput" class="loc-input" placeholder="Search your location..." autocomplete="off" spellcheck="false"/>
-    <button class="loc-btn hidden" id="useLocationBtn" aria-label="Use my location">📍 Use my location</button>
+    <input type="text" id="locInput" class="loc-input" placeholder="Search your location..." data-i18n-placeholder="searchLocation" autocomplete="off" spellcheck="false"/>
+    <button class="loc-btn hidden" id="useLocationBtn" aria-label="Use my location" data-i18n="useMyLocation">📍 Use my location</button>
     <div class="loc-dropdown hidden" id="locDropdown"></div>
   </div>
 
@@ -203,19 +203,19 @@
 
   <!-- Quick action buttons -->
   <div class="action-bar entrance entrance-d3">
-    <button class="action-bar-btn" id="pillTipsBtn" aria-label="What to do during an earthquake">
+    <button class="action-bar-btn" id="pillTipsBtn" aria-label="What to do during an earthquake" data-i18n="safetyTipsButton">
       <i data-lucide="shield" aria-hidden="true"></i>
       Safety Tips
     </button>
-    <button class="action-bar-btn action-bar-btn-primary" id="pillAnalysisBtn" aria-label="Am I safe? Analysis">
+    <button class="action-bar-btn action-bar-btn-primary" id="pillAnalysisBtn" aria-label="Am I safe? Analysis" data-i18n="analysisButton">
       <i data-lucide="search-check" aria-hidden="true"></i>
       Am I Safe?
     </button>
-    <button class="action-bar-btn" id="pillContactsBtn" aria-label="Emergency hotlines to call">
+    <button class="action-bar-btn" id="pillContactsBtn" aria-label="Emergency hotlines to call" data-i18n="hotlinesButton">
       <i data-lucide="phone" aria-hidden="true"></i>
       Hotlines
     </button>
-    <button class="action-bar-btn action-bar-btn-primary" id="pillQuizBtn" aria-label="Earthquake safety quiz">
+    <button class="action-bar-btn action-bar-btn-primary" id="pillQuizBtn" aria-label="Earthquake safety quiz" data-i18n="quizButton">
       <i data-lucide="graduation-cap" aria-hidden="true"></i>
       Quiz
     </button>
@@ -270,11 +270,11 @@
       <button class="modal-close" id="quizModalClose" aria-label="Close">&times;</button>
       <div class="modal-header">
         <i data-lucide="book-open" aria-hidden="true"></i>
-        <h2 class="modal-title">Earthquake Quiz</h2>
+        <h2 class="modal-title" data-i18n="quizTitle">Earthquake Quiz</h2>
       </div>
       <div class="quiz-modal-body" id="quizModalBody">
         <div class="quiz-intro">
-          <p>Subukan ang iyong kaalaman sa lindol. Piliin ang tamang sagot at alamin kung handa ka na!</p>
+          <p data-i18n="quizIntro">Subukan ang iyong kaalaman sa lindol. Piliin ang tamang sagot at alamin kung handa ka na!</p>
         </div>
         <div class="quiz-progress" id="quizProgress">
           <span id="quizQuestionLabel">Question 1 of 5</span>
@@ -338,14 +338,14 @@
       <button class="modal-close" id="settingsModalClose" aria-label="Close">&times;</button>
       <div class="modal-header">
         <i data-lucide="settings" aria-hidden="true"></i>
-        <h2 class="modal-title">Settings</h2>
+        <h2 class="modal-title" data-i18n="settingsTitle">Settings</h2>
       </div>
       <div class="settings-body" id="settingsBody">
         <!-- Dark mode -->
         <div class="settings-row">
           <div class="settings-row-label">
             <i data-lucide="moon" aria-hidden="true"></i>
-            <span>Dark Mode</span>
+            <span data-i18n="darkMode">Dark Mode</span>
           </div>
           <button class="settings-toggle" id="settingsDarkToggle" aria-label="Toggle dark mode">
             <span class="settings-toggle-knob"></span>
@@ -355,7 +355,7 @@
         <div class="settings-row">
           <div class="settings-row-label">
             <i data-lucide="bell" aria-hidden="true"></i>
-            <span>Alert Sound</span>
+            <span data-i18n="alertSound">Alert Sound</span>
           </div>
           <button class="settings-toggle" id="settingsSoundToggle" aria-label="Toggle alert sound">
             <span class="settings-toggle-knob"></span>
@@ -365,7 +365,7 @@
         <div class="settings-row">
           <div class="settings-row-label">
             <i data-lucide="music" aria-hidden="true"></i>
-            <span>Background Music</span>
+            <span data-i18n="backgroundMusic">Background Music</span>
           </div>
           <button class="settings-toggle" id="settingsAmbientToggle" aria-label="Toggle background music">
             <span class="settings-toggle-knob"></span>
@@ -375,12 +375,12 @@
         <div class="settings-row settings-row-track">
           <div class="settings-row-label">
             <i data-lucide="disc-3" aria-hidden="true"></i>
-            <span>Music Track</span>
+            <span data-i18n="musicTrack">Music Track</span>
           </div>
           <div class="track-picker" id="trackPicker">
             <label class="track-option active" data-track="">
               <input type="radio" name="ambientTrack" value="" checked hidden />
-              <span>All</span>
+              <span data-i18n="all">All</span>
             </label>
             <label class="track-option" data-track="sounds/Alerto sa Sakuna.mp3">
               <input type="radio" name="ambientTrack" value="sounds/Alerto sa Sakuna.mp3" hidden />
@@ -400,17 +400,29 @@
         <div class="settings-row">
           <div class="settings-row-label">
             <i data-lucide="refresh-cw" aria-hidden="true"></i>
-            <span>Auto-refresh</span>
+            <span data-i18n="autoRefresh">Auto-refresh</span>
           </div>
           <button class="settings-toggle active" id="settingsAutoRefreshToggle" aria-label="Toggle auto-refresh">
             <span class="settings-toggle-knob"></span>
           </button>
         </div>
+        <!-- Language selector -->
+        <div class="settings-row">
+          <div class="settings-row-label">
+            <i data-lucide="globe" aria-hidden="true"></i>
+            <span data-i18n="languageLabel">Language</span>
+          </div>
+          <div class="language-picker" id="languagePicker">
+            <button class="lang-option" data-lang="en">English</button>
+            <button class="lang-option" data-lang="tl">Tagalog</button>
+            <button class="lang-option" data-lang="ceb">Cebuano</button>
+          </div>
+        </div>
         <!-- Volume slider -->
         <div class="settings-row settings-row-vol">
           <div class="settings-row-label">
             <i data-lucide="volume-2" aria-hidden="true"></i>
-            <span>Volume</span>
+            <span data-i18n="volume">Volume</span>
             <span class="settings-vol-pct" id="settingsVolPct">50%</span>
           </div>
           <div class="settings-slider-wrap">
@@ -423,13 +435,13 @@
         <div class="settings-row settings-row-logs" id="updateLogsRow">
           <div class="settings-row-label">
             <i data-lucide="history" aria-hidden="true"></i>
-            <span>Update Logs</span>
+            <span data-i18n="updateLogs">Update Logs</span>
           </div>
           <span class="update-logs-chevron">▸</span>
         </div>
       </div>
       <div class="modal-footer">
-        <button class="modal-btn" id="settingsModalGotIt">Done</button>
+        <button class="modal-btn" id="settingsModalGotIt" data-i18n="doneButton">Done</button>
       </div>
     </div>
   </div>
@@ -440,11 +452,11 @@
       <button class="modal-close" id="updateLogsClose" aria-label="Close">&times;</button>
       <div class="modal-header">
         <i data-lucide="history" aria-hidden="true"></i>
-        <h2 class="modal-title">Update Logs</h2>
+        <h2 class="modal-title" data-i18n="updateLogsTitle">Update Logs</h2>
       </div>
       <div class="update-logs-modal-body" id="updateLogsBody"></div>
       <div class="modal-footer">
-        <button class="modal-btn" id="updateLogsGotIt">Got it!</button>
+        <button class="modal-btn" id="updateLogsGotIt" data-i18n="gotItButton">Got it!</button>
       </div>
     </div>
   </div>
