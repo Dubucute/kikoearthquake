@@ -2338,9 +2338,21 @@ body.dark-mode .scroll-top-btn i {
 }
 .chat-bubble-bot {
   align-self: flex-start;
+  gap: 8px;
 }
 .chat-bubble-user {
   align-self: flex-end;
+}
+.chat-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2.5px solid #2d3436;
+  flex-shrink: 0;
+  align-self: flex-end;
+  margin-bottom: 2px;
+  object-fit: cover;
+  background: #fff;
 }
 .chat-bubble-inner {
   padding: 10px 14px;
@@ -2528,4 +2540,7 @@ body.dark-mode .chat-bubble-error .chat-bubble-inner {
   color: #ffd93d;
   border-color: #ffd93d;
   box-shadow: 3px 3px 0px #ffd93d;
+}
+body.dark-mode .chat-avatar {
+  border-color: #555;
 }

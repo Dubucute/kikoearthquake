@@ -3134,7 +3134,7 @@ class JaviAlertApp {
         if (msgsContainer) {
           const errBubble = document.createElement('div');
           errBubble.className = 'chat-bubble chat-bubble-bot chat-bubble-error';
-          errBubble.innerHTML = '<div class="chat-bubble-inner">😅 Sorry, hindi ako maka-respond ngayon. Pakisubukan ulit mamaya!</div>';
+          errBubble.innerHTML = '<img class="chat-avatar" src="icons/javi-icon.png" alt="Javi"><div class="chat-bubble-inner">😅 Sorry, hindi ako maka-respond ngayon. Pakisubukan ulit mamaya!</div>';
           msgsContainer.appendChild(errBubble);
           msgsContainer.scrollTop = msgsContainer.scrollHeight;
         }
@@ -3207,6 +3207,7 @@ class JaviAlertApp {
         if (!welcome) {
           container.innerHTML = '' +
             '<div class="chat-bubble chat-bubble-bot chat-welcome" id="chatWelcome">' +
+              '<img class="chat-avatar" src="icons/javi-icon.png" alt="Javi">' +
               '<div class="chat-bubble-inner">👋 Hi! I\'m Javi! Ask me about life, recent earthquakes, safety tips, or anything!</div>' +
             '</div>' +
             '<div class="chat-typing hidden" id="chatTyping">' +
@@ -3228,7 +3229,11 @@ class JaviAlertApp {
       this.chatMessages.forEach((msg, i) => {
         const div = document.createElement('div');
         div.className = 'chat-bubble chat-bubble-' + (msg.role === 'user' ? 'user' : 'bot');
-        div.innerHTML = '<div class="chat-bubble-inner"><img src="icons/javi-icon.png" width="14" height="14" style="margin-right:4px;vertical-align:middle;" /> ' + this._escapeHtml(msg.content) + '</div>';
+        if (msg.role === 'user') {
+          div.innerHTML = '<div class="chat-bubble-inner">' + this._escapeHtml(msg.content) + '</div>';
+        } else {
+          div.innerHTML = '<img class="chat-avatar" src="icons/javi-icon.png" alt="Javi"><div class="chat-bubble-inner">' + this._escapeHtml(msg.content) + '</div>';
+        }
         container.appendChild(div);
       });
 
