@@ -2,7 +2,7 @@
 // HF_TOKEN stored as Vercel env var — NEVER in client-side code.
 
 const BASE_URL = 'https://router.huggingface.co/v1';
-const MODEL = 'Qwen/Qwen2.5-7B-Instruct';
+const MODEL = 'moonshotai/Kimi-K2-Instruct-0905';
 
 // ─── CORS helper ──────────────────────────────────────────────
 const ALLOWED_ORIGINS = [
