@@ -1,5 +1,5 @@
 import { JAVI_MESSAGES, JAVI_REACTIONS, SAFETY_TIPS, EMERGENCY_CONTACTS, CHANGELOG } from './messages.js';
-import { playAlertSound, startAmbientSound, stopAmbientSound, setAmbientVolume, setAmbientTrack, resumeAmbient, setOnTrackChange, getPlaybackMode, setPlaybackMode, nextTrack, toggleAmbient, isAmbientPlaying, preloadAlertAudio } from './audio.js';
+import { playAlertSound, startAmbientSound, stopAmbientSound, setAmbientVolume, setAmbientTrack, setOnTrackChange, getPlaybackMode, setPlaybackMode, nextTrack, toggleAmbient, isAmbientPlaying, preloadAlertAudio, setOnProgress } from './audio.js';
 import { API, CONFIG, timeSince, getCompassDir, getDistance, parsePlaceName, magClass } from './api-utils.js';
 import { QUIZ_QUESTIONS } from './quiz-questions.js';
 
@@ -212,18 +212,33 @@ class JaviAlertApp {
         const el = document.getElementById('nowPlaying');
         const textEl = document.getElementById('nowPlayingText');
         if (!el || !textEl) return;
+        // Always visible — just update the content
         if (!trackPath) {
-          el.classList.add('hidden');
-          textEl.textContent = 'Now Playing: —';
+          textEl.textContent = '♫ Music Player — tap play';
         } else {
-          // trackPath already comes cleaned from audio.js _trackLabel
           textEl.textContent = '♫ ' + trackPath;
-          el.classList.remove('hidden');
-          // Sync play/pause icon
-          const icon = document.querySelector('#npPlayPauseIcon');
-          if (icon) icon.setAttribute('data-lucide', isAmbientPlaying() ? 'pause' : 'play');
-          try { lucide.createIcons(); } catch (_) {}
         }
+        // Sync play/pause icon
+        const icon = document.querySelector('#npPlayPauseIcon');
+        if (icon) icon.setAttribute('data-lucide', isAmbientPlaying() ? 'pause' : 'play');
+        try { lucide.createIcons(); } catch (_) {}
+        // Reset progress bar when stopped
+        if (!trackPath) {
+          const pb = document.getElementById('npProgressBar');
+          if (pb) pb.style.width = '0%';
+        }
+      });
+
+      // Set initial now-playing state (idle)
+      const npText = document.getElementById('nowPlayingText');
+      if (npText) npText.textContent = '♫ Music Player — tap play';
+      const npIcon = document.querySelector('#npPlayPauseIcon');
+      if (npIcon) { npIcon.setAttribute('data-lucide', 'play'); try { lucide.createIcons(); } catch (_) {} }
+
+      // Progress bar — update on audio time
+      const progressBar = document.getElementById('npProgressBar');
+      setOnProgress((pct) => {
+        if (progressBar) progressBar.style.width = Math.min(100, Math.round(pct * 100)) + '%';
       });
 
       // Now Playing controls
@@ -239,10 +254,23 @@ class JaviAlertApp {
       });
       document.getElementById('npNext').addEventListener('click', nextTrack);
       document.getElementById('npPlayPause').addEventListener('click', () => {
-        const playing = toggleAmbient();
-        const icon = document.querySelector('#npPlayPauseIcon');
-        if (icon) icon.setAttribute('data-lucide', playing ? 'pause' : 'play');
-        try { lucide.createIcons(); } catch (_) {}
+        if (!this.ambientActive) {
+          // Nothing loaded — start ambient music
+          this.ambientActive = true;
+          this.ambientEnabled = true;
+          localStorage.setItem('javiAmbientEnabled', 'true');
+          startAmbientSound(this.ambientTrack || undefined);
+          setAmbientVolume(this.volumeLevel);
+          const icon = document.querySelector('#npPlayPauseIcon');
+          if (icon) icon.setAttribute('data-lucide', 'pause');
+          try { lucide.createIcons(); } catch (_) {}
+          this._updateSettingsUI();
+        } else {
+          const playing = toggleAmbient();
+          const icon = document.querySelector('#npPlayPauseIcon');
+          if (icon) icon.setAttribute('data-lucide', playing ? 'pause' : 'play');
+          try { lucide.createIcons(); } catch (_) {}
+        }
       });
 
       // Initial playback mode icon
@@ -316,11 +344,10 @@ class JaviAlertApp {
       // Safety timeout — dismiss loading after 8s no matter what
       const safetyTimer = setTimeout(() => this._dismissLoading(), 8000);
 
-      // Auto-start ambient early (preloads the MP3 while location/quake data loads)
+      // Ambient preload (buffers MP3) but don't auto-play — user starts via play button
       if (this.ambientEnabled && this.currentMood !== 'danger') {
-        startAmbientSound(this.ambientTrack || undefined);
-        setAmbientVolume(this.volumeLevel);
-        this.ambientActive = true;
+        // Just mark as ready, user presses play in the now-playing bar to start
+        this.ambientActive = false;
       }
 
       // Detect location then load
@@ -962,17 +989,11 @@ class JaviAlertApp {
       // Record mood for history
       this._recordMood(mood);
 
-      // Ambient sound: stop in danger, auto-start in safe/warning if enabled
+      // Ambient sound: stop in danger, do not auto-start (user plays via now-playing bar)
       if (mood === 'danger') {
         if (this.ambientActive) {
           stopAmbientSound();
           this.ambientActive = false;
-        }
-      } else {
-        if (this.ambientEnabled && !this.ambientActive) {
-          startAmbientSound(this.ambientTrack || undefined);
-          setAmbientVolume(this.volumeLevel);
-          this.ambientActive = true;
         }
       }
 
@@ -2643,13 +2664,12 @@ class JaviAlertApp {
       }, 500);
     }
 
-    /** Resume ambient AudioContext on first click/tap — browser blocks autoplay */
+    /** Pre-authorize alert audio on first click/tap — browser blocks autoplay */
     _unlockAudioOnce() {
       let unlocked = false;
       const unlock = () => {
         if (unlocked) return;
         unlocked = true;
-        resumeAmbient();
         // Pre-authorize alert audio for mobile browsers that block new Audio().play()
         preloadAlertAudio();
         // Remove all listeners after first interaction

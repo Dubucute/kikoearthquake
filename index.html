@@ -68,19 +68,24 @@
     </div>
   </div>
 
-  <!-- Now playing bar (hidden when no music) -->
-  <div class="now-playing hidden" id="nowPlaying">
-    <button class="np-btn np-play-btn" id="npPlayPause" aria-label="Pause" title="Pause">
-      <i data-lucide="pause" id="npPlayPauseIcon" width="14" height="14" aria-hidden="true"></i>
-    </button>
-    <span class="now-playing-text" id="nowPlayingText">Now Playing: —</span>
-    <div class="now-playing-controls">
-      <button class="np-btn" id="npPlaybackMode" aria-label="Change playback mode" title="Playback mode">
-        <i data-lucide="shuffle" id="npModeIcon" width="14" height="14" aria-hidden="true"></i>
-      </button>
-      <button class="np-btn" id="npNext" aria-label="Next track" title="Next track">
-        <i data-lucide="skip-forward" width="14" height="14" aria-hidden="true"></i>
-      </button>
+  <!-- Now playing bar (always visible) -->
+  <div class="now-playing" id="nowPlaying">
+    <div class="np-main-row">
+      <div class="np-buttons">
+        <button class="np-btn np-play-btn" id="npPlayPause" aria-label="Play" title="Play">
+          <i data-lucide="play" id="npPlayPauseIcon" width="14" height="14" aria-hidden="true"></i>
+        </button>
+        <button class="np-btn" id="npPlaybackMode" aria-label="Change playback mode" title="Playback mode">
+          <i data-lucide="shuffle" id="npModeIcon" width="14" height="14" aria-hidden="true"></i>
+        </button>
+        <button class="np-btn" id="npNext" aria-label="Next track" title="Next track">
+          <i data-lucide="skip-forward" width="14" height="14" aria-hidden="true"></i>
+        </button>
+      </div>
+      <span class="now-playing-text" id="nowPlayingText">♫ Music Player — tap play</span>
+    </div>
+    <div class="np-progress-wrap">
+      <div class="np-progress-bar" id="npProgressBar"></div>
     </div>
   </div>
 
@@ -404,7 +409,7 @@
         </div>
         <div class="settings-row-hint hidden" id="notifBlockedHelp">
           <i data-lucide="alert-triangle" aria-hidden="true"></i>
-          <span>Notifications blocked — enable in your browser/device site settings</span>
+          <span>Notifications blocked — enable in site settings</span>
         </div>
         <!-- Background music -->
         <div class="settings-row">

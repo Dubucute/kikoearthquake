@@ -213,6 +213,7 @@ export function startAmbientSound(track) {
     if (!_ambientAudio) {
       _ambientAudio = new Audio();
       _ambientAudio.preload = 'auto';
+      _attachProgressListener();
     }
     _ambientAudio.loop = (_playbackMode === 'loop-one');
 
@@ -290,4 +291,20 @@ export function toggleAmbient() {
 /** Check if ambient audio exists and is currently playing */
 export function isAmbientPlaying() {
   return _ambientAudio && !_ambientAudio.paused && !!_ambientAudio.src;
+}
+
+// ─── PROGRESS CALLBACK ──────────────────────────────
+let _progressCallback = null;
+export function setOnProgress(fn) { _progressCallback = fn; }
+
+function _attachProgressListener() {
+  if (!_ambientAudio) return;
+  _ambientAudio.removeEventListener('timeupdate', _onTimeUpdate);
+  _ambientAudio.addEventListener('timeupdate', _onTimeUpdate);
+}
+
+function _onTimeUpdate() {
+  if (_progressCallback && _ambientAudio && _ambientAudio.duration) {
+    _progressCallback(_ambientAudio.currentTime / _ambientAudio.duration);
+  }
 }
