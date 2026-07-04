@@ -37,7 +37,8 @@ class JaviAlertApp {
         current: 0,
         score: 0,
         selected: null,
-        completed: false
+        completed: false,
+        order: []
       };
 
       // Bind
@@ -1332,6 +1333,11 @@ class JaviAlertApp {
       this.quizState.score = 0;
       this.quizState.selected = null;
       this.quizState.completed = false;
+      this.quizState.order = QUIZ_QUESTIONS.map((_, index) => index);
+      for (let i = this.quizState.order.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [this.quizState.order[i], this.quizState.order[j]] = [this.quizState.order[j], this.quizState.order[i]];
+      }
       this._renderQuizQuestion();
     }
 
@@ -1356,7 +1362,8 @@ class JaviAlertApp {
         questionText.innerHTML = '<div class="quiz-summary"><strong>Score:</strong> ' + this.quizState.score + ' / ' + total + '</div>' +
           '<p>Magaling! Tingnan ang mga tamang sagot sa ibaba at ulitin kung gusto mo pa ng practice.</p>';
 
-        const answersHtml = QUIZ_QUESTIONS.map((item, index) => {
+        const answersHtml = this.quizState.order.map((questionIndex, index) => {
+          const item = QUIZ_QUESTIONS[questionIndex];
           const correctText = item.choices[item.answer];
           return '<div class="quiz-review"><strong>' + (index + 1) + '. ' + item.question + '</strong>' +
             '<div class="quiz-review-answer">Tamang sagot: ' + correctText + '</div></div>';
@@ -1368,7 +1375,7 @@ class JaviAlertApp {
         return;
       }
 
-      const question = QUIZ_QUESTIONS[current];
+      const question = QUIZ_QUESTIONS[this.quizState.order[current]];
       questionLabel.textContent = 'Question ' + (current + 1) + ' of ' + total;
       progressFill.style.width = Math.round((current / total) * 100) + '%';
       questionText.textContent = question.question;
@@ -1401,7 +1408,8 @@ class JaviAlertApp {
       if (this.quizState.completed) return;
       const selected = parseInt(button.dataset.index, 10);
       const current = this.quizState.current;
-      const correct = QUIZ_QUESTIONS[current].answer;
+      const questionIndex = this.quizState.order[current];
+      const correct = QUIZ_QUESTIONS[questionIndex].answer;
       const optionButtons = document.querySelectorAll('#quizOptions .quiz-option');
 
       this.quizState.selected = selected;
