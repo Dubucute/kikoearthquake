@@ -51,7 +51,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { messages } = req.body;
+    const { messages } = req.body || {};
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({ error: 'messages array is required' });
     }
@@ -61,6 +61,9 @@ export default async function handler(req, res) {
       { role: 'system', content: SYSTEM_PROMPT },
       ...messages.slice(-8),
     ];
+
+    // Log what we're sending (without full system prompt)
+    console.log('Sending to HF:', JSON.stringify({ model: MODEL, msgCount: chatMessages.length }).slice(0, 200));
 
     const hfRes = await fetch(`${BASE_URL}/chat/completions`, {
       method: 'POST',
@@ -76,20 +79,13 @@ export default async function handler(req, res) {
       }),
     });
 
-    const bodyText = await hfRes.text();
-
     if (!hfRes.ok) {
-      console.error('HF API error:', hfRes.status, bodyText.slice(0, 1000));
+      const errText = await hfRes.text().catch(() => '');
+      console.error('HF API error:', hfRes.status, errText.slice(0, 1000));
       return res.status(502).json({ error: 'AI service unavailable' });
     }
 
-    let data;
-    try {
-      data = JSON.parse(bodyText);
-    } catch {
-      console.error('PARSE FAIL - raw response:', bodyText.slice(0, 1000));
-      return res.status(502).json({ error: 'Invalid response from AI service' });
-    }
+    const data = await hfRes.json();
     const reply = data.choices?.[0]?.message?.content?.trim();
 
     if (!reply) {
@@ -100,7 +96,7 @@ export default async function handler(req, res) {
 
     res.status(200).json({ response: reply });
   } catch (err) {
-    console.error('ask-javi handler error:', err.message);
+    console.error('ask-javi handler error:', err.message, err.stack);
     res.status(500).json({ error: 'Internal server error', detail: err.message });
   }
 }
