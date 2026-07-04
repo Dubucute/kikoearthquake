@@ -73,14 +73,13 @@ export default async function handler(req, res) {
         messages: chatMessages,
         max_tokens: 300,
         temperature: 0.7,
-        repetition_penalty: 1.1,
       }),
     });
 
-    const bodyText = await hfRes.text().catch(() => '');
+    const bodyText = await hfRes.text();
 
     if (!hfRes.ok) {
-      console.error('HF API error:', hfRes.status, bodyText.slice(0, 500));
+      console.error('HF API error:', hfRes.status, bodyText.slice(0, 1000));
       return res.status(502).json({ error: 'AI service unavailable' });
     }
 
@@ -88,7 +87,7 @@ export default async function handler(req, res) {
     try {
       data = JSON.parse(bodyText);
     } catch {
-      console.error('Invalid JSON from HF router, raw response:', bodyText.slice(0, 500));
+      console.error('PARSE FAIL - raw response:', bodyText.slice(0, 1000));
       return res.status(502).json({ error: 'Invalid response from AI service' });
     }
     const reply = data.choices?.[0]?.message?.content?.trim();
