@@ -1920,8 +1920,6 @@ body.dark-mode .s12 { animation-delay: 0.8s; }
 .settings-toggle.denied {
   background: #e17055;
   border-color: #d63031;
-  opacity: 0.6;
-  cursor: not-allowed;
 }
 .settings-toggle.denied .settings-toggle-knob {
   transform: translateX(20px);

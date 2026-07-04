@@ -93,6 +93,11 @@ export const SAFETY_TIPS_TL = [
 
 // ─── CHANGELOG ───────────────────────────────────────────────
 export const CHANGELOG = [
+  { ver: 'v1.22', date: '2026-07-04', items: [
+    'Fix: Push notification toggle now shows feedback when tapped (test toast for granted, guidance for denied)',
+    'Fix: Notification toggle no longer shows "not-allowed" cursor when blocked',
+    'Updated: Service worker cache version bumped to v1.22'
+  ]},
   { ver: 'v1.21', date: '2026-07-04', items: [
     'New: Quiz fully translated to English and Cebuano (questions + UI)',
     'New: 100+ new English reactions and messages for Javi',

@@ -2343,12 +2343,21 @@ class JaviAlertApp {
       document.getElementById('settingsNotifToggle').addEventListener('click', async () => {
         if (!('Notification' in window)) return;
         if (Notification.permission === 'granted') {
-          // Already granted — toggle not really applicable, but show current state
+          // Already subscribed — send a test notification to confirm it works
+          this._showNotifToast('safe', {
+            mag: 0,
+            dist: 0,
+            place: 'Test notification — push is active!'
+          });
           return;
         }
         if (Notification.permission === 'denied') {
           // Permission permanently blocked by browser — can't re-prompt
-          this._showNotifBlockedHelp();
+          this._showNotifToast('warning', {
+            mag: 0,
+            dist: 0,
+            place: 'Enable notifications in your browser/device site settings'
+          });
           return;
         }
         try {
@@ -2356,8 +2365,17 @@ class JaviAlertApp {
           if (result === 'granted') {
             await this._setupPushNotifications();
             this._updateSettingsUI();
+            this._showNotifToast('safe', {
+              mag: 0,
+              dist: 0,
+              place: 'Push notifications are now active!'
+            });
           } else if (result === 'denied') {
-            this._showNotifBlockedHelp();
+            this._showNotifToast('warning', {
+              mag: 0,
+              dist: 0,
+              place: 'Enable notifications in your browser/device site settings'
+            });
           }
         } catch (_) { /* permission request failed */ }
       });
@@ -2879,11 +2897,22 @@ class JaviAlertApp {
       // Set content
       const emoji = type === 'danger' ? '🚨' : type === 'warning' ? '⚠️' : '🔔';
       if (iconEl) iconEl.textContent = emoji;
-      titleEl.textContent = type === 'danger' ? 'DANGER! Strong Earthquake!'
-        : type === 'warning' ? 'Warning — Earthquake Detected'
-        : 'Earthquake Alert';
-      bodyEl.textContent = (quake.mag || '?').toFixed(1) + ' mag • '
-        + quake.dist + ' km away • ' + quake.place;
+
+      // If mag is exactly 0 AND dist is 0, treat as a plain message (test/blocked/etc.)
+      const isPlain = quake.mag === 0 && quake.dist === 0;
+
+      if (!isPlain) {
+        // Real earthquake data
+        titleEl.textContent = type === 'danger' ? 'DANGER! Strong Earthquake!'
+          : type === 'warning' ? 'Warning — Earthquake Detected'
+          : 'Earthquake Alert';
+        bodyEl.textContent = (quake.mag || '?').toFixed(1) + ' mag • '
+          + quake.dist + ' km away • ' + quake.place;
+      } else {
+        // Plain message (test notifications, blocked help, etc.)
+        titleEl.textContent = quake.place || 'Notification';
+        bodyEl.textContent = '';
+      }
 
       // Remove hidden, add show class for animation
       toast.classList.remove('hidden');
@@ -2898,27 +2927,6 @@ class JaviAlertApp {
         toast.classList.remove('toast-show');
         setTimeout(() => toast.classList.add('hidden'), 400);
       }, 6000);
-    }
-
-    _showNotifBlockedHelp() {
-      const toast = document.getElementById('notifToast');
-      if (!toast) return;
-      const titleEl = document.getElementById('notifToastTitle');
-      const bodyEl = document.getElementById('notifToastBody');
-      const iconEl = document.getElementById('notifToastIcon');
-      if (!titleEl || !bodyEl) return;
-      if (iconEl) iconEl.textContent = '🔕';
-      titleEl.textContent = 'Notifications blocked';
-      bodyEl.textContent = 'Please enable notifications in your browser or device settings. On Chrome: tap the lock icon next to the URL, find "Notifications", and set to "Allow".';
-      toast.classList.remove('hidden');
-      toast.classList.remove('toast-show');
-      void toast.offsetWidth;
-      toast.classList.add('toast-show');
-      if (this._toastTimer) clearTimeout(this._toastTimer);
-      this._toastTimer = setTimeout(() => {
-        toast.classList.remove('toast-show');
-        setTimeout(() => toast.classList.add('hidden'), 400);
-      }, 8000);
     }
 
     // ─── SPAWN SPARKLES ON JAVI TAP ──────────────────────────
