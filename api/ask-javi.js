@@ -77,13 +77,20 @@ export default async function handler(req, res) {
       }),
     });
 
+    const bodyText = await hfRes.text().catch(() => '');
+
     if (!hfRes.ok) {
-      const errText = await hfRes.text().catch(() => 'Unknown error');
-      console.error('HF API error:', hfRes.status, errText);
+      console.error('HF API error:', hfRes.status, bodyText.slice(0, 500));
       return res.status(502).json({ error: 'AI service unavailable' });
     }
 
-    const data = await hfRes.json();
+    let data;
+    try {
+      data = JSON.parse(bodyText);
+    } catch {
+      console.error('Invalid JSON from HF router, raw response:', bodyText.slice(0, 500));
+      return res.status(502).json({ error: 'Invalid response from AI service' });
+    }
     const reply = data.choices?.[0]?.message?.content?.trim();
 
     if (!reply) {
@@ -95,6 +102,6 @@ export default async function handler(req, res) {
     res.status(200).json({ response: reply });
   } catch (err) {
     console.error('ask-javi handler error:', err.message);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Internal server error', detail: err.message });
   }
 }
