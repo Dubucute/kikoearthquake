@@ -2315,17 +2315,16 @@ class JaviAlertApp {
         document.getElementById('updateLogsModal').classList.remove('hidden');
       });
 
-      // Language picker
-      document.querySelectorAll('.lang-option').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const lang = btn.dataset.lang || 'tl';
+      // Language select dropdown
+      const langSelect = document.getElementById('languageSelect');
+      if (langSelect) {
+        try { langSelect.value = localStorage.getItem('javiLang') || 'tl'; } catch(_) {}
+        langSelect.addEventListener('change', () => {
+          const lang = langSelect.value;
           try { localStorage.setItem('javiLang', lang); } catch(_) {}
-          // mark selection immediately
-          document.querySelectorAll('.lang-option').forEach(b => b.classList.toggle('active', (b.dataset.lang || '') === lang));
-          // reload to apply language (messages.js reads localStorage at module load)
           setTimeout(() => window.location.reload(), 180);
         });
-      });
+      }
 
       // Update Logs modal close
       document.getElementById('updateLogsClose').addEventListener('click', () => {
@@ -2476,8 +2475,8 @@ class JaviAlertApp {
 
       // Reflect chosen language in settings UI
       try {
-        const curLang = (localStorage.getItem('javiLang') || 'tl');
-        document.querySelectorAll('.lang-option').forEach(b => b.classList.toggle('active', (b.dataset.lang || '') === curLang));
+        const sel = document.getElementById('languageSelect');
+        if (sel) sel.value = localStorage.getItem('javiLang') || 'tl';
       } catch (_) {}
     }
 
