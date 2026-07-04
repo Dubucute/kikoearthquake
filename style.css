@@ -1858,7 +1858,9 @@ body.dark-mode .s12 { animation-delay: 0.8s; }
   overflow: hidden;
   z-index: 100;
   min-width: 140px;
-  animation: fadeIn .12s ease;
+}
+.custom-select-options.hidden {
+  display: none;
 }
 .custom-select-option {
   display: block;

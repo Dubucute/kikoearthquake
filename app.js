@@ -2315,21 +2315,19 @@ class JaviAlertApp {
         document.getElementById('updateLogsModal').classList.remove('hidden');
       });
 
-      // Custom language dropdown
+      // Custom language dropdown — same pattern as sort dropdown
       const trigger = document.getElementById('langSelectTrigger');
       const optionsEl = document.getElementById('langSelectOptions');
       const textEl = document.getElementById('langSelectText');
       const langLabels = { en: 'English', tl: 'Tagalog', ceb: 'Cebuano' };
       if (trigger && optionsEl) {
-        // Set initial text
         const savedLang = (() => { try { return localStorage.getItem('javiLang') || 'tl'; } catch(_) { return 'tl'; } })();
         if (textEl) textEl.textContent = langLabels[savedLang] || 'Tagalog';
-        // Toggle dropdown
+        optionsEl.classList.add('hidden');
         trigger.addEventListener('click', (e) => {
           e.stopPropagation();
           optionsEl.classList.toggle('hidden');
         });
-        // Select option
         optionsEl.querySelectorAll('.custom-select-option').forEach(btn => {
           btn.addEventListener('click', () => {
             const lang = btn.dataset.lang || 'tl';
@@ -2339,7 +2337,6 @@ class JaviAlertApp {
             setTimeout(() => window.location.reload(), 180);
           });
         });
-        // Close on outside click
         document.addEventListener('click', (e) => {
           if (!e.target.closest('#languageSelect')) {
             optionsEl.classList.add('hidden');
