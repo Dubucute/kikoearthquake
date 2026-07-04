@@ -93,6 +93,10 @@ export const SAFETY_TIPS_TL = [
 
 // ─── CHANGELOG ───────────────────────────────────────────────
 export const CHANGELOG = [
+  { ver: 'v1.17', date: '2026-07-04', items: [
+    'Fix: Language dropdown options now properly hide/show on click',
+    'Updated: Service worker cache version bumped to v1.17'
+  ]},
   { ver: 'v1.16', date: '2026-07-04', items: [
     'New: Fully styled custom language dropdown — options now match app theme',
     'Updated: Service worker cache version bumped to v1.16'
