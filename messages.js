@@ -93,6 +93,10 @@ export const SAFETY_TIPS_TL = [
 
 // ─── CHANGELOG ───────────────────────────────────────────────
 export const CHANGELOG = [
+  { ver: 'v1.27', date: '2026-07-04', items: [
+    'New: Ask Javi now tries up to 4 different AI models if one fails — better reliability!',
+    'Updated: Service worker cache version bumped to v1.27'
+  ]},
   { ver: 'v1.26', date: '2026-07-04', items: [
     'New: Ask Javi can now chat about ANY topic — life, feelings, random fun, not just earthquakes!',
     'Updated: Service worker cache version bumped to v1.26'

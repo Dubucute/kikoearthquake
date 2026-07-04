@@ -2,7 +2,12 @@
 // HF_TOKEN stored as Vercel env var — NEVER in client-side code.
 
 const BASE_URL = 'https://router.huggingface.co/v1';
-const MODEL = 'moonshotai/Kimi-K2-Instruct-0905';
+const MODELS = [
+  'moonshotai/Kimi-K2-Instruct-0905',
+  'Qwen/Qwen2.5-7B-Instruct',
+  'mistralai/Mistral-7B-Instruct-v0.3',
+  'google/gemma-2-2b-it',
+];
 
 // ─── CORS helper ──────────────────────────────────────────────
 const ALLOWED_ORIGINS = [
@@ -84,30 +89,55 @@ export default async function handler(req, res) {
     // Log what we're sending (without full system prompt)
     console.log('Sending to HF:', JSON.stringify({ model: MODEL, msgCount: chatMessages.length }).slice(0, 200));
 
-    const hfRes = await fetch(`${BASE_URL}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: chatMessages,
-        max_tokens: 300,
-        temperature: 0.7,
-      }),
-    });
+    // Try each model in order until one works
+    let lastError = null;
+    let reply = null;
 
-    if (!hfRes.ok) {
-      const errText = await hfRes.text().catch(() => '');
-      console.error('HF API error:', hfRes.status, errText.slice(0, 1000));
-      return res.status(502).json({ error: 'AI service unavailable' });
+    for (const model of MODELS) {
+      console.log('Trying model:', model, '| msgCount:', chatMessages.length);
+      try {
+        const hfRes = await fetch(`${BASE_URL}/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model,
+            messages: chatMessages,
+            max_tokens: 300,
+            temperature: 0.7,
+          }),
+        });
+
+        if (!hfRes.ok) {
+          const errText = await hfRes.text().catch(() => '');
+          lastError = `Model ${model} returned ${hfRes.status}: ${errText.slice(0, 200)}`;
+          console.warn('Model failed:', lastError);
+          continue; // Try next model
+        }
+
+        const data = await hfRes.json();
+        const candidate = data.choices?.[0]?.message?.content?.trim();
+
+        if (candidate) {
+          reply = candidate;
+          console.log('Model succeeded:', model);
+          break; // Got a good response
+        } else {
+          lastError = `Model ${model} returned empty response`;
+          console.warn(lastError);
+          continue; // Try next model
+        }
+      } catch (modelErr) {
+        lastError = `Model ${model} threw: ${modelErr.message}`;
+        console.warn(lastError);
+        continue; // Try next model
+      }
     }
 
-    const data = await hfRes.json();
-    const reply = data.choices?.[0]?.message?.content?.trim();
-
     if (!reply) {
+      console.error('All models failed. Last error:', lastError);
       return res.status(200).json({
         response: 'Sorry, wala akong maisip na sagot ngayon. Puwede mo bang ulitin ang tanong mo?',
       });
