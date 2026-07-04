@@ -306,3 +306,155 @@ export const EMERGENCY_CONTACTS = [
   { name: "Smart Emergency",                 num: "0918-944-4444" },
   { name: "Globe Emergency",                 num: "0917-555-1212" },
 ];
+
+// ─── TRANSLATIONS: ENGLISH (readonly copies) ─────────────────
+export const JAVI_MESSAGES_EN = {
+  safe: [
+    "We're safe here — no strong earthquakes nearby.",
+    "All quiet in your area right now.",
+    "No significant seismic activity detected near you.",
+    "Relax — conditions look calm at the moment.",
+    "Good news: no strong quakes detected close by.",
+    "Monitoring shows low activity in your area.",
+    "No major shakes found nearby, you are safe.",
+    "Seismic activity is low right now — stay alert.",
+    "Everything looks stable; enjoy your day.",
+    "No nearby strong earthquakes detected."
+  ],
+  warning: [
+    "Moderate shaking detected nearby — stay cautious.",
+    "Alert: there is a moderate quake in the area.",
+    "Ground movement detected — watch for aftershocks.",
+    "Be careful — moderate seismic activity observed.",
+    "Stay aware and follow safety tips until it settles.",
+    "We detected movement — keep clear of windows and unsecured items.",
+    "Moderate earthquake alert — monitor official updates.",
+    "Possible aftershocks expected — take precautions.",
+    "Warning: moderate shaking nearby; avoid unsafe places.",
+    "Stay safe and be prepared for additional tremors."
+  ],
+  danger: [
+    "STRONG earthquake! Take cover and stay safe now!",
+    "Emergency: heavy shaking detected — DROP, COVER, and HOLD ON.",
+    "Danger: strong quake ongoing — stay under cover.",
+    "Move away from windows and falling objects immediately.",
+    "Seek shelter under sturdy furniture until it stops.",
+    "Serious shaking detected — follow emergency procedures now.",
+    "Stay calm and protect your head and neck.",
+    "High-alert: do not run outside during strong shaking.",
+    "This is an emergency — prioritize your safety and those around you.",
+    "Dangerous quake ongoing — remain sheltered until given the all-clear."
+  ]
+};
+
+export const SAFETY_TIPS_EN = [
+  "DROP, COVER, and HOLD ON — get under sturdy furniture and hold on.",
+  "Stay away from windows, glass, and objects that can fall.",
+  "If indoors, stay inside until the shaking stops and it's safe to exit.",
+  "If outdoors, move away from buildings, trees, and power lines.",
+  "In a vehicle, pull over to a safe place and remain inside.",
+  "After shaking stops, watch for aftershocks and check for hazards.",
+  "Keep an emergency kit with water, food, flashlight, and first aid.",
+  "Know safe spots at home — under a sturdy table or against an interior wall.",
+  "Do not use elevators after an earthquake — power may fail.",
+  "If you smell gas, turn it off and open windows; leave the area if needed.",
+  "Check on family and neighbors, especially the elderly and children.",
+  "Plan and practice an evacuation route with your household.",
+  "Store important documents in a waterproof container.",
+  "Keep extra batteries and a charged power bank for communications.",
+  "If near the coast, move to higher ground — tsunamis can follow quakes.",
+  "Listen to official sources for updates and instructions.",
+  "Teach children how to DROP, COVER, and HOLD ON.",
+  "Stay calm — clear thinking helps you make safer choices.",
+  "Help others if it is safe to do so; avoid creating additional risks.",
+  "Keep a whistle or signal device to call for help if trapped."
+];
+
+export const JAVI_REACTIONS_EN = [
+  "Hey — take it easy!",
+  "Ouch — that was a shake!",
+  "Haha, what's happening?",
+  "Stay safe, friend!",
+  "I got this — monitoring now.",
+  "Why are you tapping me? 😄",
+  "One more tap for luck!",
+  "Busy watching seismic stations!",
+  "Stay alert and stay safe.",
+  "Thanks for checking in — be prepared!",
+  "Javi says: Don't panic, just act safely.",
+  "High five for being earthquake-ready!",
+  "Stay calm — check your emergency kit.",
+  "Be careful out there!",
+  "I care about your safety."
+];
+
+// ─── TRANSLATIONS: CEBUANO / BISAYA (readonly copies) ──────────
+export const JAVI_MESSAGES_CEB = {
+  safe: [
+    "Luwas ta dinhi — walay kusog nga linog sa palibot.",
+    "Walay dakong kawalay-kasiguroan karon sa imong lugar.",
+    "Normal ra ang kalihukan sa yuta sa imong palibot.",
+    "Pahulay ra — kalma ang kondisyon karon.",
+    "Maayong balita: walay kusog nga linog duol kanimo.",
+    "Gamayan ra ang kalihukan sa imong lugar.",
+    "Walay grabe nga linog nga na-detect duol sa imo.",
+    "Kalma ra ang kalihukan — magmatngon gihapon.",
+    "Luwas ang palibot karon.",
+    "Walay kusog nga linog nga nakita karon."
+  ],
+  warning: [
+    "Naay moderate nga kalihukan — mag-amping.",
+    "Alert: naay lindol sa duol — bantayi ang kahimtang.",
+    "Naay pagrekord sa yuta — posible pa ang aftershocks.",
+    "Mag-amping ug likayi ang mga lugar nga delikado.",
+    "Paminaw sa mga opisyal nga pahibalo.",
+    "Likayi ang mga bintana ug angay nga mahulog.",
+    "Moderate nga lindol ang na-detect — magbantay.",
+    "Posible ang sunod nga pag-uyan — andam pirmi.",
+    "Warning: moderate shaking — likayi ang delikadong lugar.",
+    "Ayaw kalimti ang safety tips ug mag-andam sa aftershocks."
+  ],
+  danger: [
+    "KUSOG nga lindol! Pangitaa dayon ang panalipod!",
+    "Emergency: kusog kaayo nga pag-uyan — DROP, COVER, HOLD ON.",
+    "Delikado — pagpabilin ilawom sa lig-on nga muebles.",
+    "Likayi ang mga bintana ug mga mahulog nga butang.",
+    "Pangitaa ang lig-on nga lugar ug pugngi ang imong ulo.",
+    "Grabe nga pag-uyan — sundi ang emergency procedures.",
+    "Pahiluna ang imong ulo ug liog aron protektado.",
+    "Ayaw pagdagan gawas sa kusog nga pag-uyan.",
+    "Kini usa ka emergency — protektahi ang kaugalingon.",
+    "Delikado ang kahimtang — pahimutang sa luwas nga dapit." 
+  ]
+};
+
+export const SAFETY_TIPS_CEB = [
+  "DROP, COVER, and HOLD ON — pagkupot ilawom sa lig-on nga lamesa.",
+  "Likayi ang mga bintana, salamin, ug mga butang nga motulo.",
+  "Kung naa sulod balay, pagpabilin sa sulod hangtod mohunong ang pag-uyan.",
+  "Kung naa gawas, layoa ang mga building, kahoy, ug kuryente nga linya.",
+  "Kung sakay sa sakyanan, puy-a kini sa luwas nga dapit ug nagpabilin sa sulod.",
+  "Pag-andam ug emergency kit: tubig, pagkaon, flashlight, ug first aid.",
+  "Hibal-i ang luwas nga lugar sa balay — ilawom sa lig-on nga lamesa o interior wall.",
+  "Ayaw gamit ug elevator pagkahuman sa lindol.",
+  "Kung naa gas leak, patya ang gas ug ablihi ang mga bintana.",
+  "Susiha ang imong pamilya ug mga silingan pagkahuman sa lindol.",
+  "Magplano ug evacuation route uban sa pamilya.",
+  "Ibutang ang mga importante nga dokumento sa waterproof container.",
+  "Pag-andam ug extra batteries ug power bank.",
+  "Kung duol sa baybayon, adto sa mas hataas nga lugar.",
+  "Paminaw sa mga opisyal nga pahibalo ug likayi ang tsismis."
+];
+
+export const JAVI_REACTIONS_CEB = [
+  "Hoy, hinay-hinay lang!",
+  "Ayy, nisikapa ang yuta!",
+  "Haha, unsa man to?",
+  "Mag-amping ta, amigo!",
+  "Ako nagbantay ani — updated ko pirme.",
+  "Ngano man ka nagtaptap? 😄",
+  "Usa pa, para swerte!",
+  "Nagatutok ko sa seismic stations!",
+  "Amping pirmi.",
+  "Salamat sa pag-check — andam ta."
+];
