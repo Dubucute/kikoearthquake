@@ -93,6 +93,16 @@ export const SAFETY_TIPS_TL = [
 
 // ─── CHANGELOG ───────────────────────────────────────────────
 export const CHANGELOG = [
+  { ver: 'v1.24', date: '2026-07-04', items: [
+    'New: Test Notification button in Settings (debug — sends browser + push + in-app toast)',
+    'Updated: Service worker cache version bumped to v1.24'
+  ]},
+  { ver: 'v1.23', date: '2026-07-04', items: [
+    'New: Push notification toggle now properly turns notifications ON/OFF',
+    'New: Disabling push unsubscribes from server (saves battery/data)',
+    'New: Disabled state survives page reload (saved in your device)',
+    'Updated: Service worker cache version bumped to v1.23'
+  ]},
   { ver: 'v1.22', date: '2026-07-04', items: [
     'Fix: Push notification toggle now shows feedback when tapped (test toast for granted, guidance for denied)',
     'Fix: Notification toggle no longer shows "not-allowed" cursor when blocked',

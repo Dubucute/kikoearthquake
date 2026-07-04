@@ -2065,6 +2065,46 @@ body.dark-mode .custom-select-option:focus-visible {
 .settings-row-logs:active {
   opacity: .6;
 }
+/* Test notification button */
+#testNotifRow {
+  justify-content: center;
+  border-bottom: none;
+  padding-top: 0;
+}
+.btn-test-notif {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 2.5px solid #2d3436;
+  background: #fff;
+  padding: 8px 18px;
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 13px;
+  font-family: 'Fredoka', sans-serif;
+  color: #2d3436;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 #2d3436;
+  transition: transform .08s, box-shadow .08s;
+  line-height: 1.2;
+}
+.btn-test-notif:active {
+  transform: translateY(1px);
+  box-shadow: 1px 1px 0 #2d3436;
+}
+.btn-test-notif i {
+  width: 16px;
+  height: 16px;
+}
+body.dark-mode .btn-test-notif {
+  background: #2d2d2d;
+  border-color: #666;
+  color: #eee;
+  box-shadow: 2px 2px 0 #555;
+}
+body.dark-mode .btn-test-notif:active {
+  box-shadow: 1px 1px 0 #555;
+}
 .update-logs-chevron {
   font-size: 14px;
   color: var(--text-muted);

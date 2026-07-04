@@ -13,7 +13,7 @@ function setCorsHeaders(res, origin) {
   } else {
     res.setHeader('Access-Control-Allow-Origin', 'https://javi-alert.vercel.app');
   }
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 }
 
@@ -22,6 +22,23 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') {
     setCorsHeaders(res, req.headers.origin);
     return res.status(204).end();
+  }
+
+  if (req.method === 'DELETE') {
+    try {
+      const database = await getDb();
+      const subs = database.collection('pushSubscriptions');
+      const target = req.body;
+      if (target && target.endpoint) {
+        await subs.deleteOne({ endpoint: target.endpoint });
+      }
+      setCorsHeaders(res, req.headers.origin);
+      return res.json({ ok: true });
+    } catch (err) {
+      console.error('unsubscribe error:', err);
+      setCorsHeaders(res, req.headers.origin);
+      return res.status(500).json({ error: err.message });
+    }
   }
 
   if (req.method !== 'POST') {

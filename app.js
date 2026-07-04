@@ -22,6 +22,7 @@ class JaviAlertApp {
       this.moodHistory = this._loadMoodHistory();
       this.magFilter = 0;
       this._pushReady = false;
+      this._pushDisabled = localStorage.getItem('javiPushDisabled') === 'true';
       this._toastTimer = null;
       this.map = null;
       this.mapMarkers = [];
@@ -103,7 +104,7 @@ class JaviAlertApp {
             if (result === 'granted') this._setupPushNotifications();
           });
         } catch (_) { /* ignore */ }
-      } else if ('Notification' in window && Notification.permission === 'granted') {
+      } else if ('Notification' in window && Notification.permission === 'granted' && !this._pushDisabled) {
         this._setupPushNotifications();
       }
 
@@ -1193,6 +1194,8 @@ class JaviAlertApp {
           body: JSON.stringify(subscription.toJSON())
         });
         this._pushReady = true;
+        this._pushDisabled = false;
+        localStorage.setItem('javiPushDisabled', 'false');
       } catch (_) { /* push not supported */ }
     }
 
@@ -1208,7 +1211,7 @@ class JaviAlertApp {
     }
 
     async _triggerServerPush(newest, count) {
-      if (!this._pushReady) return;
+      if (!this._pushReady || this._pushDisabled) return;
       const alertType = newest.mag >= CONFIG.DANGER_THRESHOLD ? 'danger'
         : newest.mag >= CONFIG.WARNING_THRESHOLD ? 'warning'
         : null;
@@ -1296,8 +1299,8 @@ class JaviAlertApp {
           if (result === 'granted') this._setupPushNotifications();
           this._updateSettingsUI();
         }).catch(() => {});
-      } else if ('Notification' in window && Notification.permission === 'granted' && !this._pushReady) {
-        // Retry push setup if it failed earlier
+      } else if ('Notification' in window && Notification.permission === 'granted' && !this._pushReady && !this._pushDisabled) {
+        // Retry push setup if it failed earlier (only if user hasn't disabled)
         this._setupPushNotifications();
       }
 
@@ -2342,38 +2345,69 @@ class JaviAlertApp {
       // Push notification toggle (user gesture required on mobile)
       document.getElementById('settingsNotifToggle').addEventListener('click', async () => {
         if (!('Notification' in window)) return;
+
+        // ── GRANTED — toggle on/off ──
         if (Notification.permission === 'granted') {
-          // Already subscribed — send a test notification to confirm it works
-          this._showNotifToast('safe', {
-            mag: 0,
-            dist: 0,
-            place: 'Test notification — push is active!'
-          });
+          if (this._pushDisabled) {
+            // Re-enable: subscribe again
+            this._pushDisabled = false;
+            localStorage.setItem('javiPushDisabled', 'false');
+            await this._setupPushNotifications();
+            this._updateSettingsUI();
+            this._showNotifToast('safe', {
+              mag: 0, dist: 0,
+              place: 'Push notifications turned ON'
+            });
+          } else {
+            // Disable: unsubscribe
+            try {
+              const registration = await navigator.serviceWorker.ready;
+              const subscription = await registration.pushManager.getSubscription();
+              if (subscription) {
+                await subscription.unsubscribe();
+                await fetch('/api/push-subscribe', {
+                  method: 'DELETE',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(subscription.toJSON())
+                }).catch(() => {});
+              }
+            } catch (_) { /* ignore unsubscribe errors */ }
+            this._pushReady = false;
+            this._pushDisabled = true;
+            localStorage.setItem('javiPushDisabled', 'true');
+            this._updateSettingsUI();
+            this._showNotifToast('safe', {
+              mag: 0, dist: 0,
+              place: 'Push notifications turned OFF'
+            });
+          }
           return;
         }
+
+        // ── DENIED — show guidance ──
         if (Notification.permission === 'denied') {
-          // Permission permanently blocked by browser — can't re-prompt
           this._showNotifToast('warning', {
-            mag: 0,
-            dist: 0,
+            mag: 0, dist: 0,
             place: 'Enable notifications in your browser/device site settings'
           });
           return;
         }
+
+        // ── DEFAULT — request permission ──
         try {
           const result = await Notification.requestPermission();
           if (result === 'granted') {
+            this._pushDisabled = false;
+            localStorage.setItem('javiPushDisabled', 'false');
             await this._setupPushNotifications();
             this._updateSettingsUI();
             this._showNotifToast('safe', {
-              mag: 0,
-              dist: 0,
+              mag: 0, dist: 0,
               place: 'Push notifications are now active!'
             });
           } else if (result === 'denied') {
             this._showNotifToast('warning', {
-              mag: 0,
-              dist: 0,
+              mag: 0, dist: 0,
               place: 'Enable notifications in your browser/device site settings'
             });
           }
@@ -2481,6 +2515,37 @@ class JaviAlertApp {
       });
       document.getElementById('updateLogsModal').addEventListener('click', (e) => {
         if (e.target === e.currentTarget) e.currentTarget.classList.add('hidden');
+      });
+
+      // Test notification button (debug)
+      document.getElementById('testNotifBtn').addEventListener('click', async () => {
+        // Try browser notification
+        if ('Notification' in window && Notification.permission === 'granted') {
+          try {
+            new Notification('JaviAlert Test', {
+              body: 'This is a test notification from JaviAlert!',
+              icon: 'icons/javi-icon.png'
+            });
+          } catch (_) { /* ignore */ }
+        }
+        // Try push notification via server
+        try {
+          await fetch('/api/push-send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              title: '🔔 JaviAlert Test',
+              body: 'This is a test push notification!',
+              url: '/',
+              tag: 'test-' + Date.now()
+            })
+          });
+        } catch (_) { /* ignore */ }
+        // Show in-app toast
+        this._showNotifToast('safe', {
+          mag: 0, dist: 0,
+          place: 'Test notification sent! Check your device.'
+        });
       });
     }
 
@@ -2604,7 +2669,8 @@ class JaviAlertApp {
       // Notification toggle
       const nt = document.getElementById('settingsNotifToggle');
       if (nt) {
-        nt.classList.toggle('active', 'Notification' in window && Notification.permission === 'granted');
+        const canPush = 'Notification' in window && Notification.permission === 'granted';
+        nt.classList.toggle('active', canPush && !this._pushDisabled);
         nt.classList.toggle('denied', 'Notification' in window && Notification.permission === 'denied');
       }
       // Notification blocked help text
