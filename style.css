@@ -1818,6 +1818,31 @@ body.dark-mode .s12 { animation-delay: 0.8s; }
   color: var(--text);
 }
 .settings-row-label i { width: 18px; height: 18px; }
+/* Language picker styles */
+.language-picker {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+.lang-option {
+  appearance: none;
+  border: 2px solid rgba(0,0,0,.08);
+  background: transparent;
+  padding: 6px 10px;
+  border-radius: 12px;
+  font-weight: 700;
+  color: var(--text);
+  cursor: pointer;
+  transition: background .15s, color .15s, transform .08s;
+}
+.lang-option:active { transform: translateY(1px); }
+.lang-option.active {
+  background: #00b894;
+  color: #fff;
+  border-color: #2d3436;
+}
 .settings-vol-pct {
   font-size: 13px;
   font-weight: 400;

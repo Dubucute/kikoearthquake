@@ -93,6 +93,11 @@ export const SAFETY_TIPS_TL = [
 
 // ─── CHANGELOG ───────────────────────────────────────────────
 export const CHANGELOG = [
+  { ver: 'v1.14', date: '2026-07-04', items: [
+    'Fix: CSS wrapping for translated text in modals and quiz options',
+    'New: Visible language selector in Settings (English / Tagalog / Cebuano)',
+    'Updated: Service worker cache version bumped to v1.14 for fresh asset caching'
+  ]},
   { ver: 'v1.13', date: '2026-07-04', items: [
     'New: Earthquake Quiz feature with score tracking and quiz progress',
     'New: External quiz questions module for easier updates and expansion',
