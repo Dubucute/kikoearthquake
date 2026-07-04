@@ -60,7 +60,6 @@ export default async function handler(req, res) {
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({ error: 'messages array is required' });
     }
-    }
 
     // Build messages array with system prompt + conversation history
     const chatMessages = [
