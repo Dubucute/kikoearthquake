@@ -1408,7 +1408,6 @@ class JaviAlertApp {
     }
 
     _renderQuizQuestion() {
-      const lang = this._quizLang();
       const questionLabel = document.getElementById('quizQuestionLabel');
       const progressFill = document.getElementById('quizProgressFill');
       const scoreDisplay = document.getElementById('quizScore');
@@ -1418,43 +1417,19 @@ class JaviAlertApp {
       const total = this.quizState.order.length;
       const current = this.quizState.current;
 
-      // i18n strings
+      // Always English UI
       const TXT = {
-        tl: {
-          score: 'Score:',
-          completed: 'Quiz completed',
-          summary: 'Magaling! Tingnan ang mga tamang sagot sa ibaba at ulitin kung gusto mo pa ng practice.',
-          correct: 'Tamang sagot:',
-          close: 'Close',
-          question: 'Tanong',
-          of: 'ng',
-          submit: 'Submit',
-          next: 'Susunod',
-        },
-        en: {
-          score: 'Score:',
-          completed: 'Quiz completed',
-          summary: 'Great job! Review the correct answers below. Retake the quiz if you want more practice!',
-          correct: 'Correct answer:',
-          close: 'Close',
-          question: 'Question',
-          of: 'of',
-          submit: 'Submit',
-          next: 'Next',
-        },
-        ceb: {
-          score: 'Iskor:',
-          completed: 'Nahuman ang Quiz',
-          summary: 'Maayo! Tan-awa ang hustong mga tubag sa ubos. Balika ang quiz kung gusto pa og praktis!',
-          correct: 'Hustong tubag:',
-          close: 'Close',
-          question: 'Pangutana',
-          of: 'sa',
-          submit: 'Submit',
-          next: 'Sunod',
-        },
+        score: 'Score:',
+        completed: 'Quiz completed',
+        summary: 'Test your earthquake knowledge. Choose the correct answer and find out if you\'re ready!',
+        correct: 'Correct answer:',
+        close: 'Close',
+        question: 'Question',
+        of: 'of',
+        submit: 'Submit',
+        next: 'Next',
       };
-      const t = TXT[lang] || TXT.tl;
+      const t = TXT;
 
       if (scoreDisplay) {
         scoreDisplay.textContent = t.score + ' ' + this.quizState.score + ' / ' + total;
@@ -1503,11 +1478,10 @@ class JaviAlertApp {
       nextBtn.textContent = current === total - 1 ? t.submit : t.next;
       nextBtn.disabled = true;
 
-      // Update restart button i18n
+      // Update restart button
       const restartBtn = document.getElementById('quizRestartBtn');
       if (restartBtn) {
-        const rtxt = { tl: 'Ulitin', en: 'Restart', ceb: 'Usba' };
-        restartBtn.textContent = rtxt[lang] || rtxt.tl;
+        restartBtn.textContent = 'Restart';
       }
 
       options.querySelectorAll('.quiz-option').forEach((btn) => {
