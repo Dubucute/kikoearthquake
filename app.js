@@ -2576,13 +2576,22 @@ class JaviAlertApp {
             window.location.reload();
           });
 
+          // Helper: show the loading overlay so user sees the update message
+          const _showUpdateOverlay = () => {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) {
+              overlay.classList.remove('hidden', 'fade-out');
+              const lt = document.getElementById('loadingText');
+              if (lt) lt.textContent = 'Updating app...';
+            }
+          };
+
           // Helper: trigger auto-update by activating the waiting SW
           const autoUpdate = (sw) => {
             if (!sw) return;
             const justUpdated = localStorage.getItem('javiJustUpdated');
             if (justUpdated && (Date.now() - parseInt(justUpdated, 10)) < 300000) return;
-            const lt = document.getElementById('loadingText');
-            if (lt) lt.textContent = 'Updating app...';
+            _showUpdateOverlay();
             sw.postMessage({ action: 'skipWaiting' });
           };
 
@@ -2594,8 +2603,7 @@ class JaviAlertApp {
 
           // Case 2: A new SW is currently installing
           if (registration.installing && hadController && !recentUpdate) {
-            const lt = document.getElementById('loadingText');
-            if (lt) lt.textContent = 'Updating app...';
+            _showUpdateOverlay();
             registration.installing.addEventListener('statechange', () => {
               if (registration.waiting) autoUpdate(registration.waiting);
             });
@@ -2608,8 +2616,7 @@ class JaviAlertApp {
             const stillRecent = localStorage.getItem('javiJustUpdated') &&
               (Date.now() - parseInt(localStorage.getItem('javiJustUpdated'), 10)) < 300000;
             if (stillRecent) return;
-            const lt = document.getElementById('loadingText');
-            if (lt) lt.textContent = 'Updating app...';
+            _showUpdateOverlay();
             newSW.addEventListener('statechange', () => {
               if (newSW.state === 'installed' && registration.waiting) {
                 autoUpdate(registration.waiting);

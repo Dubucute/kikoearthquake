@@ -93,6 +93,10 @@ export const SAFETY_TIPS_TL = [
 
 // ─── CHANGELOG ───────────────────────────────────────────────
 export const CHANGELOG = [
+  { ver: 'v1.31', date: '2026-07-04', items: [
+    'Fix: Loading screen now stays visible during app update — shows updating message until reload',
+    'Updated: Service worker cache version bumped to v1.31'
+  ]},
   { ver: 'v1.30', date: '2026-07-04', items: [
     'New: Javi adapts to what you ask — helps with assignments, chats about life, or talks about quakes!',
     'Updated: Service worker cache version bumped to v1.30'
