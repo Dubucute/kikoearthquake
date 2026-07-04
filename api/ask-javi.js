@@ -51,9 +51,15 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { messages } = req.body || {};
+    // Read raw body manually (Vercel's body parser may have issues)
+    let body = '';
+    for await (const chunk of req) body += chunk;
+    console.log('Raw body length:', body.length, 'first 50:', JSON.stringify(body.slice(0, 50)));
+    const parsed = JSON.parse(body);
+    const { messages } = parsed || {};
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({ error: 'messages array is required' });
+    }
     }
 
     // Build messages array with system prompt + conversation history
