@@ -1445,7 +1445,8 @@ class JaviAlertApp {
       const selected = this.quizState.selected;
       if (selected === null) return;
 
-      const correct = QUIZ_QUESTIONS[current].answer;
+      const questionIndex = this.quizState.order[current];
+      const correct = QUIZ_QUESTIONS[questionIndex].answer;
       if (selected === correct) {
         this.quizState.score += 1;
       }
