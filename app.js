@@ -3203,19 +3203,16 @@ class JaviAlertApp {
 
       // Keep the welcome message if no messages
       if (!this.chatMessages.length) {
-        const welcome = container.querySelector('.chat-welcome');
-        if (!welcome) {
-          container.innerHTML = '' +
-            '<div class="chat-bubble chat-bubble-bot chat-welcome" id="chatWelcome">' +
-              '<img class="chat-avatar" src="icons/javi-icon.png" alt="Javi">' +
-              '<div class="chat-bubble-inner">👋 Hi! I\'m Javi! Ask me about life, recent earthquakes, safety tips, or anything!</div>' +
-            '</div>' +
-            '<div class="chat-typing hidden" id="chatTyping">' +
-              '<div class="chat-typing-dot"></div>' +
-              '<div class="chat-typing-dot"></div>' +
-              '<div class="chat-typing-dot"></div>' +
-            '</div>';
-        }
+        container.innerHTML = '' +
+          '<div class="chat-bubble chat-bubble-bot chat-welcome" id="chatWelcome">' +
+            '<img class="chat-avatar" src="icons/javi-icon.png" alt="Javi">' +
+            '<div class="chat-bubble-inner">👋 Hi! I\'m Javi! Ask me about life, recent earthquakes, safety tips, or anything!</div>' +
+          '</div>' +
+          '<div class="chat-typing hidden" id="chatTyping">' +
+            '<div class="chat-typing-dot"></div>' +
+            '<div class="chat-typing-dot"></div>' +
+            '<div class="chat-typing-dot"></div>' +
+          '</div>';
         return;
       }
 
