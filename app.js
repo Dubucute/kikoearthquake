@@ -41,6 +41,10 @@ class JaviAlertApp {
         order: []
       };
 
+      // Chat state
+      this.chatMessages = [];
+      this.chatLoading = false;
+
       // Bind
       this.init = this.init.bind(this);
       this.loadData = this.loadData.bind(this);
@@ -74,6 +78,10 @@ class JaviAlertApp {
       this._showSettings = this._showSettings.bind(this);
       this._registerServiceWorker = this._registerServiceWorker.bind(this);
       this._showNotifToast = this._showNotifToast.bind(this);
+      this._showChat = this._showChat.bind(this);
+      this._sendChatMessage = this._sendChatMessage.bind(this);
+      this._callHuggingFace = this._callHuggingFace.bind(this);
+      this._renderChatMessages = this._renderChatMessages.bind(this);
     }
 
     // ─── INIT ──────────────────────────────────────────────────
@@ -140,6 +148,22 @@ class JaviAlertApp {
       document.getElementById('quizModal').addEventListener('click', (e) => {
         if (e.target === e.currentTarget) {
           e.currentTarget.classList.add('hidden');
+        }
+      });
+
+      // Ask Javi chat modal
+      document.getElementById('pillAskJaviBtn').addEventListener('click', () => this._showChat());
+      document.getElementById('chatModalClose').addEventListener('click', () => {
+        document.getElementById('chatModal').classList.add('hidden');
+      });
+      document.getElementById('chatModal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) e.currentTarget.classList.add('hidden');
+      });
+      document.getElementById('chatSendBtn').addEventListener('click', () => this._sendChatMessage());
+      document.getElementById('chatInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          this._sendChatMessage();
         }
       });
 
@@ -2816,6 +2840,164 @@ class JaviAlertApp {
       void mapEl.offsetWidth;
       mapEl.classList.add('map-ripple-active');
       setTimeout(() => mapEl.classList.remove('map-ripple-active'), 1500);
+    }
+
+    // ─── ASK JAVI — CHAT ───────────────────────────────────────
+    _showChat() {
+      const modal = document.getElementById('chatModal');
+      if (!modal) return;
+
+      // Reset scroll to top
+      const msgs = document.getElementById('chatMessages');
+      if (msgs) msgs.scrollTop = 0;
+
+      modal.classList.remove('hidden');
+
+      // Re-render existing messages (in case we need to update)
+      this._renderChatMessages();
+
+      // Focus input after modal opens
+      setTimeout(() => {
+        const input = document.getElementById('chatInput');
+        if (input) input.focus();
+      }, 300);
+    }
+
+    async _sendChatMessage() {
+      const input = document.getElementById('chatInput');
+      const sendBtn = document.getElementById('chatSendBtn');
+      const text = input ? input.value.trim() : '';
+      if (!text || this.chatLoading) return;
+
+      // Clear input
+      input.value = '';
+
+      // Add user message
+      this.chatMessages.push({ role: 'user', content: text });
+      this._renderChatMessages();
+
+      // Show typing indicator
+      const typing = document.getElementById('chatTyping');
+      if (typing) typing.classList.remove('hidden');
+
+      // Scroll to bottom
+      const msgs = document.getElementById('chatMessages');
+      if (msgs) msgs.scrollTop = msgs.scrollHeight;
+
+      // Disable send
+      this.chatLoading = true;
+      if (sendBtn) sendBtn.disabled = true;
+      if (input) input.disabled = true;
+
+      try {
+        // Call HF Inference API
+        const response = await this._callHuggingFace(this.chatMessages);
+
+        // Remove typing
+        if (typing) typing.classList.add('hidden');
+
+        // Add assistant response
+        this.chatMessages.push({ role: 'assistant', content: response });
+        this._renderChatMessages();
+
+        // Scroll to bottom
+        if (msgs) msgs.scrollTop = msgs.scrollHeight;
+      } catch (err) {
+        console.error('Chat error:', err);
+        if (typing) typing.classList.add('hidden');
+
+        // Show error bubble
+        const msgsContainer = document.getElementById('chatMessages');
+        if (msgsContainer) {
+          const errBubble = document.createElement('div');
+          errBubble.className = 'chat-bubble chat-bubble-bot chat-bubble-error';
+          errBubble.innerHTML = '<div class="chat-bubble-inner">😅 Sorry, hindi ako maka-respond ngayon. Pakisubukan ulit mamaya!</div>';
+          msgsContainer.appendChild(errBubble);
+          msgsContainer.scrollTop = msgsContainer.scrollHeight;
+        }
+      } finally {
+        this.chatLoading = false;
+        if (sendBtn) sendBtn.disabled = false;
+        if (input) {
+          input.disabled = false;
+          input.focus();
+        }
+      }
+    }
+
+    async _callHuggingFace(messages) {
+      // Call our own API route — the HF API key stays server-side
+      const res = await fetch('/api/ask-javi', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages })
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'API returned ' + res.status);
+      }
+
+      const data = await res.json();
+
+      if (data && data.response) {
+        return data.response;
+      }
+
+      throw new Error('Unexpected API response format');
+    }
+
+    _renderChatMessages() {
+      const container = document.getElementById('chatMessages');
+      if (!container) return;
+
+      // Keep the welcome message if no messages
+      if (!this.chatMessages.length) {
+        const welcome = container.querySelector('.chat-welcome');
+        if (!welcome) {
+          container.innerHTML = '' +
+            '<div class="chat-bubble chat-bubble-bot chat-welcome" id="chatWelcome">' +
+              '<div class="chat-bubble-inner">👋 Hi! I\'m Javi, your earthquake safety buddy. Ask me anything about earthquakes, safety tips, or preparedness!</div>' +
+            '</div>' +
+            '<div class="chat-typing hidden" id="chatTyping">' +
+              '<div class="chat-typing-dot"></div>' +
+              '<div class="chat-typing-dot"></div>' +
+              '<div class="chat-typing-dot"></div>' +
+            '</div>';
+        }
+        return;
+      }
+
+      // Remove welcome, keep typing indicator
+      const typing = container.querySelector('#chatTyping') || document.createElement('div');
+      const hasTyping = container.querySelector('#chatTyping');
+
+      container.innerHTML = '';
+
+      // Render all messages
+      this.chatMessages.forEach((msg, i) => {
+        const div = document.createElement('div');
+        div.className = 'chat-bubble chat-bubble-' + (msg.role === 'user' ? 'user' : 'bot');
+        div.innerHTML = '<div class="chat-bubble-inner">' + this._escapeHtml(msg.content) + '</div>';
+        container.appendChild(div);
+      });
+
+      // Add typing indicator at the bottom
+      if (!hasTyping) {
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'chat-typing hidden';
+        typingDiv.id = 'chatTyping';
+        typingDiv.innerHTML = '<div class="chat-typing-dot"></div><div class="chat-typing-dot"></div><div class="chat-typing-dot"></div>';
+        container.appendChild(typingDiv);
+      } else {
+        container.appendChild(typing);
+      }
+    }
+
+    _escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
     }
   }
 

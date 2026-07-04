@@ -219,6 +219,10 @@
       <i data-lucide="graduation-cap" aria-hidden="true"></i>
       Quiz
     </button>
+    <button class="action-bar-btn action-bar-btn-primary" id="pillAskJaviBtn" aria-label="Ask Javi about earthquakes">
+      <i data-lucide="message-circle" aria-hidden="true"></i>
+      Ask Javi
+    </button>
   </div>
 
   <!-- Safety tips -->
@@ -309,6 +313,28 @@
       </div>
       <div class="modal-footer">
         <button class="modal-btn" id="analysisModalGotIt">Thanks, Javi!</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ask Javi chat modal -->
+  <div class="modal-overlay hidden" id="chatModal" role="dialog" aria-modal="true" aria-label="Ask Javi">
+    <div class="modal-card chat-modal-card">
+      <button class="modal-close" id="chatModalClose" aria-label="Close">&times;</button>
+      <div class="modal-header">
+        <i data-lucide="message-circle" aria-hidden="true" id="chatModalIcon"></i>
+        <h2 class="modal-title">Ask Javi</h2>
+      </div>
+      <div class="chat-messages" id="chatMessages">
+        <div class="chat-bubble chat-bubble-bot chat-welcome" id="chatWelcome">
+          <div class="chat-bubble-inner">👋 Hi! I'm Javi, your earthquake safety buddy. Ask me anything about earthquakes, safety tips, or preparedness!</div>
+        </div>
+      </div>
+      <div class="chat-input-area">
+        <input type="text" class="chat-input" id="chatInput" placeholder="Ask me about earthquakes..." autocomplete="off">
+        <button class="chat-send-btn" id="chatSendBtn" aria-label="Send message">
+          <i data-lucide="send" aria-hidden="true"></i>
+        </button>
       </div>
     </div>
   </div>

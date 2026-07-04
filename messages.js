@@ -93,9 +93,14 @@ export const SAFETY_TIPS_TL = [
 
 // ─── CHANGELOG ───────────────────────────────────────────────
 export const CHANGELOG = [
-  { ver: 'v1.17', date: '2026-07-04', items: [
+  { ver: 'v1.19', date: '2026-07-04', items: [
+    'New: Ask Javi AI Chat — ask Javi earthquake safety questions in real-time!',
+    'New: Chat button with message-circle icon in action bar',
+    'Updated: Service worker cache version bumped to v1.19'
+  ]},
+  { ver: 'v1.18', date: '2026-07-04', items: [
     'Fix: Language dropdown options now properly hide/show on click',
-    'Updated: Service worker cache version bumped to v1.17'
+    'Updated: Service worker cache version bumped to v1.18'
   ]},
   { ver: 'v1.16', date: '2026-07-04', items: [
     'New: Fully styled custom language dropdown — options now match app theme',
