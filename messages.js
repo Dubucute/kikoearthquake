@@ -93,6 +93,13 @@ export const SAFETY_TIPS_TL = [
 
 // ─── CHANGELOG ───────────────────────────────────────────────
 export const CHANGELOG = [
+  { ver: 'v1.21', date: '2026-07-04', items: [
+    'New: Quiz fully translated to English and Cebuano (questions + UI)',
+    'New: 100+ new English reactions and messages for Javi',
+    'New: 100+ new Cebuano reactions and messages for Javi',
+    'New: 20 safety tips each in English and Cebuano',
+    'Updated: Service worker cache version bumped to v1.21'
+  ]},
   { ver: 'v1.19', date: '2026-07-04', items: [
     'New: Ask Javi AI Chat — ask Javi earthquake safety questions in real-time!',
     'New: Chat button with message-circle icon in action bar',
