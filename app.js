@@ -1464,8 +1464,7 @@ class JaviAlertApp {
         this.quizState.completed = true;
         questionLabel.textContent = t.completed;
         progressFill.style.width = '100%';
-        questionText.innerHTML = '<div class="quiz-summary"><strong>' + t.score + ' ' + this.quizState.score + ' / ' + total + '</strong></div>' +
-          '<p>' + t.summary + '</p>';
+        questionText.innerHTML = '<p>' + t.summary + '</p>';
 
         const answersHtml = this.quizState.order.map((questionIndex, index) => {
           const item = QUIZ_QUESTIONS[questionIndex];
