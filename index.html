@@ -215,6 +215,10 @@
       <i data-lucide="phone" aria-hidden="true"></i>
       Hotlines
     </button>
+    <button class="action-bar-btn action-bar-btn-primary" id="pillQuizBtn" aria-label="Earthquake safety quiz">
+      <i data-lucide="graduation-cap" aria-hidden="true"></i>
+      Quiz
+    </button>
   </div>
 
   <!-- Safety tips -->
@@ -256,6 +260,32 @@
       </div>
       <div class="modal-footer">
         <button class="modal-btn" id="contactsModalGotIt">Got it!</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quiz modal -->
+  <div class="modal-overlay hidden" id="quizModal" role="dialog" aria-modal="true" aria-label="Earthquake quiz">
+    <div class="modal-card quiz-modal-card">
+      <button class="modal-close" id="quizModalClose" aria-label="Close">&times;</button>
+      <div class="modal-header">
+        <i data-lucide="book-open" aria-hidden="true"></i>
+        <h2 class="modal-title">Earthquake Quiz</h2>
+      </div>
+      <div class="quiz-modal-body" id="quizModalBody">
+        <div class="quiz-intro">
+          <p>Subukan ang iyong kaalaman sa lindol. Piliin ang tamang sagot at alamin kung handa ka na!</p>
+        </div>
+        <div class="quiz-progress" id="quizProgress">
+          <span id="quizQuestionLabel">Question 1 of 5</span>
+          <div class="quiz-progress-bar"><div id="quizProgressFill"></div></div>
+        </div>
+        <div class="quiz-question" id="quizQuestionText">Loading quiz…</div>
+        <div class="quiz-options" id="quizOptions"></div>
+      </div>
+      <div class="modal-footer quiz-footer">
+        <button class="modal-btn modal-btn-secondary" id="quizRestartBtn">Restart</button>
+        <button class="modal-btn" id="quizNextBtn">Next</button>
       </div>
     </div>
   </div>

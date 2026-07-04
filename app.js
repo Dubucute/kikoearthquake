@@ -1,6 +1,7 @@
 import { JAVI_MESSAGES, JAVI_REACTIONS, SAFETY_TIPS, EMERGENCY_CONTACTS, CHANGELOG } from './messages.js';
 import { playAlertSound, startAmbientSound, stopAmbientSound, setAmbientVolume, setAmbientTrack, resumeAmbient, setOnTrackChange, getPlaybackMode, setPlaybackMode, nextTrack, toggleAmbient, isAmbientPlaying, preloadAlertAudio } from './audio.js';
 import { API, CONFIG, timeSince, getCompassDir, getDistance, parsePlaceName, magClass } from './api-utils.js';
+import { QUIZ_QUESTIONS } from './quiz-questions.js';
 
 class JaviAlertApp {
     constructor() {
@@ -32,6 +33,12 @@ class JaviAlertApp {
       this.volumeLevel = parseFloat(localStorage.getItem('javiVolume') || '0.5');
       this.autoRefresh = localStorage.getItem('javiAutoRefresh') !== 'false';
       this._lastFetchTime = 0;
+      this.quizState = {
+        current: 0,
+        score: 0,
+        selected: null,
+        completed: false
+      };
 
       // Bind
       this.init = this.init.bind(this);
@@ -120,6 +127,19 @@ class JaviAlertApp {
       });
       document.getElementById('contactsModal').addEventListener('click', (e) => {
         if (e.target === e.currentTarget) e.currentTarget.classList.add('hidden');
+      });
+
+      // Quiz modal
+      document.getElementById('pillQuizBtn').addEventListener('click', () => this._showQuiz());
+      document.getElementById('quizModalClose').addEventListener('click', () => {
+        document.getElementById('quizModal').classList.add('hidden');
+      });
+      document.getElementById('quizRestartBtn').addEventListener('click', () => this._resetQuiz());
+      document.getElementById('quizNextBtn').addEventListener('click', () => this._nextQuizQuestion());
+      document.getElementById('quizModal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) {
+          e.currentTarget.classList.add('hidden');
+        }
       });
 
       // Quake detail modal close
@@ -1298,6 +1318,116 @@ class JaviAlertApp {
 
       modal.classList.remove('hidden');
       try { lucide.createIcons(); } catch (_) { /* ignore */ }
+    }
+
+    _showQuiz() {
+      const modal = document.getElementById('quizModal');
+      if (!modal) return;
+      this._resetQuiz();
+      modal.classList.remove('hidden');
+    }
+
+    _resetQuiz() {
+      this.quizState.current = 0;
+      this.quizState.score = 0;
+      this.quizState.selected = null;
+      this.quizState.completed = false;
+      this._renderQuizQuestion();
+    }
+
+    _renderQuizQuestion() {
+      const questionLabel = document.getElementById('quizQuestionLabel');
+      const progressFill = document.getElementById('quizProgressFill');
+      const questionText = document.getElementById('quizQuestionText');
+      const options = document.getElementById('quizOptions');
+      const nextBtn = document.getElementById('quizNextBtn');
+      const total = QUIZ_QUESTIONS.length;
+      const current = this.quizState.current;
+
+      if (current >= total) {
+        this.quizState.completed = true;
+        questionLabel.textContent = 'Quiz completed';
+        progressFill.style.width = '100%';
+        questionText.innerHTML = '<div class="quiz-summary"><strong>Score:</strong> ' + this.quizState.score + ' / ' + total + '</div>' +
+          '<p>Magaling! Tingnan ang mga tamang sagot sa ibaba at ulitin kung gusto mo pa ng practice.</p>';
+
+        const answersHtml = QUIZ_QUESTIONS.map((item, index) => {
+          const correctText = item.choices[item.answer];
+          return '<div class="quiz-review"><strong>' + (index + 1) + '. ' + item.question + '</strong>' +
+            '<div class="quiz-review-answer">Tamang sagot: ' + correctText + '</div></div>';
+        }).join('');
+
+        options.innerHTML = answersHtml;
+        nextBtn.textContent = 'Close';
+        nextBtn.disabled = false;
+        return;
+      }
+
+      const question = QUIZ_QUESTIONS[current];
+      questionLabel.textContent = 'Question ' + (current + 1) + ' of ' + total;
+      progressFill.style.width = Math.round((current / total) * 100) + '%';
+      questionText.textContent = question.question;
+      options.innerHTML = question.choices.map((choice, index) =>
+        '<button class="quiz-option" type="button" data-index="' + index + '">' + choice + '</button>'
+      ).join('');
+
+      this.quizState.selected = null;
+      nextBtn.textContent = current === total - 1 ? 'Submit' : 'Next';
+      nextBtn.disabled = true;
+
+      options.querySelectorAll('.quiz-option').forEach((btn) => {
+        btn.addEventListener('click', () => this._selectQuizOption(btn));
+      });
+    }
+
+    _selectQuizOption(button) {
+      if (this.quizState.completed) return;
+      const selected = parseInt(button.dataset.index, 10);
+      const current = this.quizState.current;
+      const correct = QUIZ_QUESTIONS[current].answer;
+      const optionButtons = document.querySelectorAll('#quizOptions .quiz-option');
+
+      this.quizState.selected = selected;
+      optionButtons.forEach((btn) => {
+        const idx = parseInt(btn.dataset.index, 10);
+        btn.classList.remove('selected', 'correct', 'incorrect');
+      });
+
+      optionButtons.forEach((btn) => {
+        const idx = parseInt(btn.dataset.index, 10);
+        if (idx === selected) {
+          btn.classList.add('selected');
+        }
+        if (idx === correct) {
+          btn.classList.add('correct');
+        } else if (idx === selected) {
+          btn.classList.add('incorrect');
+        }
+      });
+
+      const nextBtn = document.getElementById('quizNextBtn');
+      if (nextBtn) nextBtn.disabled = false;
+    }
+
+    _nextQuizQuestion() {
+      const total = QUIZ_QUESTIONS.length;
+      if (this.quizState.completed) {
+        document.getElementById('quizModal').classList.add('hidden');
+        return;
+      }
+
+      const current = this.quizState.current;
+      const selected = this.quizState.selected;
+      if (selected === null) return;
+
+      const correct = QUIZ_QUESTIONS[current].answer;
+      if (selected === correct) {
+        this.quizState.score += 1;
+      }
+
+      this.quizState.current += 1;
+      this.quizState.selected = null;
+      this._renderQuizQuestion();
     }
 
     showInstallTutorial() {
