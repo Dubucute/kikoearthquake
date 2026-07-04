@@ -93,6 +93,17 @@ export const SAFETY_TIPS_TL = [
 
 // ─── CHANGELOG ───────────────────────────────────────────────
 export const CHANGELOG = [
+  { ver: 'v1.33', date: '2026-07-04', items: [
+    'Fix: Javi character uses PNG only (no more GIFs for smoother performance)',
+    'Updated: Service worker cache version bumped to v1.33'
+  ]},
+  { ver: 'v1.32', date: '2026-07-04', items: [
+    'New: Music player progress bar with mood color accent',
+    'New: Play/Pause, Mode, Next buttons grouped together',
+    'Fix: Music no longer auto-plays — tap play to start',
+    'Fix: Now-playing bar always visible (never disappears)',
+    'Updated: Service worker cache version bumped to v1.32'
+  ]},
   { ver: 'v1.31', date: '2026-07-04', items: [
     'Fix: Loading screen now stays visible during app update — shows updating message until reload',
     'Updated: Service worker cache version bumped to v1.31'

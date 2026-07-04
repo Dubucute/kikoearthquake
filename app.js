@@ -963,16 +963,14 @@ class JaviAlertApp {
         this._tipInterval = null;
       }
 
-      // GIF
+      // Javi character image (PNG only — no GIFs)
       const gif = document.getElementById('kidGif');
-      const ext = this.isIOS ? 'png' : 'gif';
+      const ext = 'png';
       const shakeWrap = document.getElementById('kidWrap');
       shakeWrap.classList.remove('shake');
 
       if (mood === 'safe') {
-        // Pick random safe GIF 1-3 (but iOS only has 1-2 since safe3.png missing)
-        const maxSafe = this.isIOS ? 2 : 3;
-        const n = Math.floor(Math.random() * maxSafe) + 1;
+        const n = Math.floor(Math.random() * 2) + 1;
         gif.style.backgroundImage = "url('javi/safe" + n + "." + ext + "')";
         pillText.textContent = 'Safe';
       } else if (mood === 'warning') {
