@@ -51,12 +51,17 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Read raw body manually (Vercel's body parser may have issues)
-    let body = '';
-    for await (const chunk of req) body += chunk;
-    console.log('Raw body length:', body.length, 'first 50:', JSON.stringify(body.slice(0, 50)));
-    const parsed = JSON.parse(body);
-    const { messages } = parsed || {};
+    let parsedBody;
+    try {
+      // Vercel's body getter automatically parses JSON
+      parsedBody = req.body;
+    } catch (bodyErr) {
+      // Body parser failed — log details and return clear error
+      console.error('Body parse error:', bodyErr.message);
+      return res.status(400).json({ error: 'Invalid JSON in request body' });
+    }
+
+    const { messages } = parsedBody || {};
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({ error: 'messages array is required' });
     }
