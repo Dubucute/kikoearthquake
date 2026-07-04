@@ -3228,7 +3228,7 @@ class JaviAlertApp {
       this.chatMessages.forEach((msg, i) => {
         const div = document.createElement('div');
         div.className = 'chat-bubble chat-bubble-' + (msg.role === 'user' ? 'user' : 'bot');
-        div.innerHTML = '<div class="chat-bubble-inner">' + this._escapeHtml(msg.content) + '</div>';
+        div.innerHTML = '<div class="chat-bubble-inner"><i data-lucide=\u0022alert-triangle\u0022 aria-hidden=\u0022true\u0022></i> ' + this._escapeHtml(msg.content) + '</div>';
         container.appendChild(div);
       });
 
