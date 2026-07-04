@@ -412,11 +412,17 @@
             <i data-lucide="globe" aria-hidden="true"></i>
             <span data-i18n="languageLabel">Language</span>
           </div>
-          <select class="lang-select" id="languageSelect">
-            <option value="en">English</option>
-            <option value="tl">Tagalog</option>
-            <option value="ceb">Cebuano</option>
-          </select>
+          <div class="custom-select" id="languageSelect">
+            <button class="custom-select-trigger" id="langSelectTrigger">
+              <span id="langSelectText">English</span>
+              <i data-lucide="chevron-down" width="16" height="16" aria-hidden="true"></i>
+            </button>
+            <div class="custom-select-options hidden" id="langSelectOptions">
+              <button class="custom-select-option" data-lang="en">English</button>
+              <button class="custom-select-option" data-lang="tl">Tagalog</button>
+              <button class="custom-select-option" data-lang="ceb">Cebuano</button>
+            </div>
+          </div>
         </div>
         <!-- Volume slider -->
         <div class="settings-row settings-row-vol">

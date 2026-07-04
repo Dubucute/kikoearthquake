@@ -2315,14 +2315,35 @@ class JaviAlertApp {
         document.getElementById('updateLogsModal').classList.remove('hidden');
       });
 
-      // Language select dropdown
-      const langSelect = document.getElementById('languageSelect');
-      if (langSelect) {
-        try { langSelect.value = localStorage.getItem('javiLang') || 'tl'; } catch(_) {}
-        langSelect.addEventListener('change', () => {
-          const lang = langSelect.value;
-          try { localStorage.setItem('javiLang', lang); } catch(_) {}
-          setTimeout(() => window.location.reload(), 180);
+      // Custom language dropdown
+      const trigger = document.getElementById('langSelectTrigger');
+      const optionsEl = document.getElementById('langSelectOptions');
+      const textEl = document.getElementById('langSelectText');
+      const langLabels = { en: 'English', tl: 'Tagalog', ceb: 'Cebuano' };
+      if (trigger && optionsEl) {
+        // Set initial text
+        const savedLang = (() => { try { return localStorage.getItem('javiLang') || 'tl'; } catch(_) { return 'tl'; } })();
+        if (textEl) textEl.textContent = langLabels[savedLang] || 'Tagalog';
+        // Toggle dropdown
+        trigger.addEventListener('click', (e) => {
+          e.stopPropagation();
+          optionsEl.classList.toggle('hidden');
+        });
+        // Select option
+        optionsEl.querySelectorAll('.custom-select-option').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const lang = btn.dataset.lang || 'tl';
+            try { localStorage.setItem('javiLang', lang); } catch(_) {}
+            if (textEl) textEl.textContent = langLabels[lang] || 'Tagalog';
+            optionsEl.classList.add('hidden');
+            setTimeout(() => window.location.reload(), 180);
+          });
+        });
+        // Close on outside click
+        document.addEventListener('click', (e) => {
+          if (!e.target.closest('#languageSelect')) {
+            optionsEl.classList.add('hidden');
+          }
         });
       }
 
@@ -2474,9 +2495,14 @@ class JaviAlertApp {
       try { lucide.createIcons(); } catch (_) { /* ignore */ }
 
       // Reflect chosen language in settings UI
+      // Reflect chosen language in settings UI
       try {
-        const sel = document.getElementById('languageSelect');
-        if (sel) sel.value = localStorage.getItem('javiLang') || 'tl';
+        const textEl = document.getElementById('langSelectText');
+        if (textEl) {
+          const lang = localStorage.getItem('javiLang') || 'tl';
+          const labels = { en: 'English', tl: 'Tagalog', ceb: 'Cebuano' };
+          textEl.textContent = labels[lang] || 'Tagalog';
+        }
       } catch (_) {}
     }
 
