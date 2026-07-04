@@ -93,10 +93,10 @@ export const SAFETY_TIPS = [
 
 // ─── CHANGELOG ───────────────────────────────────────────────
 export const CHANGELOG = [
-  { ver: 'v1.12', date: '2026-07-04', items: [
+  { ver: 'v1.13', date: '2026-07-04', items: [
     'New: Earthquake Quiz feature with score tracking and quiz progress',
     'New: External quiz questions module for easier updates and expansion',
-    'Updated: Service worker cache version bumped to v1.12 for fresh asset caching'
+    'Updated: Service worker cache version bumped to v1.13 for fresh asset caching'
   ]},
   { ver: 'v1.11', date: '2026-07-03', items: [
     'Fixed: Alert sound (NDRRMC) now plays on mobile — pre-authorized on first tap',
