@@ -2065,45 +2065,38 @@ body.dark-mode .custom-select-option:focus-visible {
 .settings-row-logs:active {
   opacity: .6;
 }
-/* Test notification button */
-#testNotifRow {
-  justify-content: center;
-  border-bottom: none;
-  padding-top: 0;
+/* Push notification row — toggle + test button side by side */
+.settings-row-push-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
-.btn-test-notif {
+.btn-test-notif-small {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  border: 2.5px solid #2d3436;
-  background: #fff;
-  padding: 8px 18px;
-  border-radius: 14px;
-  font-weight: 700;
-  font-size: 13px;
-  font-family: 'Fredoka', sans-serif;
-  color: #2d3436;
+  justify-content: center;
+  width: 28px; height: 28px;
+  border: 2px solid #bbb;
+  border-radius: 50%;
+  background: #f5f5f5;
   cursor: pointer;
-  box-shadow: 2px 2px 0 #2d3436;
-  transition: transform .08s, box-shadow .08s;
-  line-height: 1.2;
+  padding: 0;
+  transition: background .2s, border-color .2s, transform .08s;
+  color: #555;
 }
-.btn-test-notif:active {
-  transform: translateY(1px);
-  box-shadow: 1px 1px 0 #2d3436;
+.btn-test-notif-small:active {
+  transform: scale(0.92);
 }
-.btn-test-notif i {
-  width: 16px;
-  height: 16px;
+.btn-test-notif-small i {
+  width: 14px; height: 14px;
 }
-body.dark-mode .btn-test-notif {
+body.dark-mode .btn-test-notif-small {
   background: #2d2d2d;
-  border-color: #666;
-  color: #eee;
-  box-shadow: 2px 2px 0 #555;
+  border-color: #555;
+  color: #999;
 }
-body.dark-mode .btn-test-notif:active {
-  box-shadow: 1px 1px 0 #555;
+body.dark-mode .btn-test-notif-small:active {
+  background: #3a3a3a;
 }
 .update-logs-chevron {
   font-size: 14px;
