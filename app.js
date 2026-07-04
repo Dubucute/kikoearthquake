@@ -3206,7 +3206,7 @@ class JaviAlertApp {
         container.innerHTML = '' +
           '<div class="chat-bubble chat-bubble-bot chat-welcome" id="chatWelcome">' +
             '<img class="chat-avatar" src="icons/javi-icon.png" alt="Javi">' +
-            '<div class="chat-bubble-inner">👋 Hi! I\'m Javi! Ask me about life, recent earthquakes, safety tips, or anything!</div>' +
+            '<div class="chat-bubble-inner">👋 Hi! I\'m Javi, your earthquake safety buddy. Ask me anything about earthquakes, safety tips, or preparedness!</div>' +
           '</div>' +
           '<div class="chat-typing hidden" id="chatTyping">' +
             '<div class="chat-typing-dot"></div>' +
