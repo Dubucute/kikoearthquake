@@ -2566,10 +2566,11 @@ class JaviAlertApp {
             localStorage.removeItem('javiJustUpdated');
           }
 
-          // Reload when a new SW takes over
+          // Reload when a new SW takes over (skip if this is the first-ever install)
           let refreshing = false;
           navigator.serviceWorker.addEventListener('controllerchange', () => {
             if (refreshing) return;
+            if (!hadController) return; // First install — no double-load needed
             refreshing = true;
             localStorage.setItem('javiJustUpdated', Date.now());
             window.location.reload();
