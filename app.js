@@ -82,6 +82,12 @@ class JaviAlertApp {
       this._sendChatMessage = this._sendChatMessage.bind(this);
       this._callHuggingFace = this._callHuggingFace.bind(this);
       this._renderChatMessages = this._renderChatMessages.bind(this);
+      this._quizLang = this._quizLang.bind(this);
+    }
+
+    /** Get current language: tl, en, or ceb */
+    _quizLang() {
+      try { return localStorage.getItem('javiLang') || 'tl'; } catch (_) { return 'tl'; }
     }
 
     // ─── INIT ──────────────────────────────────────────────────
@@ -1377,6 +1383,7 @@ class JaviAlertApp {
     }
 
     _renderQuizQuestion() {
+      const lang = this._quizLang();
       const questionLabel = document.getElementById('quizQuestionLabel');
       const progressFill = document.getElementById('quizProgressFill');
       const scoreDisplay = document.getElementById('quizScore');
@@ -1386,32 +1393,70 @@ class JaviAlertApp {
       const total = QUIZ_QUESTIONS.length;
       const current = this.quizState.current;
 
+      // i18n strings
+      const TXT = {
+        tl: {
+          score: 'Score:',
+          completed: 'Quiz completed',
+          summary: 'Magaling! Tingnan ang mga tamang sagot sa ibaba at ulitin kung gusto mo pa ng practice.',
+          correct: 'Tamang sagot:',
+          close: 'Close',
+          question: 'Tanong',
+          of: 'ng',
+          submit: 'Submit',
+          next: 'Susunod',
+        },
+        en: {
+          score: 'Score:',
+          completed: 'Quiz completed',
+          summary: 'Great job! Review the correct answers below. Retake the quiz if you want more practice!',
+          correct: 'Correct answer:',
+          close: 'Close',
+          question: 'Question',
+          of: 'of',
+          submit: 'Submit',
+          next: 'Next',
+        },
+        ceb: {
+          score: 'Iskor:',
+          completed: 'Nahuman ang Quiz',
+          summary: 'Maayo! Tan-awa ang hustong mga tubag sa ubos. Balika ang quiz kung gusto pa og praktis!',
+          correct: 'Hustong tubag:',
+          close: 'Close',
+          question: 'Pangutana',
+          of: 'sa',
+          submit: 'Submit',
+          next: 'Sunod',
+        },
+      };
+      const t = TXT[lang] || TXT.tl;
+
       if (scoreDisplay) {
-        scoreDisplay.textContent = 'Score: ' + this.quizState.score + ' / ' + total;
+        scoreDisplay.textContent = t.score + ' ' + this.quizState.score + ' / ' + total;
       }
 
       if (current >= total) {
         this.quizState.completed = true;
-        questionLabel.textContent = 'Quiz completed';
+        questionLabel.textContent = t.completed;
         progressFill.style.width = '100%';
-        questionText.innerHTML = '<div class="quiz-summary"><strong>Score:</strong> ' + this.quizState.score + ' / ' + total + '</div>' +
-          '<p>Magaling! Tingnan ang mga tamang sagot sa ibaba at ulitin kung gusto mo pa ng practice.</p>';
+        questionText.innerHTML = '<div class="quiz-summary"><strong>' + t.score + ' ' + this.quizState.score + ' / ' + total + '</strong></div>' +
+          '<p>' + t.summary + '</p>';
 
         const answersHtml = this.quizState.order.map((questionIndex, index) => {
           const item = QUIZ_QUESTIONS[questionIndex];
           const correctText = item.choices[item.answer];
           return '<div class="quiz-review"><strong>' + (index + 1) + '. ' + item.question + '</strong>' +
-            '<div class="quiz-review-answer">Tamang sagot: ' + correctText + '</div></div>';
+            '<div class="quiz-review-answer">' + t.correct + ' ' + correctText + '</div></div>';
         }).join('');
 
         options.innerHTML = answersHtml;
-        nextBtn.textContent = 'Close';
+        nextBtn.textContent = t.close;
         nextBtn.disabled = false;
         return;
       }
 
       const question = QUIZ_QUESTIONS[this.quizState.order[current]];
-      questionLabel.textContent = 'Question ' + (current + 1) + ' of ' + total;
+      questionLabel.textContent = t.question + ' ' + (current + 1) + ' ' + t.of + ' ' + total;
       progressFill.style.width = Math.round((current / total) * 100) + '%';
       questionText.textContent = question.question;
 
@@ -1431,8 +1476,15 @@ class JaviAlertApp {
       ).join('');
 
       this.quizState.selected = null;
-      nextBtn.textContent = current === total - 1 ? 'Submit' : 'Next';
+      nextBtn.textContent = current === total - 1 ? t.submit : t.next;
       nextBtn.disabled = true;
+
+      // Update restart button i18n
+      const restartBtn = document.getElementById('quizRestartBtn');
+      if (restartBtn) {
+        const rtxt = { tl: 'Ulitin', en: 'Restart', ceb: 'Usba' };
+        restartBtn.textContent = rtxt[lang] || rtxt.tl;
+      }
 
       options.querySelectorAll('.quiz-option').forEach((btn) => {
         btn.addEventListener('click', () => this._selectQuizOption(btn));
