@@ -163,6 +163,8 @@ body.dark-mode .np-btn {
 }
 .loc-btn:active { transform: scale(.95); background: #ffeaa7; }
 .loc-btn.hidden { display: none; }
+/* Global utility — any element with 'hidden' class gets hidden */
+.hidden { display: none !important; }
 .loc-btn:disabled { opacity: .5; pointer-events: none; }
 .loc-dropdown {
   position: absolute; top: 100%; left: 0; right: 0; z-index: 100;
@@ -1839,6 +1841,7 @@ body.dark-mode .s12 { animation-delay: 0.8s; }
   box-shadow: 2px 2px 0 #2d3436;
   transition: transform .08s, box-shadow .08s;
   white-space: nowrap;
+  line-height: 1.2;
 }
 .custom-select-trigger:active {
   transform: translateY(1px);
