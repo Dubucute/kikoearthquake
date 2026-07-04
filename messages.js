@@ -93,6 +93,14 @@ export const SAFETY_TIPS_TL = [
 
 // ─── CHANGELOG ───────────────────────────────────────────────
 export const CHANGELOG = [
+  { ver: 'v1.30', date: '2026-07-04', items: [
+    'New: Javi adapts to what you ask — helps with assignments, chats about life, or talks about quakes!',
+    'Updated: Service worker cache version bumped to v1.30'
+  ]},
+  { ver: 'v1.29', date: '2026-07-04', items: [
+    'New: Javi now talks like a playful little kid — short, cute, childlike replies!',
+    'Updated: Service worker cache version bumped to v1.29'
+  ]},
   { ver: 'v1.28', date: '2026-07-04', items: [
     'Fix: Ask Javi server error fixed — model fallback now works correctly',
     'Updated: Service worker cache version bumped to v1.28'
