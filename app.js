@@ -1338,11 +1338,16 @@ class JaviAlertApp {
     _renderQuizQuestion() {
       const questionLabel = document.getElementById('quizQuestionLabel');
       const progressFill = document.getElementById('quizProgressFill');
+      const scoreDisplay = document.getElementById('quizScore');
       const questionText = document.getElementById('quizQuestionText');
       const options = document.getElementById('quizOptions');
       const nextBtn = document.getElementById('quizNextBtn');
       const total = QUIZ_QUESTIONS.length;
       const current = this.quizState.current;
+
+      if (scoreDisplay) {
+        scoreDisplay.textContent = 'Score: ' + this.quizState.score + ' / ' + total;
+      }
 
       if (current >= total) {
         this.quizState.completed = true;

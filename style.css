@@ -468,7 +468,7 @@ body.dark-mode .action-bar-btn { background: rgba(40,40,60,.85); color: #e0e0e0;
 .quiz-progress {
   display: grid;
   gap: 8px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 .quiz-progress span {
   font-size: 12px;
@@ -486,11 +486,20 @@ body.dark-mode .action-bar-btn { background: rgba(40,40,60,.85); color: #e0e0e0;
   background: var(--accent);
   transition: width .3s ease;
 }
+.quiz-score {
+  font-size: 13px;
+  color: #2d3436;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
 .quiz-question {
   font-size: 15px;
   font-weight: 700;
   margin-bottom: 12px;
   color: var(--text);
+}
+body.dark-mode .quiz-score {
+  color: #f0f0f0;
 }
 .quiz-options {
   display: grid;

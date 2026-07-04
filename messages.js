@@ -93,17 +93,22 @@ export const SAFETY_TIPS = [
 
 // ─── CHANGELOG ───────────────────────────────────────────────
 export const CHANGELOG = [
-  { ver: 'v29', date: '2026-07-03', items: [
+  { ver: 'v1.12', date: '2026-07-04', items: [
+    'New: Earthquake Quiz feature with score tracking and quiz progress',
+    'New: External quiz questions module for easier updates and expansion',
+    'Updated: Service worker cache version bumped to v1.12 for fresh asset caching'
+  ]},
+  { ver: 'v1.11', date: '2026-07-03', items: [
     'Fixed: Alert sound (NDRRMC) now plays on mobile — pre-authorized on first tap',
     'Fixed: In-app notification toast shows on iOS where browser notifications are blocked',
     'Fixed: Auto-refresh earthquake data when returning to the app'
   ]},
-  { ver: 'v25', date: '2026-07-03', items: [
+  { ver: 'v1.10', date: '2026-07-03', items: [
     'Fixed: App now loads in Messenger and other in-app browsers (non-blocking SW)',
     'Fixed: Track names display correctly with URL decoding and "by JaviAlert"',
     'New: Official NDRRMC Alert sound replaces old synthesized beeps'
   ]},
-  { ver: 'v24', date: '2026-07-02', items: [
+  { ver: 'v1.00', date: '2026-07-02', items: [
     'New: Now Playing bar with song name, play/pause, next, and mode controls',
     'New: Playback modes — Shuffle All, Loop One, Play Once',
     'New: Background Music toggle + Volume slider in settings',
@@ -111,14 +116,14 @@ export const CHANGELOG = [
     'Fixed: Autoplay music works on page load (browser policy compliant)',
     'Fixed: Opening and ambient music no longer overlap (merged into one player)'
   ]},
-  { ver: 'v23', date: '2026-07-01', items: [
+  { ver: 'v1.00', date: '2026-07-01', items: [
     'New: Push notifications highlight the NEWEST quake (not the strongest)',
     'New: Depth-adjusted magnitude — shallow quakes feel stronger, deep ones feel weaker',
     'New: Lowered danger threshold to Mag 4.0, with distance-triggered danger at Mag 3.5+ within 120km',
     'Fixed: Service Worker auto-clears old cache on every update',
     'Fixed: "Pinakamalakas" changed to "Pinakabago" in alert bubbles'
   ]},
-  { ver: 'v22', date: '2026-06-30', items: [
+  { ver: 'v0.9', date: '2026-06-30', items: [
     'New: Real MP3 music tracks replace synthesized melodies',
     'New: Javi cartoon redesign with animated GIF reactions',
     'New: Earthquake safety tips, emergency hotlines, and "Am I Safe?" analysis',

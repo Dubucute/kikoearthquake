@@ -8,7 +8,6 @@
     "compile": "echo 'Compile step runs here'"
   },
   "dependencies": {
-    "bun": "^1.3.14",
     "compile": "^0.0.2",
     "mongodb": "^7.4.0",
     "run": "^1.5.0",
