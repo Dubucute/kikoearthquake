@@ -1284,6 +1284,17 @@ class JaviAlertApp {
       // Show sparkles
       this._spawnSparkles(this.currentMood === 'danger' ? 'danger' : 'safe');
 
+      // On mobile, request notification permission on user gesture if not yet decided
+      if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission().then(result => {
+          if (result === 'granted') this._setupPushNotifications();
+          this._updateSettingsUI();
+        }).catch(() => {});
+      } else if ('Notification' in window && Notification.permission === 'granted' && !this._pushReady) {
+        // Retry push setup if it failed earlier
+        this._setupPushNotifications();
+      }
+
       // If warning or danger, show a safety tip instead of jokes
       if (this.currentMood === 'warning' || this.currentMood === 'danger') {
         const tip = SAFETY_TIPS[Math.floor(Math.random() * SAFETY_TIPS.length)];
@@ -2276,6 +2287,22 @@ class JaviAlertApp {
         this._updateSettingsUI();
       });
 
+      // Push notification toggle (user gesture required on mobile)
+      document.getElementById('settingsNotifToggle').addEventListener('click', async () => {
+        if (!('Notification' in window)) return;
+        if (Notification.permission === 'granted') {
+          // Already granted — toggle not really applicable, but show current state
+          return;
+        }
+        try {
+          const result = await Notification.requestPermission();
+          if (result === 'granted') {
+            await this._setupPushNotifications();
+            this._updateSettingsUI();
+          }
+        } catch (_) { /* permission request failed */ }
+      });
+
       // Track picker
       document.querySelectorAll('.track-option').forEach(opt => {
         opt.addEventListener('click', () => {
@@ -2496,6 +2523,10 @@ class JaviAlertApp {
       // Ambient toggle
       const at = document.getElementById('settingsAmbientToggle');
       if (at) at.classList.toggle('active', this.ambientEnabled);
+
+      // Notification toggle
+      const nt = document.getElementById('settingsNotifToggle');
+      if (nt) nt.classList.toggle('active', 'Notification' in window && Notification.permission === 'granted');
 
       // Auto-refresh toggle
       const art = document.getElementById('settingsAutoRefreshToggle');
