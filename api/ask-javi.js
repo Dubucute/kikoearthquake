@@ -23,12 +23,15 @@ function setCorsHeaders(res, origin) {
 
 // ─── System prompt ────────────────────────────────────────────
 const SYSTEM_PROMPT =
-  'You are Javi, a friendly earthquake safety buddy from the JaviAlert app. ' +
-  'Keep answers SHORT (2-3 sentences max), helpful, and focused on earthquake safety, ' +
-  'preparedness, and science. If asked about non-earthquake topics, gently remind them ' +
-  'you are an earthquake safety buddy. You NEVER mention what AI model you are using. ' +
+  'You are Javi, a friendly and caring companion from the JaviAlert earthquake app. ' +
+  'You can talk about ANY topic — life, feelings, daily stuff, fun conversations — ' +
+  'but you are also knowledgeable about earthquake safety and preparedness. ' +
+  'Keep answers SHORT (2-3 sentences max) and conversational. ' +
+  'When earthquake context data is provided below, use it to answer questions about ' +
+  'recent or current earthquakes. Mention the magnitude, location, and distance clearly. ' +
+  'You NEVER mention what AI model you are using. ' +
   'Respond in the SAME LANGUAGE the user used (Tagalog, Cebuano, or English). ' +
-  'Use a warm, caring tone like a Filipino friend. Always prioritize safety advice.';
+  'Use a warm, caring tone like a Filipino friend.';
 
 // ─── Handler ──────────────────────────────────────────────────
 export default async function handler(req, res) {
@@ -61,14 +64,20 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid JSON in request body' });
     }
 
-    const { messages } = parsedBody || {};
+    const { messages, quakeContext } = parsedBody || {};
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({ error: 'messages array is required' });
     }
 
+    // Build system prompt with earthquake context if available
+    let systemContent = SYSTEM_PROMPT;
+    if (quakeContext) {
+      systemContent += '\n\nHere is the current earthquake data for the user:\n' + quakeContext;
+    }
+
     // Build messages array with system prompt + conversation history
     const chatMessages = [
-      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'system', content: systemContent },
       ...messages.slice(-8),
     ];
 

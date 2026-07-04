@@ -93,6 +93,14 @@ export const SAFETY_TIPS_TL = [
 
 // ─── CHANGELOG ───────────────────────────────────────────────
 export const CHANGELOG = [
+  { ver: 'v1.26', date: '2026-07-04', items: [
+    'New: Ask Javi can now chat about ANY topic — life, feelings, random fun, not just earthquakes!',
+    'Updated: Service worker cache version bumped to v1.26'
+  ]},
+  { ver: 'v1.25', date: '2026-07-04', items: [
+    'New: Ask Javi now knows the latest earthquakes — ask about recent quakes get real-time data!',
+    'Updated: Service worker cache version bumped to v1.25'
+  ]},
   { ver: 'v1.24', date: '2026-07-04', items: [
     'New: Test Notification button in Settings (debug — sends browser + push + in-app toast)',
     'Updated: Service worker cache version bumped to v1.24'

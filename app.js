@@ -81,6 +81,7 @@ class JaviAlertApp {
       this._showNotifToast = this._showNotifToast.bind(this);
       this._showChat = this._showChat.bind(this);
       this._sendChatMessage = this._sendChatMessage.bind(this);
+      this._buildQuakeContext = this._buildQuakeContext.bind(this);
       this._callHuggingFace = this._callHuggingFace.bind(this);
       this._renderChatMessages = this._renderChatMessages.bind(this);
       this._quizLang = this._quizLang.bind(this);
@@ -3083,8 +3084,11 @@ class JaviAlertApp {
       if (input) input.disabled = true;
 
       try {
-        // Call HF Inference API
-        const response = await this._callHuggingFace(this.chatMessages);
+        // Build earthquake context from latest data
+        const quakeContext = this._buildQuakeContext();
+
+        // Call HF Inference API with quake context
+        const response = await this._callHuggingFace(this.chatMessages, quakeContext);
 
         // Remove typing
         if (typing) typing.classList.add('hidden');
@@ -3118,12 +3122,39 @@ class JaviAlertApp {
       }
     }
 
-    async _callHuggingFace(messages) {
+    /** Build a short summary of current earthquake data for AI context */
+    _buildQuakeContext() {
+      const quakes = this.allQuakes || [];
+      if (!quakes.length) return 'No recent earthquake data available.';
+
+      // Get latest by time
+      const latest = quakes.reduce((a, b) => a.time > b.time ? a : b);
+      // Get nearest
+      const nearest = quakes.reduce((a, b) => a.dist < b.dist ? a : b);
+      // Get strongest
+      const strongest = quakes.reduce((a, b) => a.mag > b.mag ? a : b);
+
+      const fmt = (q) =>
+        (q.mag || 0).toFixed(1) + ' mag at ' + q.place +
+        ' (' + q.dist + ' km ' + q.dir + ')' +
+        (q.depth !== null ? ', depth ' + q.depth + ' km' : '') +
+        ' - ' + timeSince(q.time);
+
+      let lines = [
+        'Latest earthquake: ' + fmt(latest),
+        'Nearest earthquake: ' + fmt(nearest),
+        'Strongest earthquake: ' + fmt(strongest),
+        'Total earthquakes detected: ' + quakes.length,
+      ];
+      return lines.join('\n');
+    }
+
+    async _callHuggingFace(messages, quakeContext) {
       // Call our own API route — the HF API key stays server-side
       const res = await fetch('/api/ask-javi', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages })
+        body: JSON.stringify({ messages, quakeContext })
       });
 
       if (!res.ok) {
@@ -3150,7 +3181,7 @@ class JaviAlertApp {
         if (!welcome) {
           container.innerHTML = '' +
             '<div class="chat-bubble chat-bubble-bot chat-welcome" id="chatWelcome">' +
-              '<div class="chat-bubble-inner">👋 Hi! I\'m Javi, your earthquake safety buddy. Ask me anything about earthquakes, safety tips, or preparedness!</div>' +
+              '<div class="chat-bubble-inner">👋 Hi! I\'m Javi! Ask me about life, recent earthquakes, safety tips, or anything!</div>' +
             '</div>' +
             '<div class="chat-typing hidden" id="chatTyping">' +
               '<div class="chat-typing-dot"></div>' +
