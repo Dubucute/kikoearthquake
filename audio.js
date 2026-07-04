@@ -232,6 +232,7 @@ export function startAmbientSound(track) {
       // When opening ends, play shuffled ambient
       _ambientAudio.addEventListener('ended', _playNextAmbient);
       _applyPlaybackMode();
+      _notifyTrack(OPENING_FILE);
     }
   } catch (_) {}
 }
