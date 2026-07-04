@@ -3229,7 +3229,7 @@ class JaviAlertApp {
         if (msg.role === 'user') {
           div.innerHTML = '<div class="chat-bubble-inner">' + this._escapeHtml(msg.content) + '</div>';
         } else {
-          div.innerHTML = '<img class="chat-avatar" src="icons/javi-icon.png" alt="Javi"><div class="chat-bubble-inner">' + this._escapeHtml(msg.content) + '</div>';
+          div.innerHTML = '<img class="chat-avatar" src="icons/javi-icon.png" alt="Javi"><div class="chat-bubble-inner">' + this._formatBotMessage(msg.content) + '</div>';
         }
         container.appendChild(div);
       });
@@ -3250,6 +3250,52 @@ class JaviAlertApp {
       const div = document.createElement('div');
       div.textContent = text;
       return div.innerHTML;
+    }
+
+    /** Escape HTML then convert markdown to HTML tags */
+    _formatBotMessage(text) {
+      const escaped = this._escapeHtml(text);
+      const lines = escaped.split('\n');
+      const out = [];
+      let inBullets = false, inNumbers = false;
+
+      for (const line of lines) {
+        const bullet = line.match(/^[-*]\s+(.+)/);
+        const number = line.match(/^\d+\.\s+(.+)/);
+
+        if (bullet) {
+          if (inNumbers) { out.push('</ol>'); inNumbers = false; }
+          if (!inBullets) { out.push('<ul>'); inBullets = true; }
+          out.push('<li>' + bullet[1] + '</li>');
+        } else if (number) {
+          if (inBullets) { out.push('</ul>'); inBullets = false; }
+          if (!inNumbers) { out.push('<ol>'); inNumbers = true; }
+          out.push('<li>' + number[1] + '</li>');
+        } else {
+          if (inBullets) { out.push('</ul>'); inBullets = false; }
+          if (inNumbers) { out.push('</ol>'); inNumbers = false; }
+          out.push(line);
+        }
+      }
+      if (inBullets) out.push('</ul>');
+      if (inNumbers) out.push('</ol>');
+
+      let html = out.join('\n');
+
+      // Links
+      html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+      // Inline code (before bold/italic so * inside code isn't affected)
+      html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+      // Strikethrough
+      html = html.replace(/~~(.+?)~~/g, '<s>$1</s>');
+      // Bold
+      html = html.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+      // Italic
+      html = html.replace(/\*(.+?)\*/g, '<i>$1</i>');
+      // Line breaks
+      html = html.replace(/\n/g, '<br>');
+
+      return html;
     }
   }
 
