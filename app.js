@@ -1402,6 +1402,8 @@ class JaviAlertApp {
         const j = Math.floor(Math.random() * (i + 1));
         [this.quizState.order[i], this.quizState.order[j]] = [this.quizState.order[j], this.quizState.order[i]];
       }
+      // Only show 20 random questions per quiz
+      this.quizState.order = this.quizState.order.slice(0, 20);
       this._renderQuizQuestion();
     }
 
@@ -1413,7 +1415,7 @@ class JaviAlertApp {
       const questionText = document.getElementById('quizQuestionText');
       const options = document.getElementById('quizOptions');
       const nextBtn = document.getElementById('quizNextBtn');
-      const total = QUIZ_QUESTIONS.length;
+      const total = this.quizState.order.length;
       const current = this.quizState.current;
 
       // i18n strings
@@ -1516,6 +1518,7 @@ class JaviAlertApp {
 
     _selectQuizOption(button) {
       if (this.quizState.completed) return;
+      if (this.quizState.selected !== null) return; // lock after first selection
       const selected = parseInt(button.dataset.index, 10);
       const current = this.quizState.current;
       const questionIndex = this.quizState.order[current];
@@ -1545,7 +1548,7 @@ class JaviAlertApp {
     }
 
     _nextQuizQuestion() {
-      const total = QUIZ_QUESTIONS.length;
+      const total = this.quizState.order.length;
       if (this.quizState.completed) {
         document.getElementById('quizModal').classList.add('hidden');
         return;

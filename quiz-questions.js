@@ -37,7 +37,7 @@ const QUIZ_TL = [
   },
   {
     question: 'Ano ang ibig sabihin ng "aftershock"?',
-    choices: ['Mga kasunod na mahihinang lindol', 'Paparating na bagyo', 'Malakas na ulan', 'Pagsabog ng bulkan'],
+    choices: ['Mga kasunod na mahihinang lindol', 'Darating na bagyo', 'Malakas na ulan', 'Pagsabog ng bulkan'],
     answer: 0
   },
   {
@@ -52,11 +52,11 @@ const QUIZ_TL = [
   },
   {
     question: 'Kung nasa beach ka at lumindol, ano ang dapat mong gawin?',
-    choices: ['Lumikas sa mataas na lugar dahil sa tsunami', 'Manatili lang sa dalampasigan', 'Lumangoy palayo sa pampang', 'Sumakay sa bangka'],
+    choices: ['Lumikas sa mataas na lugar dahil sa tsunami', 'Manatili lang sa tabing-dagat', 'Lumangoy palayo sa pampang', 'Sumakay sa bangka'],
     answer: 0
   },
   {
-    question: 'Ano ang pinakamainam gawin kung nasa higaan ka habang may lindol?',
+    question: 'Ano ang pinakamagandang gawin kung nasa higaan ka habang may lindol?',
     choices: ['Manatili sa kama at takpan ang ulo ng unan', 'Tumakbo agad palabas nang nakapaa', 'Tumalon sa bintana', 'Tumakbo sa kusina'],
     answer: 0
   },
@@ -77,7 +77,7 @@ const QUIZ_TL = [
   },
   {
     question: 'Kung may gas leak pagkatapos ng lindol, ano ang dapat gawin?',
-    choices: ['Isara ang gas at buksan ang mga bintana', 'Iwanang bukas ang gas tank', 'Sindihan ang apoy para i-check', 'Sumigaw lang ng saklolo'],
+    choices: ['Isara ang gas at buksan ang mga bintana', 'Iwanang bukas ang gas tank', 'Sindihan ang apoy para i-check', 'Sumigaw lang ng tulong'],
     answer: 0
   },
   {
@@ -126,7 +126,7 @@ const QUIZ_TL = [
     answer: 0
   },
   {
-    question: 'Ano ang pinakaligtas na paraan ng pakikipag-ugnayan sa pamilya pagkatapos ng lindol?',
+    question: 'Ano ang pinakaligtas na paraan para makausap ang pamilya pagkatapos ng lindol?',
     choices: ['Mag-text o mag-chat dahil madalas may network congestion', 'Tumawag nang matagal', 'Mag-live sa social media', 'Huwag nang mag-paramdam'],
     answer: 0
   },
@@ -137,7 +137,7 @@ const QUIZ_TL = [
   },
   {
     question: 'Ano ang dapat gawin sa mga mabibigat na appliances o estante sa bahay bago pa magkalindol?',
-    choices: ['I-anchor o itali nang matibay sa pader', 'Ipatong sa ibabaw ng refrigerator', 'Hayaan lang sa gitna ng daanan', 'Igitna sa tapat ng pinto'],
+    choices: ['I-anchor o itali nang matibay sa pader', 'Ipatong sa ibabaw ng refrigerator', 'Hayaan lang sa gitna ng daanan', 'Ilagay sa harap ng pinto'],
     answer: 0
   },
   {
@@ -157,12 +157,12 @@ const QUIZ_TL = [
   },
   {
     question: 'Kung may kasama kang matanda o may kapansanan sa bahay, kailan mo dapat planuhin ang paglikas nila?',
-    choices: ['Ngayon pa lang, bago pa man magkalindol', 'Kapag gumuguho na ang bahay', 'Pagkatapos ng isang linggo', 'Ipaubaya na lang sa mga kapitbahay'],
+    choices: ['Ngayon pa lang, bago pa man magkalindol', 'Kapag gumuguho na ang bahay', 'Pagkatapos ng isang linggo', 'Iwan na lang sa mga kapitbahay'],
     answer: 0
   },
   {
     question: 'Ano ang dapat mong gawin kung makakita ka ng sugatan pagkatapos ng lindol at alam mong ligtas ang pwesto ninyo?',
-    choices: ['I-video at i-post sa TikTok', 'Iwanan at tumakbo palabas', 'Magpatulong at maglapat ng basic First Aid kung marunong', 'Hilahin siya nang mabilis kahit may bali sa leeg'],
+    choices: ['I-video at i-post sa TikTok', 'Iwanan at tumakbo palabas', 'Magpatulong at mag-apply ng basic First Aid kung marunong', 'Hilahin siya nang mabilis kahit may bali sa leeg'],
     answer: 2
   },
   {
@@ -187,7 +187,7 @@ const QUIZ_TL = [
   },
   {
     question: 'Anong uri ng sapatos o tsinelas ang pinakamagandang isuot kapag lilikas pagkatapos ng lindol?',
-    choices: ['Slippers o high heels', 'Makapal at saradong sapatos para iwas sa bubog o pako', 'Kahit ano, kahit magkakaimbalo', 'Huwag na mag-sapatos, maglakad nang nakapaa'],
+    choices: ['Slippers o high heels', 'Makapal at saradong sapatos para iwas sa bubog o pako', 'Kahit ano, kahit hindi komportable', 'Huwag na mag-sapatos, maglakad nang nakapaa'],
     answer: 1
   },
   {
