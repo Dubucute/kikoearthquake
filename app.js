@@ -2006,8 +2006,9 @@ class JaviAlertApp {
       const mapTimeMs = mapTimeDays * 86400000;
 
       // Determine which quakes to show on the map
+      // Mag >= 5 shown at any distance, smaller quakes only within 300km
       let shown = this.allQuakes.filter((q) =>
-        q.dist <= 300 &&
+        (q.dist <= 300 || q.mag >= 5) &&
         (Date.now() - q.time.getTime()) < mapTimeMs &&
         q.mag >= mapMagMin
       );
