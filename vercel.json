@@ -3,6 +3,12 @@
   "buildCommand": "echo 'Static site - no build needed'",
   "outputDirectory": ".",
   "framework": null,
+  "crons": [
+    {
+      "path": "/api/cron-check",
+      "schedule": "*/5 * * * *"
+    }
+  ],
   "rewrites": [
     {
       "source": "/api/(.*)",
