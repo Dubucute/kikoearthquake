@@ -2417,16 +2417,20 @@ class JaviAlertApp {
       // Load Javi icon for the card
       const javiIcon = await this._loadImage('icons/javi-icon.png');
 
+      // ── Load static map tiles ──
+      const mapTiles = await this._loadMapTiles(q.lat, q.lon, 8, 3);
+
       // Build a canvas card and show share overlay
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      const w = 600, h = 420;
+      const w = 700, h = 520;
       canvas.width = w * 2; canvas.height = h * 2;
       ctx.scale(2, 2); // retina
 
-      // Background gradient
-      const grad = ctx.createLinearGradient(0, 0, w, h);
       const dark = this.isDarkMode;
+
+      // ── Background gradient ──
+      const grad = ctx.createLinearGradient(0, 0, w, h);
       if (dark) {
         grad.addColorStop(0, '#1a1a2e');
         grad.addColorStop(1, '#302b63');
@@ -2441,8 +2445,8 @@ class JaviAlertApp {
       ctx.globalAlpha = 0.12;
       ctx.fillStyle = '#fff';
       for (let i = 0; i < 4; i++) {
-        const cx = [80, 200, 420, 520][i];
-        const cy = [40, 80, 30, 70][i];
+        const cx = [80, 250, 480, 620][i];
+        const cy = [35, 75, 25, 65][i];
         const r = [50, 40, 60, 35][i];
         ctx.beginPath();
         ctx.arc(cx, cy, r, 0, Math.PI * 2);
@@ -2452,140 +2456,274 @@ class JaviAlertApp {
       }
       ctx.globalAlpha = 1;
 
-      // Rounded card area
-      ctx.shadowColor = 'rgba(0,0,0,0.15)';
-      ctx.shadowBlur = 20;
-      ctx.shadowOffsetY = 4;
-      ctx.fillStyle = dark ? '#2a2a3e' : 'rgba(255,255,255,0.92)';
-      this._roundRect(ctx, 20, 20, w - 40, h - 40, 16);
+      // ── Rounded card ──
+      ctx.shadowColor = 'rgba(0,0,0,0.2)';
+      ctx.shadowBlur = 24;
+      ctx.shadowOffsetY = 6;
+      ctx.fillStyle = dark ? '#2a2a3e' : 'rgba(255,255,255,0.95)';
+      this._roundRect(ctx, 16, 16, w - 32, h - 32, 18);
       ctx.fill();
       ctx.shadowColor = 'transparent';
 
-      // Border
+      // Card border
       ctx.strokeStyle = dark ? '#555' : '#2d3436';
       ctx.lineWidth = 2.5;
-      this._roundRect(ctx, 20, 20, w - 40, h - 40, 16);
+      this._roundRect(ctx, 16, 16, w - 32, h - 32, 18);
       ctx.stroke();
 
-      // ── Javi icon (top-right area) ──
+      // ── Map tiles (right side, clipped to rounded rect) ──
+      const mapX = 380, mapY = 50, mapW = 290, mapH = 280;
+      ctx.save();
+      this._roundRect(ctx, mapX, mapY, mapW, mapH, 14);
+      ctx.clip();
+      if (mapTiles) {
+        ctx.drawImage(mapTiles, mapX, mapY, mapW, mapH);
+        // Semi-transparent overlay to soften map
+        ctx.fillStyle = dark ? 'rgba(26,26,46,0.15)' : 'rgba(255,255,255,0.1)';
+        ctx.fillRect(mapX, mapY, mapW, mapH);
+      } else {
+        // Fallback: colored rect with pin
+        ctx.fillStyle = dark ? '#3a3a5e' : '#dfe6e9';
+        ctx.fillRect(mapX, mapY, mapW, mapH);
+      }
+      ctx.restore();
+      // Map border
+      ctx.strokeStyle = dark ? '#555' : '#2d3436';
+      ctx.lineWidth = 2.5;
+      this._roundRect(ctx, mapX, mapY, mapW, mapH, 14);
+      ctx.stroke();
+
+      // ── Epicenter pin on map ──
+      const pinCX = mapX + mapW / 2, pinCY = mapY + mapH / 2;
+      // Pulsing ring
+      ctx.globalAlpha = 0.3;
+      ctx.fillStyle = '#e17055';
+      ctx.beginPath();
+      ctx.arc(pinCX, pinCY, 16, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      // Pin dot
+      ctx.fillStyle = '#e17055';
+      ctx.beginPath();
+      ctx.arc(pinCX, pinCY, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc(pinCX, pinCY, 3, 0, Math.PI * 2);
+      ctx.fill();
+      // Pin border
+      ctx.strokeStyle = '#2d3436';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(pinCX, pinCY, 8, 0, Math.PI * 2);
+      ctx.stroke();
+      // Coordinates label below map
+      ctx.fillStyle = dark ? '#888' : '#636e72';
+      ctx.font = '10px Fredoka, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(q.lat.toFixed(2) + '°N  ' + q.lon.toFixed(2) + '°E', mapX + mapW / 2, mapY + mapH + 16);
+
+      // ── Javi icon (top-right) ──
       if (javiIcon) {
-        // Circular mask
         ctx.save();
         ctx.beginPath();
-        ctx.arc(w - 64, 54, 22, 0, Math.PI * 2);
+        ctx.arc(w - 56, 42, 18, 0, Math.PI * 2);
         ctx.clip();
-        // White background circle
         ctx.fillStyle = '#fff';
-        ctx.fillRect(w - 86, 32, 44, 44);
-        ctx.drawImage(javiIcon, w - 86, 32, 44, 44);
+        ctx.fillRect(w - 74, 24, 36, 36);
+        ctx.drawImage(javiIcon, w - 74, 24, 36, 36);
         ctx.restore();
-        // Circle border
         ctx.strokeStyle = dark ? '#555' : '#2d3436';
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(w - 64, 54, 22, 0, Math.PI * 2);
+        ctx.arc(w - 56, 42, 18, 0, Math.PI * 2);
         ctx.stroke();
       }
 
-      // Header: JaviAlert
+      // ── Header ──
       ctx.fillStyle = dark ? '#e0e0e0' : '#2d3436';
-      ctx.font = 'bold 22px Fredoka, sans-serif';
+      ctx.font = 'bold 20px Fredoka, sans-serif';
       ctx.textAlign = 'left';
-      ctx.fillText('JaviAlert', 44, 58);
+      ctx.fillText('JaviAlert', 40, 44);
 
-      // Separator line
+      // Subheader: EARTHQUAKE ALERT
+      ctx.fillStyle = dark ? '#aaa' : '#636e72';
+      ctx.font = 'bold 11px Fredoka, sans-serif';
+      ctx.fillText('EARTHQUAKE ALERT', 40, 60);
+
+      // Separator
       ctx.strokeStyle = dark ? '#444' : '#dfe6e9';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.moveTo(36, 72);
-      ctx.lineTo(w - 36, 72);
+      ctx.moveTo(32, 72);
+      ctx.lineTo(mapX - 16, 72);
       ctx.stroke();
 
-      // ── Magnitude badge (fixed: no more overlap) ──
+      // ── Magnitude badge ──
       const mag = q.mag.toFixed(1);
       const cls = magClass(q.mag);
       const badgeColor = cls === 'danger' ? '#e17055' : cls === 'warning' ? '#fdcb6e' : '#00b894';
-      const badgeW = 80, badgeH = 62, badgeX = 44, badgeY = 90;
+      const badgeX = 40, badgeY = 84, badgeW = 80, badgeH = 64;
+      // Badge shadow
+      ctx.shadowColor = 'rgba(0,0,0,0.15)';
+      ctx.shadowBlur = 8;
+      ctx.shadowOffsetY = 3;
       ctx.fillStyle = badgeColor;
       ctx.beginPath();
       this._roundRect(ctx, badgeX, badgeY, badgeW, badgeH, 12);
       ctx.fill();
-
-      // "MAGNITUDE" label
+      ctx.shadowColor = 'transparent';
+      // Badge border
+      ctx.strokeStyle = '#2d3436';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      this._roundRect(ctx, badgeX, badgeY, badgeW, badgeH, 12);
+      ctx.stroke();
+      // Badge shadow (cartoon style)
+      ctx.strokeStyle = 'rgba(0,0,0,0.12)';
+      ctx.lineWidth = 2.5;
+      this._roundRect(ctx, badgeX + 3, badgeY + 3, badgeW, badgeH, 12);
+      ctx.stroke();
+      // MAGNITUDE label
       ctx.fillStyle = cls === 'warning' ? '#2d3436' : '#fff';
       ctx.font = 'bold 10px Fredoka, sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText('MAGNITUDE', badgeX + badgeW / 2, badgeY + 18);
-
-      // Magnitude number
-      ctx.fillStyle = cls === 'warning' ? '#2d3436' : '#fff';
+      // Number
       ctx.font = 'bold 34px Fredoka, sans-serif';
-      ctx.fillText(mag, badgeX + badgeW / 2, badgeY + 52);
+      ctx.fillText(mag, badgeX + badgeW / 2, badgeY + 54);
+
+      // ── Intensity badge ──
+      if (q.intensity) {
+        const intX = badgeX + badgeW + 16, intY = badgeY + 4;
+        const intLabel = PEIS_SHORT[q.intensity] || '';
+        const intColor = q.intensity <= 2 ? '#74b9ff' : q.intensity <= 4 ? '#fdcb6e' : q.intensity <= 6 ? '#e17055' : '#d63031';
+        ctx.shadowColor = 'rgba(0,0,0,0.1)';
+        ctx.shadowBlur = 6;
+        ctx.shadowOffsetY = 2;
+        ctx.fillStyle = intColor;
+        ctx.beginPath();
+        this._roundRect(ctx, intX, intY, 40, 34, 8);
+        ctx.fill();
+        ctx.shadowColor = 'transparent';
+        ctx.strokeStyle = '#2d3436';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        this._roundRect(ctx, intX, intY, 40, 34, 8);
+        ctx.stroke();
+        ctx.fillStyle = q.intensity <= 2 ? '#2d3436' : '#fff';
+        ctx.font = 'bold 10px Fredoka, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('INT', intX + 20, intY + 13);
+        ctx.font = 'bold 16px Fredoka, sans-serif';
+        ctx.fillText(intLabel, intX + 20, intY + 29);
+      }
 
       // ── Place name ──
       ctx.fillStyle = dark ? '#e0e0e0' : '#2d3436';
-      ctx.font = 'bold 17px Fredoka, sans-serif';
+      ctx.font = 'bold 15px Fredoka, sans-serif';
       ctx.textAlign = 'left';
       const placeLabel = q.dist + ' km ' + q.dir + ' of ' + q.place;
-      this._wrapText(ctx, placeLabel, 142, 110, w - 200, 20, 2);
+      this._wrapText(ctx, placeLabel, 40, 174, 320, 18, 3);
 
       // ── Info rows ──
-      const infoY = 172;
+      const infoY = 238;
       const infoData = [
-        { label: 'Time', value: timeSince(q.time) },
-        { label: 'Depth', value: q.depth !== null ? q.depth + ' km' : '--' },
-        { label: 'Coordinates', value: q.lat.toFixed(2) + ', ' + q.lon.toFixed(2) },
+        { icon: '🕐', label: timeSince(q.time) },
+        { icon: '📏', label: q.depth !== null ? q.depth + ' km depth' : '--' },
+        { icon: '📍', label: q.lat.toFixed(2) + ', ' + q.lon.toFixed(2) },
       ];
       infoData.forEach((item, i) => {
-        const x = 52;
-        const y = infoY + i * 38;
-        ctx.fillStyle = dark ? '#999' : '#636e72';
-        ctx.font = '11px Fredoka, sans-serif';
-        ctx.fillText(item.label, x, y);
-        ctx.fillStyle = dark ? '#e0e0e0' : '#2d3436';
-        ctx.font = 'bold 16px Fredoka, sans-serif';
-        ctx.fillText(item.value, x + 74, y);
+        const y = infoY + i * 30;
+        ctx.fillStyle = dark ? '#aaa' : '#636e72';
+        ctx.font = '13px Fredoka, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(item.icon + '  ' + item.label, 44, y);
       });
 
-      // ── Small map pin indicating location ──
-      const pinX = w - 90, pinY = 150;
-      ctx.fillStyle = '#e17055';
-      ctx.beginPath();
-      ctx.arc(pinX, pinY, 12, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#fff';
-      ctx.font = 'bold 14px Fredoka, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('📍', pinX, pinY + 5);
-
-      // Pin label
-      ctx.fillStyle = dark ? '#999' : '#636e72';
-      ctx.font = '9px Fredoka, sans-serif';
-      ctx.fillText(q.lat.toFixed(1) + ', ' + q.lon.toFixed(1), pinX, pinY + 28);
-
-      // ── Javi character quote at bottom ──
-      ctx.fillStyle = dark ? '#555' : '#e8f4f8';
-      this._roundRect(ctx, 44, h - 126, w - 88, 32, 10);
+      // ── Quote bar at bottom ──
+      const barY = h - 110;
+      ctx.fillStyle = dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)';
+      this._roundRect(ctx, 32, barY, w - 64, 30, 10);
       ctx.fill();
       ctx.fillStyle = dark ? '#999' : '#636e72';
       ctx.font = '12px Fredoka, sans-serif';
       ctx.textAlign = 'center';
       const quote = this._getRandomQuote();
-      ctx.fillText(quote, w / 2, h - 106);
+      ctx.fillText('💬 ' + quote, w / 2, barY + 20);
 
-      // Footer: earthquake alert from Javi
-      ctx.fillStyle = dark ? '#777' : '#999';
-      ctx.font = '11px Fredoka, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('Brought to you by JaviAlert', w / 2, h - 76);
-
-      // Raw place
-      ctx.fillStyle = dark ? '#555' : '#bbb';
+      // ── Footer ──
+      ctx.fillStyle = dark ? '#666' : '#b2bec3';
       ctx.font = '10px Fredoka, sans-serif';
-      ctx.fillText(q.rawPlace, w / 2, h - 60);
+      ctx.textAlign = 'center';
+      ctx.fillText('Brought to you by JaviAlert  •  ' + q.rawPlace, w / 2, h - 58);
+
+      // ── App branding bar ──
+      ctx.fillStyle = dark ? '#333' : '#dfe6e9';
+      this._roundRect(ctx, 32, h - 48, w - 64, 1, 1);
+      ctx.fill();
+      ctx.fillStyle = dark ? '#555' : '#b2bec3';
+      ctx.font = '9px Fredoka, sans-serif';
+      ctx.fillText('javi-alert.vercel.app', w / 2, h - 34);
 
       // Show overlay
       this._showShareImageOverlay(canvas, q);
+    }
+
+    // ── Load static OSM map tiles onto canvas ──
+    _loadMapTiles(lat, lon, zoom, grid) {
+      return new Promise((resolve) => {
+        const tileSize = 256;
+        const totalSize = tileSize * grid;
+        const canvas = document.createElement('canvas');
+        canvas.width = totalSize;
+        canvas.height = totalSize;
+        const ctx = canvas.getContext('2d');
+
+        // Convert lat/lon to tile numbers
+        const n = Math.pow(2, zoom);
+        const xFloat = (lon + 180) / 360 * n;
+        const yFloat = (1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * n;
+        const tileX = Math.floor(xFloat);
+        const tileY = Math.floor(yFloat);
+        const offsetX = Math.round((xFloat - tileX) * tileSize);
+        const offsetY = Math.round((yFloat - tileY) * tileSize);
+
+        const half = Math.floor(grid / 2);
+        let loaded = 0;
+        const total = grid * grid;
+        let failed = false;
+
+        const done = () => {
+          loaded++;
+          if (loaded >= total) resolve(failed ? null : canvas);
+        };
+
+        const timeout = setTimeout(() => resolve(null), 8000);
+
+        for (let dy = -half; dy <= half; dy++) {
+          for (let dx = -half; dx <= half; dx++) {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => {
+              const sx = (dx + half) * tileSize + (tileSize - offsetX);
+              const sy = (dy + half) * tileSize + (tileSize - offsetY);
+              // Center the grid on the exact lat/lon
+
+              // Actually: compute so the epicenter is at center of grid
+              const cx = totalSize / 2 - (xFloat - tileX) * tileSize;
+              const cy = totalSize / 2 - (yFloat - tileY) * tileSize;
+              const drawX = cx + dx * tileSize;
+              const drawY = cy + dy * tileSize;
+              try { ctx.drawImage(img, drawX, drawY, tileSize, tileSize); } catch (_) {}
+              done();
+            };
+            img.onerror = () => { failed = true; done(); };
+            // Use HTTPS for CORS
+            img.src = 'https://tile.openstreetmap.org/' + zoom + '/' + (tileX + dx) + '/' + (tileY + dy) + '.png';
+          }
+        }
+      });
     }
 
     _loadImage(src) {
