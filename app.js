@@ -163,10 +163,24 @@ class JaviAlertApp {
 
     /** Quick reply suggestions shown below each bot message */
     _quickReply() {
+      const lang = this._quizLang();
+      if (lang === 'ceb') {
+        return [
+          { text: 'Unsa ang linog?', msg: 'Unsa ang linog? Ipaliwang sa ako.' },
+          { text: 'Safety tips', msg: 'Unsa ang akong buhaton kung maglinog?' },
+          { text: 'Handa ba ko?', msg: 'Giunsa pagkahibalo kung handa ko sa linog?' },
+        ];
+      } else if (lang === 'tl') {
+        return [
+          { text: 'Ano ang lindol?', msg: 'Ano ang lindol? Ipaliwanag mo sa akin.' },
+          { text: 'Safety tips', msg: 'Ano ang dapat kong gawin kapag may lindol?' },
+          { text: 'Handa ba ako?', msg: 'Paano malalaman kung handa ako sa lindol?' },
+        ];
+      }
       return [
-        { text: '📖 Safety tips', action: 'tips' },
-        { text: '📝 Quiz', action: 'quiz' },
-        { text: '💬 Chat', action: 'chat' },
+        { text: 'What is an earthquake?', msg: 'What is an earthquake? Explain it to me.' },
+        { text: 'Safety tips', msg: 'What should I do during an earthquake?' },
+        { text: 'Am I ready?', msg: 'How do I know if I\'m prepared for an earthquake?' },
       ];
     }
 
@@ -3416,16 +3430,12 @@ class JaviAlertApp {
         el.className = 'chat-quick-btn';
         el.textContent = btn.text;
         el.addEventListener('click', () => {
-          if (btn.action === 'tips') {
-            this.showTipsModal();
-          } else if (btn.action === 'quiz') {
-            this._showQuiz();
-          } else if (btn.action === 'chat') {
+          if (btn.msg) {
+            // Send as a real chat message
             const input = document.getElementById('chatInput');
-            const sendBtn = document.getElementById('chatSendBtn');
             if (input) {
-              input.value = 'What should I do during an earthquake?';
-              input.focus();
+              input.value = btn.msg;
+              this._sendChatMessage();
             }
           }
         });
