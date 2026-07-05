@@ -65,6 +65,9 @@ export default async function handler(req, res) {
     const payload = JSON.stringify({
       title: req.body.title || 'JaviAlert',
       body: req.body.body || 'May bagong earthquake update!',
+      icon: req.body.icon || '/icons/javi-icon.png',
+      badge: req.body.badge || '/icons/javi-icon.png',
+      image: req.body.image || '/icons/javi-icon.png',
       url: req.body.url || '/',
       tag: req.body.tag || 'javi-alert',
       alertType: req.body.alertType || null

@@ -65,17 +65,23 @@ self.addEventListener('push', e => {
     }
   } catch (_) { /* ignore */ }
 
+  const notifOptions = {
+    body: data.body,
+    icon: data.icon || '/icons/javi-icon.png',
+    badge: data.badge || '/icons/javi-icon.png',
+    tag: data.tag || 'javi-alert',
+    renotify: true,
+    data: { url: data.url, alertType: data.alertType }
+  };
+  // Android: show rich image notification
+  if (data.image) notifOptions.image = data.image;
+  // Vibrate only on Android (iOS ignores it)
+  if (typeof Notification !== 'undefined' && 'maxActions' in Notification) {
+    notifOptions.vibrate = [200, 100, 200];
+    notifOptions.requireInteraction = true;
+  }
   e.waitUntil(
-    self.registration.showNotification(data.title, {
-      body: data.body,
-      icon: data.icon,
-      badge: data.badge,
-      tag: data.tag,
-      renotify: true,
-      vibrate: [200, 100, 200],
-      requireInteraction: true,
-      data: { url: data.url, alertType: data.alertType }
-    })
+    self.registration.showNotification(data.title, notifOptions)
   );
 });
 
