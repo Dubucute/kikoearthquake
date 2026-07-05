@@ -93,6 +93,10 @@ export const SAFETY_TIPS_TL = [
 
 // ─── CHANGELOG ───────────────────────────────────────────────
 export const CHANGELOG = [
+  { ver: 'v1.67', date: '2026-07-05', items: [
+    'Fix: PHIVOLCS results now filtered by 500km radius from your location (was showing all nationwide)',
+    'Updated: Service worker cache bumped to v1.67'
+  ]},
   { ver: 'v1.66', date: '2026-07-05', items: [
     'Fix: PHIVOLCS API SSL cert issue — added rejectUnauthorized:false for PHIVOLCS self-signed cert',
     'Updated: Service worker cache bumped to v1.66'

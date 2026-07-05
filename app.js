@@ -865,7 +865,11 @@ class JaviAlertApp {
         const phivRes = await fetch('/api/phivolcs-quakes');
         const phivData = await phivRes.json();
         if (phivData.features && phivData.features.length > 0) {
-          return phivData.features;
+          // Filter to quakes within ~500km of user (PHIVOLCS returns ALL PH quakes)
+          return phivData.features.filter(f => {
+            const coords = f.geometry ? f.geometry.coordinates : [0, 0];
+            return getDistance(this.userLat, this.userLon, coords[1], coords[0]) <= 500;
+          });
         }
       } catch (_) {
         // PHIVOLCS failed — fall through to USGS
