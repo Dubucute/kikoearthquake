@@ -6,29 +6,55 @@
  *
  * This is the PRIMARY data source — more accurate for PH earthquakes.
  * USGS is used as fallback.
+ *
+ * NOTE: Uses Node.js built-in https module instead of fetch because
+ * Vercel's fetch (undici) has connectivity issues with PHIVOLCS server.
  */
 
-const PHIVOLCS_URL = 'https://earthquake.phivolcs.dost.gov.ph/';
+import https from 'https';
+import http from 'http';
+
+const PHIVOLCS_HOST = 'earthquake.phivolcs.dost.gov.ph';
+const PHIVOLCS_PATH = '/';
 const BASE_URL = 'https://earthquake.phivolcs.dost.gov.ph/';
 const FETCH_TIMEOUT_MS = 15000;
+
+/**
+ * Fetch a URL using Node's built-in http/https module.
+ * More reliable for older servers than the global fetch().
+ */
+function nodeFetch(url, timeoutMs) {
+  return new Promise((resolve, reject) => {
+    const mod = url.startsWith('https') ? https : http;
+    const req = mod.get(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+      },
+      timeout: timeoutMs,
+    }, (res) => {
+      let data = '';
+      res.on('data', (chunk) => { data += chunk; });
+      res.on('end', () => {
+        resolve({
+          ok: res.statusCode >= 200 && res.statusCode < 300,
+          status: res.statusCode,
+          text: () => data,
+        });
+      });
+    });
+    req.on('error', (err) => reject(new Error(`Request failed: ${err.message}`, { cause: err })));
+    req.on('timeout', () => { req.destroy(); reject(new Error('Request timed out')); });
+  });
+}
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 'public, max-age=120, s-maxage=120');
 
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-
-    const response = await fetch(PHIVOLCS_URL, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5',
-      },
-      signal: controller.signal,
-    });
-    clearTimeout(timeout);
+    const response = await nodeFetch('https://' + PHIVOLCS_HOST + PHIVOLCS_PATH, FETCH_TIMEOUT_MS);
 
     if (!response.ok) {
       throw new Error(`PHIVOLCS returned ${response.status}`);
@@ -39,10 +65,9 @@ export default async function handler(req, res) {
 
     res.status(200).json({ features });
   } catch (err) {
-    const msg = err.cause ? `${err.message} (cause: ${err.cause})` : err.message;
-    console.error('PHIVOLCS fetch error:', msg, err.name, err.type);
+    console.error('PHIVOLCS fetch error:', err.message);
     // Return empty features so the app can fall back to USGS
-    res.status(200).json({ features: [], _error: msg });
+    res.status(200).json({ features: [], _error: err.message });
   }
 }
 

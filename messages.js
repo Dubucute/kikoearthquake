@@ -93,6 +93,10 @@ export const SAFETY_TIPS_TL = [
 
 // ─── CHANGELOG ───────────────────────────────────────────────
 export const CHANGELOG = [
+  { ver: 'v1.65', date: '2026-07-05', items: [
+    'Fix: PHIVOLCS API on Vercel — switched to Node.js https module (Vercel fetch can\'t reach PHIVOLCS)',
+    'Updated: Service worker cache bumped to v1.65'
+  ]},
   { ver: 'v1.64', date: '2026-07-05', items: [
     'New: PHIVOLCS as primary earthquake data source — more accurate for PH',
     'New: /api/phivolcs-quakes — serverless parser that scrapes PHIVOLCS HTML table into live quake data',
