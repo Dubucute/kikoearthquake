@@ -1644,9 +1644,26 @@ class JaviAlertApp {
       try {
         const registration = await navigator.serviceWorker.ready;
         let subscription = await registration.pushManager.getSubscription();
+
+        // Fetch current public key from server
+        const publicKey = await this._fetchVapidPublicKey();
+        if (!publicKey) return;
+
+        // If existing subscription, check if it uses the same VAPID key
+        if (subscription) {
+          const existingKey = subscription.options.applicationServerKey;
+          const newKey = this._urlBase64ToUint8Array(publicKey);
+          // Compare keys — if they differ, unsubscribe and re-subscribe
+          const existingBase64 = btoa(String.fromCharCode(...new Uint8Array(existingKey)));
+          const newBase64 = btoa(String.fromCharCode(...newKey));
+          if (existingBase64 !== newBase64) {
+            console.log('[Push] VAPID key changed — re-subscribing');
+            await subscription.unsubscribe();
+            subscription = null;
+          }
+        }
+
         if (!subscription) {
-          const publicKey = await this._fetchVapidPublicKey();
-          if (!publicKey) return;
           subscription = await registration.pushManager.subscribe({
             userVisibleOnly: true,
             applicationServerKey: this._urlBase64ToUint8Array(publicKey)
