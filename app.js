@@ -2685,47 +2685,50 @@ class JaviAlertApp {
         canvas.height = totalSize;
         const ctx = canvas.getContext('2d');
 
-        // Convert lat/lon to tile numbers
+        // Convert lat/lon to tile numbers (fractional)
         const n = Math.pow(2, zoom);
         const xFloat = (lon + 180) / 360 * n;
         const yFloat = (1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * n;
         const tileX = Math.floor(xFloat);
         const tileY = Math.floor(yFloat);
-        const offsetX = Math.round((xFloat - tileX) * tileSize);
-        const offsetY = Math.round((yFloat - tileY) * tileSize);
+        const fracX = xFloat - tileX; // 0..1 fraction within center tile
+        const fracY = yFloat - tileY;
 
-        const half = Math.floor(grid / 2);
+        // Pixel offset: where the epicenter falls within the tile canvas
+        const epicenterPx = totalSize / 2;
+        const offsetXPx = epicenterPx - fracX * tileSize;
+        const offsetYPx = epicenterPx - fracY * tileSize;
+
         let loaded = 0;
         const total = grid * grid;
         let failed = false;
+        const timeout = setTimeout(() => resolve(null), 8000);
 
         const done = () => {
           loaded++;
-          if (loaded >= total) resolve(failed ? null : canvas);
+          if (loaded >= total) {
+            clearTimeout(timeout);
+            resolve(failed ? null : canvas);
+          }
         };
 
-        const timeout = setTimeout(() => resolve(null), 8000);
+        for (let gy = 0; gy < grid; gy++) {
+          for (let gx = 0; gx < grid; gx++) {
+            // Tile coords in world space
+            const tx = tileX + gx - Math.floor(grid / 2);
+            const ty = tileY + gy - Math.floor(grid / 2);
+            // Pixel position on our canvas
+            const drawX = offsetXPx + (gx - Math.floor(grid / 2)) * tileSize;
+            const drawY = offsetYPx + (gy - Math.floor(grid / 2)) * tileSize;
 
-        for (let dy = -half; dy <= half; dy++) {
-          for (let dx = -half; dx <= half; dx++) {
             const img = new Image();
             img.crossOrigin = 'anonymous';
             img.onload = () => {
-              const sx = (dx + half) * tileSize + (tileSize - offsetX);
-              const sy = (dy + half) * tileSize + (tileSize - offsetY);
-              // Center the grid on the exact lat/lon
-
-              // Actually: compute so the epicenter is at center of grid
-              const cx = totalSize / 2 - (xFloat - tileX) * tileSize;
-              const cy = totalSize / 2 - (yFloat - tileY) * tileSize;
-              const drawX = cx + dx * tileSize;
-              const drawY = cy + dy * tileSize;
               try { ctx.drawImage(img, drawX, drawY, tileSize, tileSize); } catch (_) {}
               done();
             };
             img.onerror = () => { failed = true; done(); };
-            // Use HTTPS for CORS
-            img.src = 'https://tile.openstreetmap.org/' + zoom + '/' + (tileX + dx) + '/' + (tileY + dy) + '.png';
+            img.src = 'https://tile.openstreetmap.org/' + zoom + '/' + tx + '/' + ty + '.png';
           }
         }
       });
