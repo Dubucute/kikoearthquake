@@ -1785,14 +1785,20 @@ class JaviAlertApp {
         this._setupPushNotifications();
       }
 
-      // If warning or danger, show a safety tip instead of jokes
+      // If warning or danger, show appropriate message
       if (this.currentMood === 'warning' || this.currentMood === 'danger') {
-        const tip = SAFETY_TIPS[Math.floor(Math.random() * SAFETY_TIPS.length)];
-        const prefix = this.currentMood === 'danger'
-          ? '🚨 DANGER! '
-          : '⚠️ Warning! ';
+        let msg;
+        if (this.currentMood === 'danger') {
+          // Danger — show safety tips
+          msg = SAFETY_TIPS[Math.floor(Math.random() * SAFETY_TIPS.length)];
+          msg = '🚨 DANGER! ' + msg;
+        } else {
+          // Warning — show reassuring message (wag kabahan)
+          const warns = JAVI_MESSAGES.warning || [];
+          msg = warns[Math.floor(Math.random() * warns.length)];
+        }
         bubble.className = 'bubble';
-        bubble.innerHTML = prefix + tip;
+        bubble.innerHTML = msg;
         try { lucide.createIcons(); } catch (_) { /* ignore */ }
         return;
       }
