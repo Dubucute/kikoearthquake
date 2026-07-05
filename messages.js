@@ -93,7 +93,30 @@ export const SAFETY_TIPS_TL = [
 
 // ─── CHANGELOG ───────────────────────────────────────────────
 export const CHANGELOG = [
-  { ver: 'v1.33', date: '2026-07-04', items: [
+  { ver: 'v1.63', date: '2026-07-05', items: [
+    'New: Javi Chat Head — floating draggable button on screen (like Messenger)',
+    'New: Chat Head drag with edge-snap — position saved across sessions',
+    'New: Unread badge on Chat Head when Javi replies while chat is closed',
+    'New: Notification popup on Chat Head — shows preview of Javi\'s reply or earthquake alert',
+    'New: Popup auto-positions LEFT or RIGHT based on where Chat Head is on screen',
+    'New: Fullscreen mode for Ask Javi chat — expand to fill entire screen',
+    'New: Quick reply buttons that send real messages to Javi (not modals)',
+    'New: Proactive earthquake alerts pushed to chat with Chat Head notification',
+    'New: Javi chat memory (localStorage) — remembers your last 3 topics for 1 hour',
+    'New: Typewriter effect with blinking cursor on Javi\'s replies',
+    'New: Language detection — auto-switches app language based on your first message',
+    'New: Fallback mode — Javi still responds when AI providers are down',
+    'New: Health check endpoint (/api/health) to monitor AI provider status',
+    'Fix: Quick reply buttons no longer appear above user messages',
+    'Fix: Chat modal background no longer scrolls behind the popup',
+    'Fix: Chat Head drag no longer opens chat or scrolls page on mobile',
+    'Fix: Settings modal is now scrollable (no longer overflows screen)',
+    'Fix: Chat Head icon and avatar are perfectly circular (overflow hidden)',
+    'Fix: Share image icon uses crisp circular clipping',
+    'Updated: AI provider chain — NVIDIA → Groq → Google AI Studio → Hugging Face',
+    'Updated: System prompt fixes — correct language matching, limited emoji usage',
+    'Updated: Service worker cache bumped to v1.63'
+  ]},
     'Fix: Javi character uses PNG only (no more GIFs for smoother performance)',
     'Updated: Service worker cache version bumped to v1.33'
   ]},
