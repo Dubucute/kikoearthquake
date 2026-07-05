@@ -92,7 +92,17 @@ export const SAFETY_TIPS_TL = [
 ];
 
 // ─── CHANGELOG ───────────────────────────────────────────────
-export const CHANGELOG = [  { ver: 'v1.72', date: '2026-07-05', items: [
+export const CHANGELOG = [  { ver: 'v1.107', date: '2026-07-05', items: [
+    'New: Warning mood Javi tap shows reassuring messages (wag kabahan)',
+    'New: Danger mood Javi tap shows safety tips (DROP, COVER, HOLD ON)',
+    'Fix: Notification click now focuses window and navigates to app',
+    'Fix: Notification text format — line breaks for readability on iOS/Android',
+    'Fix: Added icon, badge, image to push payload for better display',
+    'Fix: iOS notification — removed vibrate/requireInteraction (unsupported)',
+    'New: Reassuring warning messages in all 3 languages (TL/EN/CEB)',
+    'Updated: Service worker cache bumped to v1.107'
+  ]},
+  { ver: 'v1.72', date: '2026-07-05', items: [
     'New: Earthquake map time filter — show 24h / 3 days / 7 days / 30 days',
     'New: Earthquake map magnitude filter dropdown',
     'New: Quake list column labels — Mag / Int / Location / Away',
