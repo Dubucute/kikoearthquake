@@ -2418,7 +2418,7 @@ class JaviAlertApp {
       const javiIcon = await this._loadImage('icons/javi-icon.png');
 
       // ── Load static map tiles ──
-      const mapTiles = await this._loadMapTiles(q.lat, q.lon, 8, 2);
+      const mapTiles = await this._loadMapTiles(q.lat, q.lon, 7, 3);
 
       // Build a canvas card and show share overlay
       const canvas = document.createElement('canvas');
@@ -2679,25 +2679,25 @@ class JaviAlertApp {
     _loadMapTiles(lat, lon, zoom, grid) {
       return new Promise((resolve) => {
         const tileSize = 256;
+        const half = Math.floor(grid / 2);
         const totalSize = tileSize * grid;
         const canvas = document.createElement('canvas');
         canvas.width = totalSize;
         canvas.height = totalSize;
         const ctx = canvas.getContext('2d');
 
-        // Convert lat/lon to tile numbers (fractional)
+        // Convert lat/lon to fractional tile coords
         const n = Math.pow(2, zoom);
         const xFloat = (lon + 180) / 360 * n;
         const yFloat = (1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * n;
         const tileX = Math.floor(xFloat);
         const tileY = Math.floor(yFloat);
-        const fracX = xFloat - tileX; // 0..1 fraction within center tile
+        const fracX = xFloat - tileX;
         const fracY = yFloat - tileY;
 
-        // Pixel offset: where the epicenter falls within the tile canvas
-        const epicenterPx = totalSize / 2;
-        const offsetXPx = epicenterPx - fracX * tileSize;
-        const offsetYPx = epicenterPx - fracY * tileSize;
+        // Pixel position of epicenter on our tile canvas
+        const epicX = half * tileSize + fracX * tileSize;
+        const epicY = half * tileSize + fracY * tileSize;
 
         let loaded = 0;
         const total = grid * grid;
@@ -2714,12 +2714,10 @@ class JaviAlertApp {
 
         for (let gy = 0; gy < grid; gy++) {
           for (let gx = 0; gx < grid; gx++) {
-            // Tile coords in world space
-            const tx = tileX + gx - Math.floor(grid / 2);
-            const ty = tileY + gy - Math.floor(grid / 2);
-            // Pixel position on our canvas
-            const drawX = offsetXPx + (gx - Math.floor(grid / 2)) * tileSize;
-            const drawY = offsetYPx + (gy - Math.floor(grid / 2)) * tileSize;
+            const tx = tileX + gx - half;
+            const ty = tileY + gy - half;
+            const drawX = gx * tileSize;
+            const drawY = gy * tileSize;
 
             const img = new Image();
             img.crossOrigin = 'anonymous';
