@@ -92,8 +92,13 @@ export const SAFETY_TIPS_TL = [
 ];
 
 // ─── CHANGELOG ───────────────────────────────────────────────
-export const CHANGELOG = [
-  { ver: 'v1.68', date: '2026-07-05', items: [
+export const CHANGELOG = [  { ver: 'v1.72', date: '2026-07-05', items: [
+    'New: Earthquake map time filter — show 24h / 3 days / 7 days / 30 days',
+    'New: Earthquake map magnitude filter dropdown',
+    'New: Quake list column labels — Mag / Int / Location / Away',
+    'Fix: Map only shows quakes within 300km of user',
+    'Updated: Service worker cache bumped to v1.72'
+  ]},  { ver: 'v1.68', date: '2026-07-05', items: [
     'New: PHIVOLCS Intensity Scale (PEIS) — each quake shows intensity (I-X) based on mag + distance',
     'New: Tiered distance filter — mag ≥5 always shown, smaller quakes closer to you',
     'New: Intensity badges on quake list and detail modal',

@@ -433,6 +433,12 @@ class JaviAlertApp {
         this.setMagFilter(parseFloat(btn.dataset.min));
       });
 
+      // Map filters — update markers when dropdowns change
+      const mapTimeFilter = document.getElementById('mapTimeFilter');
+      const mapMagFilter = document.getElementById('mapMagFilter');
+      if (mapTimeFilter) mapTimeFilter.addEventListener('change', () => this._updateMapMarkers());
+      if (mapMagFilter) mapMagFilter.addEventListener('change', () => this._updateMapMarkers());
+
       // Offline detection
       window.addEventListener('online', () => {
         document.getElementById('offlineBanner').classList.add('hidden');
@@ -1995,8 +2001,17 @@ class JaviAlertApp {
 
       if (!this.allQuakes || !this.allQuakes.length) return;
 
-      // Determine which quakes to show — only within 300km on the map
-      let shown = this.allQuakes.filter((q) => q.dist <= 300);
+      // Map filters: time range + magnitude from dropdowns
+      const mapTimeDays = parseInt(document.getElementById('mapTimeFilter')?.value || '7', 10);
+      const mapMagMin = parseFloat(document.getElementById('mapMagFilter')?.value || '0');
+      const mapTimeMs = mapTimeDays * 86400000;
+
+      // Determine which quakes to show on the map
+      let shown = this.allQuakes.filter((q) =>
+        q.dist <= 300 &&
+        (Date.now() - q.time.getTime()) < mapTimeMs &&
+        q.mag >= mapMagMin
+      );
       if (this.magFilter > 0) {
         shown = shown.filter((q) => q.mag >= this.magFilter);
       }

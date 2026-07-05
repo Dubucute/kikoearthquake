@@ -688,6 +688,20 @@ body.dark-mode .quiz-review { background: rgba(40,40,60,.75); border-color: rgba
 }
 .list-header i { width: 14px; height: 14px; }
 .list-header { position: relative; }
+
+/* Quake list column labels */
+.quake-list-labels {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 16px; font-size: 10px; font-weight: 700;
+  color: var(--muted); text-transform: uppercase; letter-spacing: .5px;
+  border-bottom: 1px solid rgba(0,0,0,.06);
+  background: rgba(255,255,255,.5);
+}
+.ql-bl { flex-shrink: 0; }
+.ql-bl-mag { width: 46px; text-align: center; }
+.ql-bl-int { width: 36px; text-align: center; }
+.ql-bl-place { flex: 1; }
+.ql-bl-dist { width: 60px; text-align: right; }
 #listTitle { flex: 1; }
 .sort-wrap { position: relative; }
 .sort-btn {
@@ -1213,6 +1227,17 @@ body.dark-mode .notif-toast-close:active {
   background: rgba(255,245,245,.4);
 }
 .map-header i { width: 14px; height: 14px; }
+.map-filter-wrap {
+  display: flex; gap: 6px; margin-left: auto;
+}
+.map-filter {
+  padding: 4px 8px; border-radius: 8px;
+  border: 2px solid #2d3436; background: white;
+  font-size: 11px; font-weight: 600; color: var(--text);
+  cursor: pointer; font-family: 'Fredoka', sans-serif;
+  box-shadow: 2px 2px 0px #2d3436;
+}
+.map-filter:focus { outline: 2px solid #fdcb6e; outline-offset: 1px; }
 .map-container {
   width: 100%; height: 280px;
   background: #e8e4de;
