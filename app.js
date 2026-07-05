@@ -1201,6 +1201,15 @@ class JaviAlertApp {
       // Show cached data instantly (if available)
       const cached = this._loadCachedData();
       if (cached && cached.features) {
+        // Restore location from cache if localStorage was cleared
+        if (cached.lat && cached.lon) {
+          if (!this.userLat || !this.userLon) {
+            this.userLat = cached.lat;
+            this.userLon = cached.lon;
+            this.userPlace = cached.place || '';
+            if (this.userPlace) document.getElementById('locInput').value = this.userPlace;
+          }
+        }
         const cData = this.processQuakeData(cached.features);
         this._saveKnownQuakeIds(cData.quakes);
         await this.updateUI(cData);
@@ -1222,14 +1231,16 @@ class JaviAlertApp {
         // Cache the fresh data for next load
         this._saveCachedData(features);
 
-        // Update known IDs
+        // Detect NEW quakes BEFORE saving known IDs
+        const newQuakes = this._detectNewQuakes(data.quakes);
+
+        // Now update known IDs (must come AFTER detection)
         this._saveKnownQuakeIds(data.quakes);
 
         this._lastFetchTime = Date.now();
         await this.updateUI(data);
 
         // Alert AFTER mood is determined — fire for any new quake
-        const newQuakes = this._detectNewQuakes(data.quakes);
         if (newQuakes.length > 0) {
           this._alertNewQuakes(newQuakes);
         }
@@ -1281,7 +1292,13 @@ class JaviAlertApp {
 
     _saveCachedData(features) {
       try {
-        localStorage.setItem('javiQuakeCache', JSON.stringify({ ts: Date.now(), features }));
+        localStorage.setItem('javiQuakeCache', JSON.stringify({
+          ts: Date.now(),
+          features,
+          lat: this.userLat,
+          lon: this.userLon,
+          place: this.userPlace
+        }));
       } catch (_) { /* ignore quota errors */ }
     }
 
