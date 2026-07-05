@@ -1290,10 +1290,10 @@ class JaviAlertApp {
     }
 
     _alertNewQuakes(newQuakes) {
-      // Determine alert level from the NEWEST quake using intensity
+      // Determine alert level — uses intensity AND magnitude
       const newest = newQuakes.reduce((a, b) => a.time > b.time ? a : b);
-      const alertType = newest.intensity >= 5 ? 'danger' :
-                        newest.intensity >= 3 ? 'warning' : null;
+      const alertType = (newest.intensity >= 5 || newest.mag >= 5) ? 'danger' :
+                        (newest.intensity >= 3 || newest.mag >= 3) ? 'warning' : null;
 
       // Play alert sound
       if (alertType) {
