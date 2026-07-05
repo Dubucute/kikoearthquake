@@ -101,7 +101,15 @@ export function getPHIVOLCSIntensity(mag, distanceKm) {
   // MMI ≈ 1.0 + 1.5 × Mag − 2.0 × log₁₀(Distance)
   const dist = Math.max(distanceKm, 1); // avoid log(0)
   const felt = 1.0 + 1.5 * mag - 2.0 * Math.log10(dist);
-  const level = Math.round(Math.max(1, Math.min(10, felt)));
+  let level = Math.round(Math.max(1, Math.min(10, felt)));
+
+  // Cap intensity based on magnitude — small quakes can't produce strong shaking
+  // Based on real PEIS observation data
+  if (mag < 2) level = Math.min(level, 2);      // Mag <2: max II
+  else if (mag < 3) level = Math.min(level, 3);  // Mag <3: max III
+  else if (mag < 4) level = Math.min(level, 5);  // Mag <4: max V
+  else if (mag < 5) level = Math.min(level, 7);  // Mag <5: max VII
+
   return level;
 }
 
