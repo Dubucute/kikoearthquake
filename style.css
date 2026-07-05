@@ -829,6 +829,7 @@ body.dark-mode .tsunami-badge { border-color: #555; }
   display: flex; align-items: center; justify-content: center;
   padding: 20px;
   animation: fadeIn .25s ease;
+  overscroll-behavior: contain;
 }
 .modal-overlay.hidden { display: none; }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -2326,6 +2327,7 @@ body.dark-mode .scroll-top-btn i {
   max-height: 40vh;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 .chat-bubble {
   display: flex;

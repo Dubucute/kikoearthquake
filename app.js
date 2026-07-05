@@ -48,6 +48,7 @@ class JaviAlertApp {
       this.unreadCount = 0;
       this._notifTimer = null;
       this._pendingClose = false;
+      this._scrollPos = 0;
 
       // Bind
       this.init = this.init.bind(this);
@@ -96,6 +97,8 @@ class JaviAlertApp {
       this._updateChatHeadBadge = this._updateChatHeadBadge.bind(this);
       this._showChatHeadNotif = this._showChatHeadNotif.bind(this);
       this._initChatHeadDrag = this._initChatHeadDrag.bind(this);
+      this._lockBodyScroll = this._lockBodyScroll.bind(this);
+      this._unlockBodyScroll = this._unlockBodyScroll.bind(this);
     }
 
     /** Get current language: tl, en, or ceb */
@@ -262,6 +265,7 @@ class JaviAlertApp {
       this._initChatHeadDrag();
       document.getElementById('chatModalClose').addEventListener('click', () => {
         document.getElementById('chatModal').classList.add('hidden');
+        this._unlockBodyScroll();
         // If bot is still loading, mark that there may be unread messages
         if (this.chatLoading) {
           this._pendingClose = true;
@@ -270,6 +274,7 @@ class JaviAlertApp {
       document.getElementById('chatModal').addEventListener('click', (e) => {
         if (e.target === e.currentTarget) {
           e.currentTarget.classList.add('hidden');
+          this._unlockBodyScroll();
           if (this.chatLoading) {
             this._pendingClose = true;
           }
@@ -1341,6 +1346,24 @@ class JaviAlertApp {
       }, 5000);
     }
 
+    /** Lock body scrolling when a modal is open */
+    _lockBodyScroll() {
+      this._scrollPos = window.scrollY;
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.top = '-' + this._scrollPos + 'px';
+      document.body.style.width = '100%';
+    }
+
+    /** Restore body scrolling */
+    _unlockBodyScroll() {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      window.scrollTo(0, this._scrollPos);
+    }
+
     /** Make the chat head draggable like Messenger — snap to nearest edge */
     _initChatHeadDrag() {
       const head = document.getElementById('chatHead');
@@ -1369,6 +1392,8 @@ class JaviAlertApp {
 
       const onPointerDown = (e) => {
         if (e.button !== 0) return;
+        // Prevent default to stop scroll/click — we handle everything via pointer events
+        e.preventDefault();
         // Hide notification popup when dragging
         const notif = document.getElementById('chatHeadNotif');
         if (notif && !notif.classList.contains('hidden')) {
@@ -1395,6 +1420,8 @@ class JaviAlertApp {
           moved = true;
         }
         if (isDragging) {
+          // Prevent page scroll while dragging
+          e.preventDefault();
           let newX = origLeft + dx;
           let newY = origTop + dy;
           newX = Math.max(0, Math.min(window.innerWidth - size, newX));
@@ -1407,7 +1434,6 @@ class JaviAlertApp {
       const onPointerUp = (e) => {
         head.classList.remove('grabbing');
         if (isDragging) {
-          e.preventDefault();
           const rect = head.getBoundingClientRect();
           const centerX = rect.left + rect.width / 2;
           const snapLeft = centerX < window.innerWidth / 2;
@@ -3364,6 +3390,9 @@ class JaviAlertApp {
       if (msgs) msgs.scrollTop = 0;
 
       modal.classList.remove('hidden');
+
+      // Lock body scroll to prevent background scrolling
+      this._lockBodyScroll();
 
       // Re-render existing messages (in case we need to update)
       this._renderChatMessages();
