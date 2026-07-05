@@ -1995,8 +1995,8 @@ class JaviAlertApp {
 
       if (!this.allQuakes || !this.allQuakes.length) return;
 
-      // Determine which quakes to show (respects mag filter)
-      let shown = this.allQuakes;
+      // Determine which quakes to show — only within 300km on the map
+      let shown = this.allQuakes.filter((q) => q.dist <= 300);
       if (this.magFilter > 0) {
         shown = shown.filter((q) => q.mag >= this.magFilter);
       }
