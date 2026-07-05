@@ -1620,23 +1620,30 @@ body.dark-mode .analysis-factor-text span { color: #e0e0e0; }
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 16px;
+  overflow-y: auto;
   animation: fadeIn .2s ease;
 }
 .share-img-overlay.hidden { display: none; }
 .share-img-card {
   background: white;
   border-radius: 20px;
-  padding: 20px;
-  max-width: 360px;
-  width: 90vw;
+  padding: 16px;
+  max-width: 400px;
+  width: 92vw;
+  max-height: 90vh;
   text-align: center;
   box-shadow: 0 8px 32px rgba(0,0,0,.3);
+  overflow: hidden;
 }
 .share-img-card canvas {
   width: 100%;
   height: auto;
   border-radius: 12px;
   box-shadow: 0 2px 12px rgba(0,0,0,.1);
+  display: block;
+  max-height: calc(90vh - 80px);
+  object-fit: contain;
 }
 .share-img-actions {
   display: flex;
