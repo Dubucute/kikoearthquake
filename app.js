@@ -2471,57 +2471,65 @@ class JaviAlertApp {
       this._roundRect(ctx, 16, 16, w - 32, h - 32, 18);
       ctx.stroke();
 
-      // ── Map tiles (right side, clipped to rounded rect) ──
-      const mapX = 380, mapY = 50, mapW = 290, mapH = 280;
+      // ── Map tiles (right side, fills entire right half of card) ──
+      const cardL = 16, cardR = w - 16, cardT = 16, cardB = h - 16;
+      const mapX = 370, mapY = cardT, mapW = cardR - mapX, mapH = cardB - cardT;
       ctx.save();
-      this._roundRect(ctx, mapX, mapY, mapW, mapH, 14);
+      // Clip map to card's right side with rounded top-right and bottom-right corners
+      ctx.beginPath();
+      this._roundRect(ctx, mapX, mapY, mapW, mapH, 18);
       ctx.clip();
       if (mapTiles) {
         ctx.drawImage(mapTiles, mapX, mapY, mapW, mapH);
-        // Semi-transparent overlay to soften map
-        ctx.fillStyle = dark ? 'rgba(26,26,46,0.15)' : 'rgba(255,255,255,0.1)';
+        // Subtle overlay
+        ctx.fillStyle = dark ? 'rgba(26,26,46,0.12)' : 'rgba(255,255,255,0.08)';
         ctx.fillRect(mapX, mapY, mapW, mapH);
       } else {
-        // Fallback: colored rect with pin
         ctx.fillStyle = dark ? '#3a3a5e' : '#dfe6e9';
         ctx.fillRect(mapX, mapY, mapW, mapH);
       }
       ctx.restore();
-      // Map border
-      ctx.strokeStyle = dark ? '#555' : '#2d3436';
-      ctx.lineWidth = 2.5;
-      this._roundRect(ctx, mapX, mapY, mapW, mapH, 14);
+      // Divider line between info and map
+      ctx.strokeStyle = dark ? '#444' : '#dfe6e9';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(mapX, cardT + 18);
+      ctx.lineTo(mapX, cardB - 18);
       ctx.stroke();
 
-      // ── Epicenter pin on map ──
+      // ── Epicenter pin on map (center) ──
       const pinCX = mapX + mapW / 2, pinCY = mapY + mapH / 2;
       // Pulsing ring
-      ctx.globalAlpha = 0.3;
+      ctx.globalAlpha = 0.25;
       ctx.fillStyle = '#e17055';
       ctx.beginPath();
-      ctx.arc(pinCX, pinCY, 16, 0, Math.PI * 2);
+      ctx.arc(pinCX, pinCY, 20, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 0.45;
+      ctx.beginPath();
+      ctx.arc(pinCX, pinCY, 12, 0, Math.PI * 2);
       ctx.fill();
       ctx.globalAlpha = 1;
       // Pin dot
       ctx.fillStyle = '#e17055';
       ctx.beginPath();
-      ctx.arc(pinCX, pinCY, 8, 0, Math.PI * 2);
+      ctx.arc(pinCX, pinCY, 7, 0, Math.PI * 2);
       ctx.fill();
       ctx.fillStyle = '#fff';
       ctx.beginPath();
-      ctx.arc(pinCX, pinCY, 3, 0, Math.PI * 2);
+      ctx.arc(pinCX, pinCY, 2.5, 0, Math.PI * 2);
       ctx.fill();
       // Pin border
       ctx.strokeStyle = '#2d3436';
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.arc(pinCX, pinCY, 8, 0, Math.PI * 2);
+      ctx.arc(pinCX, pinCY, 7, 0, Math.PI * 2);
       ctx.stroke();
-      // Coordinates label below map
+      // Coordinates label at bottom of map
       ctx.fillStyle = dark ? '#888' : '#636e72';
       ctx.font = '10px Fredoka, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(q.lat.toFixed(2) + '°N  ' + q.lon.toFixed(2) + '°E', mapX + mapW / 2, mapY + mapH + 16);
+      ctx.fillText(q.lat.toFixed(2) + '°N  ' + q.lon.toFixed(2) + '°E', mapX + mapW / 2, cardB - 10);
 
       // ── Javi icon (top-right) ──
       if (javiIcon) {
@@ -2641,30 +2649,27 @@ class JaviAlertApp {
         ctx.fillText(item.icon + '  ' + item.label, 44, y);
       });
 
-      // ── Quote bar at bottom ──
-      const barY = h - 110;
+      // ── Quote bar at bottom (left side only) ──
+      const barY = h - 105;
       ctx.fillStyle = dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)';
-      this._roundRect(ctx, 32, barY, w - 64, 30, 10);
+      this._roundRect(ctx, 32, barY, mapX - 44, 28, 10);
       ctx.fill();
       ctx.fillStyle = dark ? '#999' : '#636e72';
       ctx.font = '12px Fredoka, sans-serif';
       ctx.textAlign = 'center';
       const quote = this._getRandomQuote();
-      ctx.fillText('💬 ' + quote, w / 2, barY + 20);
+      ctx.fillText('💬 ' + quote, 32 + (mapX - 44) / 2, barY + 19);
 
-      // ── Footer ──
+      // ── Footer (left side) ──
       ctx.fillStyle = dark ? '#666' : '#b2bec3';
       ctx.font = '10px Fredoka, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('Brought to you by JaviAlert  •  ' + q.rawPlace, w / 2, h - 58);
+      ctx.fillText('JaviAlert  •  ' + q.rawPlace, 32 + (mapX - 44) / 2, h - 58);
 
-      // ── App branding bar ──
-      ctx.fillStyle = dark ? '#333' : '#dfe6e9';
-      this._roundRect(ctx, 32, h - 48, w - 64, 1, 1);
-      ctx.fill();
+      // ── App URL at bottom-left ──
       ctx.fillStyle = dark ? '#555' : '#b2bec3';
       ctx.font = '9px Fredoka, sans-serif';
-      ctx.fillText('javi-alert.vercel.app', w / 2, h - 34);
+      ctx.fillText('javi-alert.vercel.app', 32 + (mapX - 44) / 2, h - 42);
 
       // Show overlay
       this._showShareImageOverlay(canvas, q);
