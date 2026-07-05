@@ -3395,8 +3395,11 @@ class JaviAlertApp {
           type();
         }
       } else {
-        // No animation — add quick replies after last bot message
-        this._addQuickReplies(container);
+        // No animation — add quick replies only if last message is from bot
+        const lastMsg = this.chatMessages[this.chatMessages.length - 1];
+        if (lastMsg && lastMsg.role === 'assistant') {
+          this._addQuickReplies(container);
+        }
       }
 
       // Add typing indicator at the bottom
