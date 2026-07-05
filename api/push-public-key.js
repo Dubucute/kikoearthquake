@@ -27,5 +27,9 @@ export default function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
   setCorsHeaders(res, req.headers.origin);
+  // Never cache the public key — must always be fresh
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   res.json({ publicKey: process.env.VAPID_PUBLIC_KEY || null });
 }
