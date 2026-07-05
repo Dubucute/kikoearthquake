@@ -214,7 +214,7 @@ class JaviAlertApp {
       document.getElementById('kidWrap').addEventListener('click', () => this.onJaviTap());
 
       // Setup UI
-      document.getElementById('refreshBtn').addEventListener('click', () => this.loadData());
+      document.getElementById('refreshBtn').addEventListener('click', () => location.reload());
       document.getElementById('installBanner').addEventListener('click', () => this.showInstallTutorial());
       document.getElementById('modalClose').addEventListener('click', () => {
         document.getElementById('installModal').classList.add('hidden');
