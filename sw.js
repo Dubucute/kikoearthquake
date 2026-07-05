@@ -1,4 +1,4 @@
-const CACHE = 'quake-buddy-v1.86';
+const CACHE = 'quake-buddy-v1.87';
 const ASSETS = [
   '/', '/index.html', '/manifest.json',
   '/style.css', '/style.css?v=2', '/app.js',
@@ -6,9 +6,9 @@ const ASSETS = [
   '/javi/safe1.gif', '/javi/safe2.gif', '/javi/safe3.gif',
   '/javi/warning1.gif', '/javi/warning2.gif',
   '/javi/danger1.gif', '/javi/danger2.gif',
-  '/javi/safe1.png', '/javi/safe2.png',
-  '/javi/warning1.png', '/javi/warning2.png',
-  '/javi/danger1.png', '/javi/danger2.png',
+  '/javi/safe1.png', '/javi/safe2.png', '/javi/safe3.png', '/javi/safe4.png',
+  '/javi/warning1.png', '/javi/warning2.png', '/javi/warning3.png', '/javi/warning4.png',
+  '/javi/danger1.png', '/javi/danger2.png', '/javi/danger3.png', '/javi/danger4.png',
   '/sounds/Alerto sa Sakuna.mp3',
   '/sounds/Ligtas.mp3',
   '/sounds/Javilerto.mp3',

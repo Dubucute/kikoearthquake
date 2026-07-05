@@ -464,7 +464,7 @@ class JaviAlertApp {
       // Set default Javi icon to the app icon
       const kidGif = document.getElementById('kidGif');
       if (kidGif) {
-        kidGif.style.backgroundImage = "url('icons/javi-icon.png')";
+        kidGif.style.backgroundImage = "url('icons/javi-avatar.png')";
       }
 
       // Lucide
@@ -1112,15 +1112,15 @@ class JaviAlertApp {
       shakeWrap.classList.remove('shake');
 
       if (mood === 'safe') {
-        const n = Math.floor(Math.random() * 2) + 1;
+        const n = Math.floor(Math.random() * 4) + 1;
         gif.style.backgroundImage = "url('javi/safe" + n + "." + ext + "')";
         pillText.textContent = 'Safe';
       } else if (mood === 'warning') {
-        const n = Math.floor(Math.random() * 2) + 1;
+        const n = Math.floor(Math.random() * 4) + 1;
         gif.style.backgroundImage = "url('javi/warning" + n + "." + ext + "')";
         pillText.textContent = 'Warning';
       } else {
-        const n = Math.floor(Math.random() * 2) + 1;
+        const n = Math.floor(Math.random() * 4) + 1;
         gif.style.backgroundImage = "url('javi/danger" + n + "." + ext + "')";
         pillText.textContent = 'DANGER';
         shakeWrap.classList.add('shake');
@@ -2415,7 +2415,7 @@ class JaviAlertApp {
     // ─── SHARE QUAKE AS IMAGE ─────────────────────────────────
     async _shareQuakeAsImage(q) {
       // Load Javi icon for the card
-      const javiIcon = await this._loadImage('icons/javi-icon.png');
+      const javiIcon = await this._loadImage('icons/javi-avatar.png');
 
       // ── Load static map tiles ──
       const mapTiles = await this._loadMapTiles(q.lat, q.lon, 7, 3);
@@ -3815,7 +3815,7 @@ class JaviAlertApp {
       if (!this.chatMessages.length) {
         container.innerHTML = '' +
           '<div class="chat-bubble chat-bubble-bot chat-welcome" id="chatWelcome">' +
-            '<div class="chat-avatar-wrap"><img class="chat-avatar" src="icons/javi-icon.png" alt="Javi"></div>' +
+            '<div class="chat-avatar-wrap"><img class="chat-avatar" src="icons/javi-avatar.png" alt="Javi"></div>' +
             '<div class="chat-bubble-inner">👋 Hi! I\'m Javi, your earthquake safety buddy. Ask me anything about earthquakes, safety tips, or preparedness!</div>' +
           '</div>' +
           '<div class="chat-typing hidden" id="chatTyping">' +
@@ -3841,7 +3841,7 @@ class JaviAlertApp {
         if (msg.role === 'user') {
           div.innerHTML = '<div class="chat-bubble-inner">' + this._escapeHtml(msg.content) + '</div>';
         } else {
-          div.innerHTML = '<div class="chat-avatar-wrap"><img class="chat-avatar" src="icons/javi-icon.png" alt="Javi"></div><div class="chat-bubble-inner">' + this._formatBotMessage(msg.content) + '</div>';
+          div.innerHTML = '<div class="chat-avatar-wrap"><img class="chat-avatar" src="icons/javi-avatar.png" alt="Javi"></div><div class="chat-bubble-inner">' + this._formatBotMessage(msg.content) + '</div>';
         }
         container.appendChild(div);
       });
@@ -3852,7 +3852,7 @@ class JaviAlertApp {
         if (lastMsg.role === 'assistant') {
           const div = document.createElement('div');
           div.className = 'chat-bubble chat-bubble-bot chat-bubble-typing';
-          div.innerHTML = '<div class="chat-avatar-wrap"><img class="chat-avatar" src="icons/javi-icon.png" alt="Javi"></div><div class="chat-bubble-inner" id="chatTypingText"></div>';
+          div.innerHTML = '<div class="chat-avatar-wrap"><img class="chat-avatar" src="icons/javi-avatar.png" alt="Javi"></div><div class="chat-bubble-inner" id="chatTypingText"></div>';
           container.appendChild(div);
 
           // Typewriter animation
