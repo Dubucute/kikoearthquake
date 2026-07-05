@@ -4,15 +4,23 @@ import { getDb } from './_db.js';
 const vapidPublicKey = process.env.VAPID_PUBLIC_KEY;
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
 
+let vapidReady = false;
+
 if (!vapidPublicKey || !vapidPrivateKey) {
   console.warn('VAPID keys not set — push sending disabled');
+} else {
+  try {
+    webpush.setVapidDetails(
+      'mailto:javi@javi-alert.app',
+      vapidPublicKey,
+      vapidPrivateKey
+    );
+    vapidReady = true;
+  } catch (err) {
+    console.error('VAPID key validation failed:', err.message);
+    console.error('Please regenerate and update VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY in Vercel.');
+  }
 }
-
-webpush.setVapidDetails(
-  'mailto:javi@javi-alert.app',
-  vapidPublicKey,
-  vapidPrivateKey
-);
 
 // ─── CORS helper ──────────────────────────────────────────────
 const ALLOWED_ORIGINS = [
@@ -42,9 +50,9 @@ export default async function handler(req, res) {
     setCorsHeaders(res, req.headers.origin);
     return res.status(405).json({ error: 'Method not allowed' });
   }
-  if (!vapidPublicKey || !vapidPrivateKey) {
+  if (!vapidReady) {
     setCorsHeaders(res, req.headers.origin);
-    return res.status(500).json({ error: 'VAPID keys not configured' });
+    return res.status(500).json({ error: 'VAPID keys not configured or invalid. Regenerate keys in Vercel.' });
   }
   try {
     const database = await getDb();

@@ -1198,9 +1198,11 @@ class JaviAlertApp {
       const ico = document.getElementById('refreshIcon');
       const quakeContainer = document.getElementById('quakeList');
 
+      console.log('[🔔 NOTIFY] loadData() called — knownQuakeIds size:', this.knownQuakeIds.size);
       // Show cached data instantly (if available)
       const cached = this._loadCachedData();
       if (cached && cached.features) {
+        console.log('[🔔 NOTIFY] Cache HIT — showing', cached.features.length, 'cached features instantly');
         // Restore location from cache if localStorage was cleared
         if (cached.lat && cached.lon) {
           if (!this.userLat || !this.userLon) {
@@ -1215,6 +1217,7 @@ class JaviAlertApp {
         await this.updateUI(cData);
         // Don't show skeleton — we already have data
       } else {
+        console.log('[🔔 NOTIFY] Cache MISS — showing skeleton');
         // No cache — show skeleton loaders
         bubble.className = 'bubble loading';
         bubble.innerHTML = '<i data-lucide="search" aria-hidden="true"></i> Checking for earthquakes...';
@@ -1225,14 +1228,19 @@ class JaviAlertApp {
       ico.classList.add('spin');
 
       try {
+        console.log('[🔔 NOTIFY] Fetching fresh data from server...');
         const features = await this.fetchEarthquakeData();
+        console.log('[🔔 NOTIFY] Got', features.length, 'features from server');
         const data = this.processQuakeData(features);
+        console.log('[🔔 NOTIFY] Processed', data.quakes.length, 'quakes');
 
         // Cache the fresh data for next load
         this._saveCachedData(features);
 
         // Detect NEW quakes BEFORE saving known IDs
+        console.log('[🔔 NOTIFY] About to detect new quakes (knownIds:', this.knownQuakeIds.size, ')');
         const newQuakes = this._detectNewQuakes(data.quakes);
+        console.log('[🔔 NOTIFY] Detection result:', newQuakes.length, 'new quakes found');
 
         // Now update known IDs (must come AFTER detection)
         this._saveKnownQuakeIds(data.quakes);
@@ -1321,8 +1329,12 @@ class JaviAlertApp {
     _loadKnownQuakeIds() {
       try {
         const stored = localStorage.getItem('javiKnownQuakeIds');
-        return stored ? new Set(JSON.parse(stored)) : new Set();
+        const ids = stored ? new Set(JSON.parse(stored)) : new Set();
+        console.log('[🔔 NOTIFY] _loadKnownQuakeIds:', ids.size, 'known IDs from localStorage');
+        if (ids.size > 0) console.log('[🔔 NOTIFY] Sample IDs:', [...ids].slice(0, 5));
+        return ids;
       } catch (_) {
+        console.log('[🔔 NOTIFY] _loadKnownQuakeIds: failed to load, returning empty set');
         return new Set();
       }
     }
@@ -1333,20 +1345,32 @@ class JaviAlertApp {
         localStorage.setItem('javiKnownQuakeIds', JSON.stringify([...ids]));
       } catch (_) { /* ignore */ }
       this.knownQuakeIds = ids;
+      console.log('[🔔 NOTIFY] _saveKnownQuakeIds: saved', ids.size, 'IDs to localStorage');
     }
 
     _detectNewQuakes(quakes) {
+      console.log('[🔔 NOTIFY] _detectNewQuakes called with', quakes.length, 'quakes');
+      console.log('[🔔 NOTIFY] Current knownQuakeIds size:', this.knownQuakeIds.size);
       // On first load, detect ALL quakes from last 24h
       if (this.knownQuakeIds.size === 0) {
         const cutoff = Date.now() - 86400000; // 24h
-        return quakes.filter(q => q.time.getTime() > cutoff);
+        const recent = quakes.filter(q => q.time.getTime() > cutoff);
+        console.log('[🔔 NOTIFY] FIRST LOAD — returning ALL', recent.length, 'quakes from last 24h');
+        return recent;
       }
-      return quakes.filter((q) => !this.knownQuakeIds.has(q.id));
+      const newQuakes = quakes.filter((q) => !this.knownQuakeIds.has(q.id));
+      console.log('[🔔 NOTIFY] SUBSEQUENT LOAD — found', newQuakes.length, 'new quakes not in known IDs');
+      if (newQuakes.length > 0) {
+        newQuakes.forEach(q => console.log('[🔔 NOTIFY] NEW:', q.mag, 'mag', q.place, 'id:', q.id));
+      }
+      return newQuakes;
     }
 
     _alertNewQuakes(newQuakes) {
+      console.log('[🔔 NOTIFY] _alertNewQuakes called with', newQuakes.length, 'new quakes');
       // Determine the biggest/most significant new quake
       const newest = newQuakes.reduce((a, b) => a.time > b.time ? a : b);
+      console.log('[🔔 NOTIFY] Newest:', newest.mag, 'mag', newest.place);
       // Play NDRRMC alarm only for mag >= 3 or intensity >= 3
       const hasAlarm = newest.mag >= 3 || newest.intensity >= 3;
       const alertType = (newest.intensity >= 5 || newest.mag >= 5) ? 'danger' :
@@ -1362,15 +1386,22 @@ class JaviAlertApp {
         this._hapticAlert(alertType);
       }
 
+      console.log('[🔔 NOTIFY] alertType:', alertType, '| hasAlarm:', hasAlarm);
+
       // Show browser notification for ALL new quakes
+      const notifPerm = ('Notification' in window) ? Notification.permission : 'not-supported';
+      console.log('[🔔 NOTIFY] Notification.permission:', notifPerm);
       if ('Notification' in window && Notification.permission === 'granted') {
         const count = newQuakes.length;
         const intLabel = PEIS_LABELS[newest.intensity] || '';
         const title = count === 1 ? 'New earthquake detected!' : count + ' new earthquakes detected!';
         const body = newest.mag.toFixed(1) + ' mag — ' + intLabel + ' at ' + newest.place + ' (' + newest.dist + ' km away)';
+        console.log('[🔔 NOTIFY] Sending browser notification:', title, body);
         try {
           new Notification(title, { body, icon: 'icons/javi-icon.png' });
-        } catch (_) { /* ignore */ }
+        } catch (_) { console.log('[🔔 NOTIFY] Browser notification FAILED'); }
+      } else {
+        console.log('[🔔 NOTIFY] Browser notifications NOT granted — skipping');
       }
 
       // Always show in-app toast for ALL new quakes
@@ -4045,5 +4076,49 @@ class JaviAlertApp {
   document.addEventListener('DOMContentLoaded', () => {
     const app = new JaviAlertApp();
     app.init();
+
+    // ─── DEBUG HELPERS (run in browser console) ───────────────
+    window.javidebug = {
+      /** Show current notification state */
+      status() {
+        console.log('=== NOTIFICATION DEBUG STATUS ===');
+        console.log('knownQuakeIds size:', app.knownQuakeIds.size);
+        console.log('Sample known IDs:', [...app.knownQuakeIds].slice(0, 5));
+        console.log('lastFetchTime:', app._lastFetchTime ? new Date(app._lastFetchTime).toLocaleString() : 'never');
+        console.log('Notification.permission:', Notification.permission);
+        console.log('soundEnabled:', app.soundEnabled);
+        console.log('volumeLevel:', app.volumeLevel);
+        console.log('currentMood:', app.currentMood);
+        console.log('userLat:', app.userLat, 'userLon:', app.userLon, 'place:', app.userPlace);
+        console.log('=== END STATUS ===');
+      },
+      /** Reset known IDs so next reload treats all 24h quakes as new (will re-notify) */
+      reset() {
+        localStorage.removeItem('javiKnownQuakeIds');
+        app.knownQuakeIds = new Set();
+        console.log('[🔔] Known quake IDs cleared. Reload the page — ALL 24h quakes will notify as new.');
+      },
+      /** Clear everything and reload fresh */
+      clearAll() {
+        localStorage.removeItem('javiKnownQuakeIds');
+        localStorage.removeItem('javiQuakeCache');
+        app.knownQuakeIds = new Set();
+        console.log('[🔔] All caches cleared. Reloading...');
+        location.reload();
+      },
+      /** Simulate a test notification */
+      testNotif() {
+        if (Notification.permission !== 'granted') {
+          console.log('[🔔] Notification permission not granted. Current:', Notification.permission);
+          return;
+        }
+        new Notification('🧪 Test Notification', {
+          body: '4.2 mag — Intensity IV at Davao (120 km away)',
+          icon: 'icons/javi-icon.png'
+        });
+        console.log('[🔔] Test notification sent!');
+      }
+    };
+    console.log('[🔔] Debug helpers loaded! Type: javidebug.status() | javidebug.reset() | javidebug.testNotif()');
   });
 
