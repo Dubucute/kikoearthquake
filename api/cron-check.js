@@ -127,23 +127,41 @@ export default async function handler(req, res) {
     // 2. Check what we already notified about
     const tracker = database.collection('cronTracker');
     const lastDoc = await tracker.findOne({ _id: 'lastQuakeId' });
-    const lastKnownId = lastDoc ? lastDoc.quakeId : null;
+    const lastTime = lastDoc ? (lastDoc.lastTime || 0) : 0;
 
-    // Find quakes newer than the last known
-    let newQuakes;
-    if (!lastKnownId) {
-      // First run — only notify about the single most recent quake
-      newQuakes = [quakes[0]];
-    } else {
-      newQuakes = quakes.filter(q => q.time > (lastDoc.lastTime || 0));
+    // First run ever — set tracker silently, don't notify
+    if (!lastTime) {
+      await tracker.updateOne(
+        { _id: 'lastQuakeId' },
+        { $set: { lastTime: quakes[0].time, quakeId: quakes[0].id } },
+        { upsert: true }
+      );
+      return res.json({ ok: true, message: 'First run — tracker set', sent: 0, total: quakes.length });
     }
+
+    // Find quakes genuinely newer than the last notified
+    const newQuakes = quakes.filter(q => q.time > lastTime);
 
     if (!newQuakes.length) {
       return res.json({ ok: true, message: 'No new quakes', sent: 0, total: quakes.length });
     }
 
+    // Only notify about quakes from the last 10 minutes (avoid stale notifications on deploy)
+    const cutoff = Date.now() - 600000;
+    const freshQuakes = newQuakes.filter(q => q.time > cutoff);
+
+    if (!freshQuakes.length) {
+      // Still update tracker to skip stale quakes
+      await tracker.updateOne(
+        { _id: 'lastQuakeId' },
+        { $set: { lastTime: quakes[0].time, quakeId: quakes[0].id } },
+        { upsert: true }
+      );
+      return res.json({ ok: true, message: 'New quakes found but too old to notify', sent: 0 });
+    }
+
     // Limit to prevent notification spam — max 5 per cron run
-    const toNotify = newQuakes.slice(0, 5);
+    const toNotify = freshQuakes.slice(0, 5);
     const biggest = toNotify.reduce((a, b) => b.mag > a.mag ? b : a);
 
     // 3. Send push to all subscribers
@@ -159,7 +177,7 @@ export default async function handler(req, res) {
       return res.json({ ok: true, message: 'No subscribers', sent: 0 });
     }
 
-    const count = toNotify.length;
+    const count = freshQuakes.length;
     const alertType = classifyQuake(biggest);
     const title = count === 1 ? 'New earthquake detected!' : count + ' new earthquakes detected!';
     const body = biggest.mag.toFixed(1) + ' mag — ' + biggest.place;
