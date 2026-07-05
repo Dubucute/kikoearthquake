@@ -177,7 +177,7 @@ export default async function handler(req, res) {
       return res.json({ ok: true, message: 'No subscribers', sent: 0 });
     }
 
-    const count = freshQuakes.length;
+    const count = toNotify.length;
     const alertType = classifyQuake(biggest);
     const title = count === 1 ? 'New earthquake detected!' : count + ' new earthquakes detected!';
     const body = '📍 ' + biggest.mag.toFixed(1) + ' mag\n' +

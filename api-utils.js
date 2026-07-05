@@ -126,6 +126,6 @@ export function shouldShowQuake(mag, distKm) {
   if (mag >= 4.0 && distKm <= 300) return true;  // Strong quakes
   if (mag >= 3.0 && distKm <= 200) return true;  // Moderate quakes
   if (mag >= 2.0 && distKm <= 100) return true;  // Small quakes
-  if (distKm <= 50) return true;      // Very near quakes regardless of mag
+  if (distKm <= 200) return true;      // Very near quakes regardless of mag (expanded)
   return false;
 }
