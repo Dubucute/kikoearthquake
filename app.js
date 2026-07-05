@@ -433,11 +433,9 @@ class JaviAlertApp {
         this.setMagFilter(parseFloat(btn.dataset.min));
       });
 
-      // Map filters — update markers when dropdowns change
-      const mapTimeFilter = document.getElementById('mapTimeFilter');
-      const mapMagFilter = document.getElementById('mapMagFilter');
-      if (mapTimeFilter) mapTimeFilter.addEventListener('change', () => this._updateMapMarkers());
-      if (mapMagFilter) mapMagFilter.addEventListener('change', () => this._updateMapMarkers());
+      // Map filters — custom dropdowns (click to open, click option to select)
+      this._setupMapDropdown('mapTimeSelect', 'mapTimeFilter', 'mapTimeOptions', () => this._updateMapMarkers());
+      this._setupMapDropdown('mapMagSelect', 'mapMagFilter', 'mapMagOptions', () => this._updateMapMarkers());
 
       // Offline detection
       window.addEventListener('online', () => {
@@ -2000,9 +1998,11 @@ class JaviAlertApp {
 
       if (!this.allQuakes || !this.allQuakes.length) return;
 
-      // Map filters: time range + magnitude from dropdowns
-      const mapTimeDays = parseInt(document.getElementById('mapTimeFilter')?.value || '7', 10);
-      const mapMagMin = parseFloat(document.getElementById('mapMagFilter')?.value || '0');
+      // Map filters: read from custom dropdown data-value attributes
+      const mapTimeBtn = document.getElementById('mapTimeFilter');
+      const mapMagBtn = document.getElementById('mapMagFilter');
+      const mapTimeDays = parseInt(mapTimeBtn?.dataset?.value || '7', 10);
+      const mapMagMin = parseFloat(mapMagBtn?.dataset?.value || '0');
       const mapTimeMs = mapTimeDays * 86400000;
 
       // Determine which quakes to show on the map
@@ -2080,6 +2080,43 @@ class JaviAlertApp {
           this.map.fitBounds(bounds, { padding: [30, 30], maxZoom: 10 });
         } catch (_) { /* ignore bounds errors */ }
       }
+    }
+
+    _setupMapDropdown(containerId, triggerId, optionsId, onChange) {
+      const container = document.getElementById(containerId);
+      const trigger = document.getElementById(triggerId);
+      const optionsEl = document.getElementById(optionsId);
+      if (!trigger || !optionsEl) return;
+
+      const textEl = trigger.querySelector('span');
+      trigger.dataset.value = optionsEl.querySelector('.selected')?.dataset?.value || '0';
+
+      trigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        // Close other map dropdowns
+        document.querySelectorAll('.map-filter-wrap .custom-select-options').forEach(el => {
+          if (el !== optionsEl) el.classList.add('hidden');
+        });
+        optionsEl.classList.toggle('hidden');
+      });
+
+      optionsEl.querySelectorAll('.custom-select-option').forEach(btn => {
+        btn.addEventListener('click', () => {
+          optionsEl.querySelectorAll('.custom-select-option').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          trigger.dataset.value = btn.dataset.value;
+          if (textEl) textEl.textContent = btn.textContent;
+          optionsEl.classList.add('hidden');
+          if (onChange) onChange();
+        });
+      });
+
+      // Close on outside click
+      document.addEventListener('click', (e) => {
+        if (!container || !container.contains(e.target)) {
+          optionsEl.classList.add('hidden');
+        }
+      });
     }
 
     _magColor(mag) {
