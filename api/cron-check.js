@@ -180,7 +180,8 @@ export default async function handler(req, res) {
     const count = freshQuakes.length;
     const alertType = classifyQuake(biggest);
     const title = count === 1 ? 'New earthquake detected!' : count + ' new earthquakes detected!';
-    const body = biggest.mag.toFixed(1) + ' mag — ' + biggest.place;
+    const body = '📍 ' + biggest.mag.toFixed(1) + ' mag\n' +
+      '\uD83D\uDCCD ' + biggest.place;
 
     const payload = JSON.stringify({
       title: '🌏 ' + title,

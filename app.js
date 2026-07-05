@@ -1699,8 +1699,9 @@ class JaviAlertApp {
       try {
         const title = count === 1 ? 'New earthquake detected!'
           : count + ' new earthquakes!';
-        const body = newest.mag.toFixed(1) + ' mag \u2014 ' +
-          newest.place + ' (' + newest.dist + ' km away)';
+        const body = '📍 ' + newest.mag.toFixed(1) + ' mag\n' +
+          '\uD83D\uDCCD ' + newest.place + '\n' +
+          '\u23F1 ' + newest.dist + ' km away';
         await fetch('/api/push-send', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
