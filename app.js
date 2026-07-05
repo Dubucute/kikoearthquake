@@ -1,6 +1,6 @@
 import { JAVI_MESSAGES, JAVI_REACTIONS, SAFETY_TIPS, EMERGENCY_CONTACTS, CHANGELOG } from './messages.js';
 import { playAlertSound, startAmbientSound, stopAmbientSound, setAmbientVolume, setAmbientTrack, setOnTrackChange, getPlaybackMode, setPlaybackMode, nextTrack, toggleAmbient, isAmbientPlaying, preloadAlertAudio, setOnProgress } from './audio.js';
-import { API, CONFIG, timeSince, getCompassDir, getDistance, parsePlaceName, magClass } from './api-utils.js';
+import { API, CONFIG, timeSince, getCompassDir, getDistance, parsePlaceName, magClass, getPHIVOLCSIntensity, intensityClass, shouldShowQuake, PEIS_LABELS, PEIS_SHORT } from './api-utils.js';
 import { QUIZ_QUESTIONS } from './quiz-questions.js';
 
 class JaviAlertApp {
@@ -865,10 +865,11 @@ class JaviAlertApp {
         const phivRes = await fetch('/api/phivolcs-quakes');
         const phivData = await phivRes.json();
         if (phivData.features && phivData.features.length > 0) {
-          // Filter to quakes within ~500km of user (PHIVOLCS returns ALL PH quakes)
+          // Filter by tiered distance: mag ≥5 always, smaller mags closer
           return phivData.features.filter(f => {
             const coords = f.geometry ? f.geometry.coordinates : [0, 0];
-            return getDistance(this.userLat, this.userLon, coords[1], coords[0]) <= 500;
+            const dist = getDistance(this.userLat, this.userLon, coords[1], coords[0]);
+            return shouldShowQuake(f.properties.mag, dist);
           });
         }
       } catch (_) {
@@ -916,7 +917,8 @@ class JaviAlertApp {
           dir,
           parsedDist: parsed.distance,
           parsedDir: parsed.direction,
-          url: props.url || ''
+          url: props.url || '',
+          intensity: getPHIVOLCSIntensity(props.mag || 0, Math.round(dist)),
         };
       });
 
@@ -943,26 +945,19 @@ class JaviAlertApp {
       document.getElementById('statNearest').textContent = nearestDist ? nearestDist + ' km' : '--';
       this._updateLastSignificant(quakes);
 
-      // Determine mood — factors magnitude, recency, distance, AND depth
+      // Determine mood — factors intensity (mag+distance+depth), recency
       let mood = 'safe';
       const now = Date.now();
       for (const q of quakes) {
         const isRecent = now - q.time.getTime();
-        // Adjust effective magnitude based on depth
-        // Shallow (< 70km) feels stronger; deep (> 150km) feels weaker
-        let effectiveMag = q.mag;
-        if (q.depth !== null) {
-          if (q.depth < CONFIG.SHALLOW_DEPTH_KM) effectiveMag += 0.5;
-          else if (q.depth > CONFIG.DEEP_DEPTH_KM) effectiveMag -= 0.5;
-        }
-        // Danger: strong quake recently OR moderate shallow quake very near
-        if ((effectiveMag >= CONFIG.DANGER_THRESHOLD && isRecent < CONFIG.DANGER_WINDOW_MS) ||
-            (effectiveMag >= 3.5 && q.dist <= CONFIG.DANGER_DIST_KM && isRecent < CONFIG.DANGER_WINDOW_MS)) {
+        // Use intensity (0-10) which already accounts for mag, distance, depth
+        // Danger: intensity ≥ 5 recently
+        if (q.intensity >= 5 && isRecent < CONFIG.DANGER_WINDOW_MS) {
           mood = 'danger';
           break;
         }
-        // Warning: any quake above threshold within window
-        if (q.mag >= CONFIG.WARNING_THRESHOLD && isRecent < CONFIG.WARNING_WINDOW_MS) {
+        // Warning: intensity ≥ 3 within 24h
+        if (q.intensity >= 3 && isRecent < CONFIG.WARNING_WINDOW_MS) {
           mood = 'warning';
         }
       }
@@ -1012,11 +1007,14 @@ class JaviAlertApp {
         const distKm = q.dist + ' km';
         const dirStr = q.dir;
         const isTsunamiRisk = q.mag >= 6.5 && q.depth !== null && q.depth < 70;
+        const intLabel = PEIS_SHORT[q.intensity] || '—';
+        const intCls = intensityClass(q.intensity);
 
         const mapsUrl = 'https://www.google.com/maps?q=' + q.lat + ',' + q.lon;
 
         html += '<div class="quake-item' + (isTsunamiRisk ? ' tsunami-risk' : '') + '" data-id="' + q.id + '">' +
           '<div class="mag-badge ' + cls + '">' + mag + '</div>' +
+          '<div class="intensity-badge ' + intCls + '">' + intLabel + '</div>' +
           '<div class="q-info">' +
             '<div class="q-top">' +
               '<span class="q-place">' + q.place + '</span>' +
@@ -1289,10 +1287,10 @@ class JaviAlertApp {
     }
 
     _alertNewQuakes(newQuakes) {
-      // Determine alert level from the NEWEST quake (most recent time)
+      // Determine alert level from the NEWEST quake using intensity
       const newest = newQuakes.reduce((a, b) => a.time > b.time ? a : b);
-      const alertType = newest.mag >= CONFIG.DANGER_THRESHOLD ? 'danger' :
-                        newest.mag >= CONFIG.WARNING_THRESHOLD ? 'warning' : null;
+      const alertType = newest.intensity >= 5 ? 'danger' :
+                        newest.intensity >= 3 ? 'warning' : null;
 
       // Play alert sound
       if (alertType) {
@@ -1305,8 +1303,9 @@ class JaviAlertApp {
       // Show browser notification (works on Android Chrome, not on iOS Safari)
       if ('Notification' in window && Notification.permission === 'granted') {
         const count = newQuakes.length;
+        const intLabel = PEIS_LABELS[newest.intensity] || '';
         const title = count === 1 ? 'New earthquake detected!' : count + ' new earthquakes detected!';
-        const body = newest.mag.toFixed(1) + ' mag at ' + newest.place + ' (' + newest.dist + ' km away)';
+        const body = intLabel + ' — ' + newest.mag.toFixed(1) + ' mag at ' + newest.place + ' (' + newest.dist + ' km away)';
         try {
           new Notification(title, { body, icon: 'icons/javi-icon.png' });
         } catch (_) { /* ignore */ }
@@ -2304,9 +2303,12 @@ class JaviAlertApp {
       mapFrame.src = embedUrl;
 
       // Build info body
+      const intLabel = PEIS_LABELS[q.intensity] || '—';
+      const intCls = intensityClass(q.intensity);
       body.innerHTML =
         '<div class="detail-mag-row">' +
           '<div class="detail-mag-badge ' + cls + '">' + mag + '</div>' +
+          '<div class="detail-intensity-badge ' + intCls + '">' + intLabel + '</div>' +
           '<div class="detail-mag-label">' +
             'Magnitude<strong>' + cls.charAt(0).toUpperCase() + cls.slice(1) + '</strong>' +
           '</div>' +
@@ -3328,11 +3330,12 @@ class JaviAlertApp {
       const isPlain = quake.mag === 0 && quake.dist === 0;
 
       if (!isPlain) {
-        // Real earthquake data
+        // Real earthquake data — show intensity + mag + distance
+        const intLabel = PEIS_LABELS[quake.intensity] || '';
         titleEl.textContent = type === 'danger' ? 'DANGER! Strong Earthquake!'
           : type === 'warning' ? 'Warning — Earthquake Detected'
           : 'Earthquake Alert';
-        bodyEl.textContent = (quake.mag || '?').toFixed(1) + ' mag • '
+        bodyEl.textContent = intLabel + ' — ' + (quake.mag || '?').toFixed(1) + ' mag • '
           + quake.dist + ' km away • ' + quake.place;
       } else {
         // Plain message (test notifications, blocked help, etc.)

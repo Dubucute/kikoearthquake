@@ -73,3 +73,50 @@ export function magClass(mag) {
   if (mag < 6) return 'mag-strong';
   return 'mag-major';
 }
+
+// ─── PHIVOLCS INTENSITY ESTIMATOR ──────────────────────────────
+// Estimates PEIS intensity from magnitude + distance using empirical
+// approximation: felt intensity ≈ mag − log10(distance) − 1.0
+
+export const PEIS_LABELS = [
+  '',               // 0 (unused)
+  'I — Scarcely Perceptible',
+  'II — Slightly Felt',
+  'III — Weak',
+  'IV — Moderately Strong',
+  'V — Strong',
+  'VI — Very Strong',
+  'VII — Destructive',
+  'VIII — Very Destructive',
+  'IX — Devastating',
+  'X — Completely Devastating'
+];
+
+export const PEIS_SHORT = [
+  '', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'
+];
+
+export function getPHIVOLCSIntensity(mag, distanceKm) {
+  // Empirical approximation based on PHIVOLCS intensity-distance tables
+  const dist = Math.max(distanceKm, 1); // avoid log(0)
+  const felt = mag - Math.log10(dist) - 1.0;
+  const level = Math.round(Math.max(0, Math.min(10, felt)));
+  return level;
+}
+
+export function intensityClass(intensity) {
+  if (intensity <= 2) return 'intensity-low';
+  if (intensity <= 4) return 'intensity-moderate';
+  if (intensity <= 6) return 'intensity-strong';
+  return 'intensity-extreme';
+}
+
+export function shouldShowQuake(mag, distKm) {
+  // Tiered filter: larger quakes shown from further away
+  if (mag >= 5.0) return true;         // Always show major quakes
+  if (mag >= 4.0 && distKm <= 300) return true;  // Strong quakes
+  if (mag >= 3.0 && distKm <= 200) return true;  // Moderate quakes
+  if (mag >= 2.0 && distKm <= 100) return true;  // Small quakes
+  if (distKm <= 50) return true;      // Very near quakes regardless of mag
+  return false;
+}

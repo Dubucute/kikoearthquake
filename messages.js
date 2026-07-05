@@ -93,6 +93,15 @@ export const SAFETY_TIPS_TL = [
 
 // ─── CHANGELOG ───────────────────────────────────────────────
 export const CHANGELOG = [
+  { ver: 'v1.68', date: '2026-07-05', items: [
+    'New: PHIVOLCS Intensity Scale (PEIS) — each quake shows intensity (I-X) based on mag + distance',
+    'New: Tiered distance filter — mag ≥5 always shown, smaller quakes closer to you',
+    'New: Intensity badges on quake list and detail modal',
+    'New: Notifications show intensity label (e.g. "III — Weak — 2.6 mag at Glan")',
+    'Fix: Mood detection now uses intensity instead of raw magnitude',
+    'Fix: Quake list no longer shows all nationwide quakes — only relevant ones near you',
+    'Updated: Service worker cache bumped to v1.68'
+  ]},
   { ver: 'v1.67', date: '2026-07-05', items: [
     'Fix: PHIVOLCS results now filtered by 500km radius from your location (was showing all nationwide)',
     'Updated: Service worker cache bumped to v1.67'

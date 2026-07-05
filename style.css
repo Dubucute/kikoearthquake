@@ -737,6 +737,26 @@ body.dark-mode .quiz-review { background: rgba(40,40,60,.75); border-color: rgba
 .mag-moderate{ background: #e17055; }
 .mag-strong  { background: #d63031; }
 .mag-major   { background: #6c5ce7; }
+
+/* PHIVOLCS Intensity badges */
+.intensity-badge {
+  width: 36px; height: 36px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 800; color: white; flex-shrink: 0;
+  border: 2px solid #2d3436;
+  box-shadow: 2px 2px 0px #2d3436;
+}
+.intensity-low      { background: #74b9ff; }
+.intensity-moderate { background: #fdcb6e; color: #2d3436; }
+.intensity-strong   { background: #e17055; }
+.intensity-extreme  { background: #d63031; }
+
+.detail-intensity-badge {
+  display: inline-block; padding: 4px 10px; border-radius: 8px;
+  font-size: 12px; font-weight: 700; color: white; margin-left: 8px;
+  vertical-align: middle;
+}
+
 .q-info { flex: 1; min-width: 0; }
 .q-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .q-place { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
