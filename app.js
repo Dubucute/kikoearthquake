@@ -95,6 +95,7 @@ class JaviAlertApp {
       this._quickReply = this._quickReply.bind(this);
       this._updateChatHeadBadge = this._updateChatHeadBadge.bind(this);
       this._showChatHeadNotif = this._showChatHeadNotif.bind(this);
+      this._initChatHeadDrag = this._initChatHeadDrag.bind(this);
     }
 
     /** Get current language: tl, en, or ceb */
@@ -258,7 +259,7 @@ class JaviAlertApp {
 
       // Ask Javi chat modal
       document.getElementById('pillAskJaviBtn').addEventListener('click', () => this._showChat());
-      document.getElementById('chatHead').addEventListener('click', () => this._showChat());
+      this._initChatHeadDrag();
       document.getElementById('chatModalClose').addEventListener('click', () => {
         document.getElementById('chatModal').classList.add('hidden');
         // If bot is still loading, mark that there may be unread messages
@@ -1340,6 +1341,108 @@ class JaviAlertApp {
       }, 5000);
     }
 
+    /** Make the chat head draggable like Messenger — snap to nearest edge */
+    _initChatHeadDrag() {
+      const head = document.getElementById('chatHead');
+      if (!head) return;
+      const size = 56; // icon size in px
+      const margin = 12;
+
+      // Load saved position or default to bottom-right
+      let savedPos = null;
+      try { savedPos = JSON.parse(localStorage.getItem('javiChatHeadPos')); } catch (_) {} // prettier-ignore
+
+      const setInitialPos = () => {
+        if (savedPos) {
+          head.style.left = savedPos.x + 'px';
+          head.style.top = savedPos.y + 'px';
+        } else {
+          head.style.left = (window.innerWidth - size - 24) + 'px';
+          head.style.top = (window.innerHeight - size - 24) + 'px';
+        }
+      };
+      setInitialPos();
+
+      let isDragging = false;
+      let startX, startY, origLeft, origTop;
+      let moved = false;
+
+      const onPointerDown = (e) => {
+        if (e.button !== 0) return;
+        // Hide notification popup when dragging
+        const notif = document.getElementById('chatHeadNotif');
+        if (notif && !notif.classList.contains('hidden')) {
+          notif.classList.add('hidden');
+          if (this._notifTimer) clearTimeout(this._notifTimer);
+        }
+        isDragging = false;
+        moved = false;
+        startX = e.clientX;
+        startY = e.clientY;
+        const rect = head.getBoundingClientRect();
+        origLeft = rect.left;
+        origTop = rect.top;
+        head.setPointerCapture(e.pointerId);
+        head.classList.add('grabbing');
+      };
+
+      const onPointerMove = (e) => {
+        if (!head.hasPointerCapture(e.pointerId)) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+          isDragging = true;
+          moved = true;
+        }
+        if (isDragging) {
+          let newX = origLeft + dx;
+          let newY = origTop + dy;
+          newX = Math.max(0, Math.min(window.innerWidth - size, newX));
+          newY = Math.max(0, Math.min(window.innerHeight - size, newY));
+          head.style.left = newX + 'px';
+          head.style.top = newY + 'px';
+        }
+      };
+
+      const onPointerUp = (e) => {
+        head.classList.remove('grabbing');
+        if (isDragging) {
+          e.preventDefault();
+          const rect = head.getBoundingClientRect();
+          const centerX = rect.left + rect.width / 2;
+          const snapLeft = centerX < window.innerWidth / 2;
+          const snapX = snapLeft ? margin : window.innerWidth - size - margin;
+          const snapY = Math.max(margin, Math.min(window.innerHeight - size - margin, parseInt(head.style.top, 10)));
+          head.style.left = snapX + 'px';
+          head.style.top = snapY + 'px';
+          savedPos = { x: snapX, y: snapY };
+          try { localStorage.setItem('javiChatHeadPos', JSON.stringify(savedPos)); } catch (_) {} // prettier-ignore
+        } else if (!moved) {
+          // Treat as a tap — open chat
+          this._showChat();
+        }
+      };
+
+      head.addEventListener('pointerdown', onPointerDown);
+      head.addEventListener('pointermove', onPointerMove);
+      head.addEventListener('pointerup', onPointerUp);
+      head.addEventListener('pointercancel', onPointerUp);
+
+      // Handle window resize — keep within bounds
+      window.addEventListener('resize', () => {
+        const x = parseInt(head.style.left, 10) || 0;
+        const y = parseInt(head.style.top, 10) || 0;
+        if (x + size > window.innerWidth - margin || y + size > window.innerHeight - margin) {
+          const newX = Math.min(x, window.innerWidth - size - margin);
+          const newY = Math.min(y, window.innerHeight - size - margin);
+          head.style.left = Math.max(margin, newX) + 'px';
+          head.style.top = Math.max(margin, newY) + 'px';
+          savedPos = { x: parseInt(head.style.left, 10), y: parseInt(head.style.top, 10) };
+          try { localStorage.setItem('javiChatHeadPos', JSON.stringify(savedPos)); } catch (_) {} // prettier-ignore
+        }
+      });
+    }
+
     /** Push a proactive earthquake alert into the chat */
     _pushProactiveAlert(quake, alertType) {
       const mag = quake.mag.toFixed(1);
@@ -2251,6 +2354,9 @@ class JaviAlertApp {
         ctx.beginPath();
         ctx.arc(w - 64, 54, 22, 0, Math.PI * 2);
         ctx.clip();
+        // White background circle
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(w - 86, 32, 44, 44);
         ctx.drawImage(javiIcon, w - 86, 32, 44, 44);
         ctx.restore();
         // Circle border
@@ -3431,7 +3537,7 @@ class JaviAlertApp {
       if (!this.chatMessages.length) {
         container.innerHTML = '' +
           '<div class="chat-bubble chat-bubble-bot chat-welcome" id="chatWelcome">' +
-            '<img class="chat-avatar" src="icons/javi-icon.png" alt="Javi">' +
+            '<div class="chat-avatar-wrap"><img class="chat-avatar" src="icons/javi-icon.png" alt="Javi"></div>' +
             '<div class="chat-bubble-inner">👋 Hi! I\'m Javi, your earthquake safety buddy. Ask me anything about earthquakes, safety tips, or preparedness!</div>' +
           '</div>' +
           '<div class="chat-typing hidden" id="chatTyping">' +
@@ -3457,7 +3563,7 @@ class JaviAlertApp {
         if (msg.role === 'user') {
           div.innerHTML = '<div class="chat-bubble-inner">' + this._escapeHtml(msg.content) + '</div>';
         } else {
-          div.innerHTML = '<img class="chat-avatar" src="icons/javi-icon.png" alt="Javi"><div class="chat-bubble-inner">' + this._formatBotMessage(msg.content) + '</div>';
+          div.innerHTML = '<div class="chat-avatar-wrap"><img class="chat-avatar" src="icons/javi-icon.png" alt="Javi"></div><div class="chat-bubble-inner">' + this._formatBotMessage(msg.content) + '</div>';
         }
         container.appendChild(div);
       });
@@ -3468,7 +3574,7 @@ class JaviAlertApp {
         if (lastMsg.role === 'assistant') {
           const div = document.createElement('div');
           div.className = 'chat-bubble chat-bubble-bot chat-bubble-typing';
-          div.innerHTML = '<img class="chat-avatar" src="icons/javi-icon.png" alt="Javi"><div class="chat-bubble-inner" id="chatTypingText"></div>';
+          div.innerHTML = '<div class="chat-avatar-wrap"><img class="chat-avatar" src="icons/javi-icon.png" alt="Javi"></div><div class="chat-bubble-inner" id="chatTypingText"></div>';
           container.appendChild(div);
 
           // Typewriter animation

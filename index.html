@@ -332,7 +332,7 @@
       </div>
       <div class="chat-messages" id="chatMessages">
         <div class="chat-bubble chat-bubble-bot chat-welcome" id="chatWelcome">
-          <img class="chat-avatar" src="icons/javi-icon.png" alt="Javi">
+          <div class="chat-avatar-wrap"><img class="chat-avatar" src="icons/javi-icon.png" alt="Javi"></div>
           <div class="chat-bubble-inner">👋 Hi! I'm Javi, your earthquake safety buddy. Ask me anything about earthquakes, safety tips, or preparedness!</div>
         </div>
       </div>
@@ -577,7 +577,9 @@
 
   <!-- Javi Chat Head (floating bottom-right) -->
   <div class="chat-head" id="chatHead" aria-label="Open Javi chat" role="button" tabindex="0">
-    <img src="icons/javi-icon.png" alt="Javi" class="chat-head-icon">
+    <div class="chat-head-icon-wrap">
+      <img src="icons/javi-icon.png" alt="Javi" class="chat-head-icon">
+    </div>
     <span class="chat-head-badge hidden" id="chatHeadBadge">0</span>
     <div class="chat-head-notif hidden" id="chatHeadNotif">
       <div class="chat-head-notif-inner">
