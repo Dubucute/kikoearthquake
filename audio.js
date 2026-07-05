@@ -7,30 +7,12 @@
  * @param {number} [volume=0.3] — volume level (0-1)
  */
 let _alertAudio = null;
-let _audioCtx = null;
-let _alertBuffer = null;
 
 /**
- * Pre-create and preload the alert audio buffer.
+ * Pre-create and preload the alert audio element.
  * Call during first user interaction to authorize playback on mobile.
  */
 export function preloadAlertAudio() {
-  if (!_audioCtx && typeof AudioContext !== 'undefined') {
-    try {
-      _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    } catch (_) {
-      _audioCtx = null;
-    }
-  }
-
-  if (_audioCtx && !_alertBuffer) {
-    fetch('sounds/NDRRMC-Alert.mp3')
-      .then(res => res.arrayBuffer())
-      .then(buffer => _audioCtx.decodeAudioData(buffer))
-      .then(decoded => { _alertBuffer = decoded; })
-      .catch(() => { _alertBuffer = null; });
-  }
-
   if (!_alertAudio) {
     try {
       _alertAudio = new Audio();
@@ -72,22 +54,7 @@ export function playAlertSound(type, soundEnabled, volume = 0.3) {
     return { wasPlaying, prevSrc, prevVol, prevLoop };
   };
 
-  const tryAudioContext = () => {
-    if (!_audioCtx || !_alertBuffer) return Promise.reject();
-    if (_audioCtx.state === 'suspended') {
-      _audioCtx.resume().catch(() => {});
-    }
-    const { wasPlaying, prevSrc, prevVol, prevLoop } = pauseAmbientForAlert();
-    const source = _audioCtx.createBufferSource();
-    source.buffer = _alertBuffer;
-    const gain = _audioCtx.createGain();
-    gain.gain.value = vol;
-    source.connect(gain).connect(_audioCtx.destination);
-    source.onended = () => resumeAmbientAfter(wasPlaying, prevSrc, prevVol, prevLoop);
-    source.start(0);
-    return Promise.resolve();
-  };
-
+  // Strategy 1: Use dedicated _alertAudio element
   const tryAlertAudio = () => {
     if (!_alertAudio) {
       try {
@@ -107,6 +74,7 @@ export function playAlertSound(type, soundEnabled, volume = 0.3) {
     });
   };
 
+  // Strategy 2: Fall back to ambient audio (already has playback permission)
   const tryAmbientAudio = () => {
     if (!_ambientAudio) return Promise.reject();
     const wasPlaying = !_ambientAudio.paused && !!_ambientAudio.src;
@@ -138,10 +106,9 @@ export function playAlertSound(type, soundEnabled, volume = 0.3) {
   };
 
   try {
-    tryAudioContext()
-      .catch(() => tryAlertAudio())
-      .catch(() => tryAmbientAudio())
-      .catch(() => {});
+    tryAlertAudio().catch(() => {
+      tryAmbientAudio().catch(() => {});
+    });
   } catch (_) { /* audio not supported */ }
 }
 

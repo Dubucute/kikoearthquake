@@ -92,7 +92,13 @@ export const SAFETY_TIPS_TL = [
 ];
 
 // ─── CHANGELOG ───────────────────────────────────────────────
-export const CHANGELOG = [  { ver: 'v1.108', date: '2026-07-05', items: [
+export const CHANGELOG = [  { ver: 'v1.109', date: '2026-07-05', items: [
+    'Fix: NDRRMC alarm not playing — reverted AudioContext (buffer wasn\'t ready in time)',
+    'Fix: Back to HTMLAudioElement for alert — reliable playback on mobile',
+    'Kept: Ambient music pauses during alarm, resumes after',
+    'Updated: Service worker cache bumped to v1.109'
+  ]},
+  { ver: 'v1.108', date: '2026-07-05', items: [
     'Fix: NDRRMC alarm now uses Web Audio API — no mobile media controls in notification',
     'New: AudioContext pre-buffers alert sound for instant playback on first tap',
     'Removed: Opening intro track (Sabay-sabay Tayong Bida) — ambient starts directly',
