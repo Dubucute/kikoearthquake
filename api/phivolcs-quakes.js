@@ -10,17 +10,25 @@
 
 const PHIVOLCS_URL = 'https://earthquake.phivolcs.dost.gov.ph/';
 const BASE_URL = 'https://earthquake.phivolcs.dost.gov.ph/';
-const FETCH_TIMEOUT_MS = 10000;
+const FETCH_TIMEOUT_MS = 15000;
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 'public, max-age=120, s-maxage=120');
 
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
     const response = await fetch(PHIVOLCS_URL, {
-      headers: { 'User-Agent': 'JaviAlert/1.0' },
-      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+      },
+      signal: controller.signal,
     });
+    clearTimeout(timeout);
 
     if (!response.ok) {
       throw new Error(`PHIVOLCS returned ${response.status}`);
@@ -31,9 +39,10 @@ export default async function handler(req, res) {
 
     res.status(200).json({ features });
   } catch (err) {
-    console.error('PHIVOLCS fetch error:', err.message);
+    const msg = err.cause ? `${err.message} (cause: ${err.cause})` : err.message;
+    console.error('PHIVOLCS fetch error:', msg, err.name, err.type);
     // Return empty features so the app can fall back to USGS
-    res.status(200).json({ features: [], _error: err.message });
+    res.status(200).json({ features: [], _error: msg });
   }
 }
 
