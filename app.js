@@ -951,19 +951,18 @@ class JaviAlertApp {
       document.getElementById('statNearest').textContent = nearestDist ? nearestDist + ' km' : '--';
       this._updateLastSignificant(quakes);
 
-      // Determine mood — factors intensity (mag+distance+depth), recency
+      // Determine mood — based on intensity AND magnitude
       let mood = 'safe';
       const now = Date.now();
       for (const q of quakes) {
         const isRecent = now - q.time.getTime();
-        // Use intensity (0-10) which already accounts for mag, distance, depth
-        // Danger: intensity ≥ 5 recently
-        if (q.intensity >= 5 && isRecent < CONFIG.DANGER_WINDOW_MS) {
+        // Danger: intensity ≥ 5 or mag ≥ 5 within danger window
+        if ((q.intensity >= 5 || q.mag >= 5) && isRecent < CONFIG.DANGER_WINDOW_MS) {
           mood = 'danger';
           break;
         }
-        // Warning: intensity ≥ 3 within 24h
-        if (q.intensity >= 3 && isRecent < CONFIG.WARNING_WINDOW_MS) {
+        // Warning: intensity ≥ 3 or mag ≥ 3 within 24h
+        if ((q.intensity >= 3 || q.mag >= 3) && isRecent < CONFIG.WARNING_WINDOW_MS) {
           mood = 'warning';
         }
       }
