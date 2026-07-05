@@ -85,11 +85,89 @@ class JaviAlertApp {
       this._callHuggingFace = this._callHuggingFace.bind(this);
       this._renderChatMessages = this._renderChatMessages.bind(this);
       this._quizLang = this._quizLang.bind(this);
+      this._loadChatMemory = this._loadChatMemory.bind(this);
+      this._saveChatMemory = this._saveChatMemory.bind(this);
+      this._detectLanguage = this._detectLanguage.bind(this);
+      this._fallbackResponse = this._fallbackResponse.bind(this);
+      this._quickReply = this._quickReply.bind(this);
     }
 
     /** Get current language: tl, en, or ceb */
     _quizLang() {
       try { return localStorage.getItem('javiLang') || 'tl'; } catch (_) { return 'tl'; }
+    }
+
+    // ─── CHAT MEMORY (localStorage) ──────────────────────────
+    /** Load past chat context so Javi remembers the user */
+    _loadChatMemory() {
+      try {
+        const saved = localStorage.getItem('javiChatMemory');
+        if (saved) {
+          const mem = JSON.parse(saved);
+          // Only use memory if it's less than 1 hour old
+          if (mem && mem.timestamp && Date.now() - mem.timestamp < 3600000) {
+            return mem;
+          }
+        }
+      } catch (_) { /* ignore */ }
+      return null;
+    }
+
+    /** Save a short summary after each AI reply */
+    _saveChatMemory(userMessage, aiReply) {
+      try {
+        const existing = this._loadChatMemory();
+        const topics = existing ? existing.topics : [];
+        // Keep last 3 topics
+        topics.push(userMessage.slice(0, 60));
+        if (topics.length > 3) topics.shift();
+
+        const mem = {
+          timestamp: Date.now(),
+          lastUserMsg: userMessage.slice(0, 100),
+          lastAiSummary: aiReply.slice(0, 100),
+          topics,
+        };
+        localStorage.setItem('javiChatMemory', JSON.stringify(mem));
+      } catch (_) { /* ignore */ }
+    }
+
+    /** Detect language from text: 'tl', 'ceb', or 'en' */
+    _detectLanguage(text) {
+      const t = text.toLowerCase();
+      // Cebuano markers
+      const cebuanoWords = ['unsa', 'kinsa', 'asa', 'kanus', 'ngano', 'tagpila', 'buntag', 'gabii',
+        'adlaw', 'salamat', 'palihug', 'gwapa', 'gwapo', 'maayo', 'ako', 'imong', 'wala', 'dili',
+        'kini', 'kana', 'didto', 'dinhi', 'nimo', 'ako', 'siya', 'kami', 'sila', 'ang', 'og', 'ug',
+        'hala', 'mao', 'nya', 'bitaw', 'sige', 'lagi', 'nga', 'mga', 'kaayo'];
+      const matchesCeb = cebuanoWords.filter(w => t.includes(w)).length;
+
+      // Tagalog markers
+      const tagalogWords = ['po', 'opo', 'ako', 'ikaw', 'sila', 'sino', 'ano', 'bakit', 'paano',
+        'saan', 'kailan', 'magkano', 'meron', 'wala', 'mayroon', 'kong', 'mong', 'kanila',
+        'atin', 'amin', 'natin', 'ko', 'mo', 'niya', 'namin', 'ninyo', 'sana', 'kasi', 'nga',
+        'mga', 'ay', 'ang', 'ng', 'sa', 'at', 'ayon', 'daw', 'raw', 'na', 'kung', 'pero', 'kaya'];
+      const matchesTl = tagalogWords.filter(w => t.includes(w)).length;
+
+      if (matchesCeb > matchesTl && matchesCeb >= 2) return 'ceb';
+      if (matchesTl > matchesCeb && matchesTl >= 2) return 'tl';
+      return 'en';
+    }
+
+    /** Pick a fallback Javi response when AI is unavailable */
+    _fallbackResponse() {
+      const mood = this.currentMood || 'safe';
+      const pool = JAVI_MESSAGES[mood] || JAVI_MESSAGES.safe;
+      return pool[Math.floor(Math.random() * pool.length)];
+    }
+
+    /** Quick reply suggestions shown below each bot message */
+    _quickReply() {
+      return [
+        { text: '📖 Safety tips', action: 'tips' },
+        { text: '📝 Quiz', action: 'quiz' },
+        { text: '💬 Chat', action: 'chat' },
+      ];
     }
 
     // ─── INIT ──────────────────────────────────────────────────
@@ -1191,6 +1269,37 @@ class JaviAlertApp {
       bubble.className = 'bubble';
       bubble.innerHTML = '<i data-lucide="bell" aria-hidden="true"></i> ' + msg;
       try { lucide.createIcons(); } catch (_) { /* ignore */ }
+
+      // Proactive alert: push a personalized message to the chat
+      if (alertType) {
+        this._pushProactiveAlert(newest, alertType);
+      }
+    }
+
+    /** Push a proactive earthquake alert into the chat */
+    _pushProactiveAlert(quake, alertType) {
+      const mag = quake.mag.toFixed(1);
+      const place = quake.place;
+      const dist = quake.dist;
+      const depth = quake.depth !== null ? quake.depth + ' km depth' : 'unknown depth';
+      const timeAgo = timeSince(quake.time);
+
+      let advice = '';
+      if (alertType === 'danger') {
+        advice = '🚨 DANGER! ' + mag + ' magnitude earthquake near ' + place + ' (' + dist + ' km away, ' + depth + ')! DROP, COVER, and HOLD ON right now! Protect your head and stay under cover until the shaking stops.';
+      } else if (alertType === 'warning') {
+        advice = '⚠️ Warning! ' + mag + ' magnitude earthquake detected near ' + place + ' (' + dist + ' km away, ' + depth + '). Stay alert and be ready! Secure loose items and check your emergency kit.';
+      }
+
+      const chatMsg = advice + '\n\n' + (alertType === 'danger'
+        ? 'Remember: Drop, Cover, and Hold On! 🛡️'
+        : 'Stay safe and check your surroundings! 🙏');
+
+      // Push to chat if it's not a duplicate (check last 2 messages)
+      const lastMsgs = this.chatMessages.slice(-2).map(m => m.content).join(' ');
+      if (!lastMsgs.includes(quake.id) && !lastMsgs.includes(mag + ' magnitude')) {
+        this.chatMessages.push({ role: 'assistant', content: chatMsg, _quakeId: quake.id });
+      }
     }
 
     // ─── PUSH NOTIFICATIONS ────────────────────────────────────
@@ -3043,6 +3152,21 @@ class JaviAlertApp {
       const modal = document.getElementById('chatModal');
       if (!modal) return;
 
+      // Load chat memory — only when no user messages yet
+      const hasUserMsg = this.chatMessages.some(m => m.role === 'user');
+      if (!hasUserMsg) {
+        const memory = this._loadChatMemory();
+        if (memory && !this.chatMessages.length) {
+          const lastTopic = memory.topics && memory.topics.length > 0
+            ? memory.topics[memory.topics.length - 1]
+            : null;
+          const greeting = memory.lastAiSummary
+            ? '👋 Welcome back! Last time we talked about "' + this._escapeHtml(lastTopic || 'something') + '". Want to continue or ask something new? 😊'
+            : '👋 Welcome back! Nice to see you again! 😊';
+          this.chatMessages.push({ role: 'assistant', content: greeting });
+        }
+      }
+
       // Reset scroll to top
       const msgs = document.getElementById('chatMessages');
       if (msgs) msgs.scrollTop = 0;
@@ -3068,6 +3192,23 @@ class JaviAlertApp {
       // Clear input
       input.value = '';
 
+      // Auto-detect language on first user message and switch app language
+      if (this.chatMessages.filter(m => m.role === 'user').length === 0) {
+        const detected = this._detectLanguage(text);
+        const currentLang = this._quizLang();
+        if (detected !== currentLang) {
+          try {
+            localStorage.setItem('javiLang', detected);
+            // Update the language dropdown UI if it exists
+            const langBtn = document.getElementById('langDropdownBtn');
+            if (langBtn) {
+              const labels = { tl: 'Tagalog', en: 'English', ceb: 'Cebuano' };
+              langBtn.textContent = labels[detected] || 'English';
+            }
+          } catch (_) { /* ignore */ }
+        }
+      }
+
       // Add user message
       this.chatMessages.push({ role: 'user', content: text });
       this._renderChatMessages();
@@ -3089,7 +3230,7 @@ class JaviAlertApp {
         // Build earthquake context from latest data
         const quakeContext = this._buildQuakeContext();
 
-        // Call HF Inference API with quake context
+        // Call AI API with quake context
         const response = await this._callHuggingFace(this.chatMessages, quakeContext);
 
         // Remove typing
@@ -3097,7 +3238,10 @@ class JaviAlertApp {
 
         // Add assistant response
         this.chatMessages.push({ role: 'assistant', content: response });
-        this._renderChatMessages();
+        this._renderChatMessages(true);
+
+        // Save to memory
+        this._saveChatMemory(text, response);
 
         // Scroll to bottom
         if (msgs) msgs.scrollTop = msgs.scrollHeight;
@@ -3105,15 +3249,12 @@ class JaviAlertApp {
         console.error('Chat error:', err);
         if (typing) typing.classList.add('hidden');
 
-        // Show error bubble
-        const msgsContainer = document.getElementById('chatMessages');
-        if (msgsContainer) {
-          const errBubble = document.createElement('div');
-          errBubble.className = 'chat-bubble chat-bubble-bot chat-bubble-error';
-          errBubble.innerHTML = '<img class="chat-avatar" src="icons/javi-icon.png" alt="Javi"><div class="chat-bubble-inner">😅 Sorry, hindi ako maka-respond ngayon. Pakisubukan ulit mamaya!</div>';
-          msgsContainer.appendChild(errBubble);
-          msgsContainer.scrollTop = msgsContainer.scrollHeight;
-        }
+        // Fallback: use built-in response instead of error message
+        const fallback = this._fallbackResponse();
+        this.chatMessages.push({ role: 'assistant', content: fallback });
+        this._renderChatMessages(true);
+        this._saveChatMemory(text, fallback);
+        if (msgs) msgs.scrollTop = msgs.scrollHeight;
       } finally {
         this.chatLoading = false;
         if (sendBtn) sendBtn.disabled = false;
@@ -3173,7 +3314,7 @@ class JaviAlertApp {
       throw new Error('Unexpected API response format');
     }
 
-    _renderChatMessages() {
+    _renderChatMessages(animateLastBot) {
       const container = document.getElementById('chatMessages');
       if (!container) return;
 
@@ -3193,13 +3334,15 @@ class JaviAlertApp {
       }
 
       // Remove welcome, keep typing indicator
-      const typing = container.querySelector('#chatTyping') || document.createElement('div');
-      const hasTyping = container.querySelector('#chatTyping');
+      const typingEl = container.querySelector('#chatTyping');
 
       container.innerHTML = '';
 
-      // Render all messages
-      this.chatMessages.forEach((msg, i) => {
+      // Render all messages except the last one (render last separately for animation)
+      const lastIdx = animateLastBot ? this.chatMessages.length - 1 : -1;
+      const msgsToRender = animateLastBot ? this.chatMessages.slice(0, -1) : this.chatMessages;
+
+      msgsToRender.forEach((msg) => {
         const div = document.createElement('div');
         div.className = 'chat-bubble chat-bubble-' + (msg.role === 'user' ? 'user' : 'bot');
         if (msg.role === 'user') {
@@ -3210,16 +3353,90 @@ class JaviAlertApp {
         container.appendChild(div);
       });
 
+      // Render the last bot message with typewriter effect
+      if (animateLastBot && lastIdx >= 0) {
+        const lastMsg = this.chatMessages[lastIdx];
+        if (lastMsg.role === 'assistant') {
+          const div = document.createElement('div');
+          div.className = 'chat-bubble chat-bubble-bot chat-bubble-typing';
+          div.innerHTML = '<img class="chat-avatar" src="icons/javi-icon.png" alt="Javi"><div class="chat-bubble-inner" id="chatTypingText"></div>';
+          container.appendChild(div);
+
+          // Typewriter animation
+          const textEl = document.getElementById('chatTypingText');
+          const fullText = this._formatBotMessage(lastMsg.content);
+          let idx = 0;
+          const speed = 12; // ms per character
+          const type = () => {
+            if (idx < fullText.length) {
+              textEl.innerHTML = fullText.slice(0, idx + 1);
+              idx++;
+              setTimeout(type, speed);
+            } else {
+              div.classList.remove('chat-bubble-typing');
+              // Add quick reply buttons after typewriter finishes
+              this._addQuickReplies(container);
+            }
+          };
+          type();
+        }
+      } else {
+        // No animation — add quick replies after last bot message
+        this._addQuickReplies(container);
+      }
+
       // Add typing indicator at the bottom
-      if (!hasTyping) {
+      if (!typingEl) {
         const typingDiv = document.createElement('div');
         typingDiv.className = 'chat-typing hidden';
         typingDiv.id = 'chatTyping';
         typingDiv.innerHTML = '<div class="chat-typing-dot"></div><div class="chat-typing-dot"></div><div class="chat-typing-dot"></div>';
         container.appendChild(typingDiv);
       } else {
-        container.appendChild(typing);
+        container.appendChild(typingEl);
       }
+    }
+
+    /** Add quick reply suggestion buttons below the last bot message */
+    _addQuickReplies(container) {
+      // Remove any existing quick reply row
+      const existing = container.querySelector('.chat-quick-replies');
+      if (existing) existing.remove();
+
+      // Only show if there's at least one bot message
+      const botMsgs = container.querySelectorAll('.chat-bubble-bot');
+      if (!botMsgs.length) return;
+
+      const row = document.createElement('div');
+      row.className = 'chat-quick-replies';
+
+      const btns = this._quickReply();
+      btns.forEach((btn) => {
+        const el = document.createElement('button');
+        el.className = 'chat-quick-btn';
+        el.textContent = btn.text;
+        el.addEventListener('click', () => {
+          if (btn.action === 'tips') {
+            this.showTipsModal();
+          } else if (btn.action === 'quiz') {
+            this._showQuiz();
+          } else if (btn.action === 'chat') {
+            const input = document.getElementById('chatInput');
+            const sendBtn = document.getElementById('chatSendBtn');
+            if (input) {
+              input.value = 'What should I do during an earthquake?';
+              input.focus();
+            }
+          }
+        });
+        row.appendChild(el);
+      });
+
+      container.appendChild(row);
+
+      // Scroll to show quick replies
+      const msgs = document.getElementById('chatMessages');
+      if (msgs) msgs.scrollTop = msgs.scrollHeight;
     }
 
     _escapeHtml(text) {

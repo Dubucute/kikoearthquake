@@ -2571,3 +2571,51 @@ body.dark-mode .chat-bubble-inner code {
 body.dark-mode .chat-bubble-inner a {
   color: #ff9f7c;
 }
+
+/* Chat quick reply buttons */
+.chat-quick-replies {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 6px 0 2px 40px;
+  animation: chatSlideIn .3s ease;
+}
+.chat-quick-btn {
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 500;
+  font-size: 12px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 2.5px solid #2d3436;
+  background: #fff5f5;
+  color: #2d3436;
+  cursor: pointer;
+  box-shadow: 2px 2px 0px #2d3436;
+  transition: transform .1s, box-shadow .1s;
+  white-space: nowrap;
+}
+.chat-quick-btn:active {
+  transform: scale(.95);
+  box-shadow: 1px 1px 0px #2d3436;
+}
+body.dark-mode .chat-quick-btn {
+  background: #333350;
+  color: #e0e0e0;
+  border-color: #555;
+  box-shadow: 2px 2px 0px #555;
+}
+
+/* Typewriter typing animation for chat */
+.chat-bubble-typing .chat-bubble-inner::after {
+  content: '|';
+  animation: cursorBlink .6s step-end infinite;
+  margin-left: 1px;
+  color: #e17055;
+  font-weight: bold;
+}
+@keyframes cursorBlink {
+  50% { opacity: 0; }
+}
+body.dark-mode .chat-bubble-typing .chat-bubble-inner::after {
+  color: #ff9f7c;
+}
