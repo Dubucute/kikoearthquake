@@ -2453,15 +2453,15 @@ body.dark-mode .scroll-top-btn i {
   align-self: flex-end;
 }
 .chat-avatar-wrap {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   overflow: hidden;
   border: 2.5px solid #2d3436;
   flex-shrink: 0;
   align-self: flex-end;
   margin-bottom: 2px;
-  background: #fff;
+  background: linear-gradient(135deg, #74b9ff, #a29bfe);
 }
 .chat-avatar {
   width: 100%;
@@ -2678,6 +2678,7 @@ body.dark-mode .chat-bubble-error .chat-bubble-inner {
   box-shadow: 3px 3px 0px #ffd93d;
 }
 body.dark-mode .chat-avatar-wrap {
+  background: linear-gradient(135deg, #6c5ce7, #a29bfe);
   border-color: #555;
 }
 body.dark-mode .chat-bubble-inner code {
@@ -2763,7 +2764,7 @@ body.dark-mode .chat-bubble-typing .chat-bubble-inner::after {
   overflow: hidden;
   border: 3px solid #2d3436;
   box-shadow: 4px 4px 0px #2d3436, 0 4px 16px rgba(0,0,0,.15);
-  background: #fff;
+  background: linear-gradient(135deg, #74b9ff, #a29bfe);
   flex-shrink: 0;
   transition: transform .15s, box-shadow .15s;
 }
@@ -2910,6 +2911,7 @@ body.dark-mode .chat-bubble-typing .chat-bubble-inner::after {
 /* Dark mode chat head */
 body.dark-mode .chat-head-icon-wrap {
   border-color: #555;
+  background: linear-gradient(135deg, #6c5ce7, #a29bfe);
   box-shadow: 4px 4px 0px #555, 0 4px 16px rgba(0,0,0,.35);
 }
 body.dark-mode .chat-head:active .chat-head-icon-wrap {
