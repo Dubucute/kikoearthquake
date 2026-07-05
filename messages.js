@@ -92,7 +92,14 @@ export const SAFETY_TIPS_TL = [
 ];
 
 // ─── CHANGELOG ───────────────────────────────────────────────
-export const CHANGELOG = [  { ver: 'v1.107', date: '2026-07-05', items: [
+export const CHANGELOG = [  { ver: 'v1.108', date: '2026-07-05', items: [
+    'Fix: NDRRMC alarm now uses Web Audio API — no mobile media controls in notification',
+    'New: AudioContext pre-buffers alert sound for instant playback on first tap',
+    'Removed: Opening intro track (Sabay-sabay Tayong Bida) — ambient starts directly',
+    'Fix: Ambient music pauses during NDRRMC alarm, resumes after',
+    'Updated: Service worker cache bumped to v1.108'
+  ]},
+  { ver: 'v1.107', date: '2026-07-05', items: [
     'New: Warning mood Javi tap shows reassuring messages (wag kabahan)',
     'New: Danger mood Javi tap shows safety tips (DROP, COVER, HOLD ON)',
     'Fix: Notification click now focuses window and navigates to app',

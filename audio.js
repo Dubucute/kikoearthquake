@@ -7,22 +7,38 @@
  * @param {number} [volume=0.3] — volume level (0-1)
  */
 let _alertAudio = null;
+let _audioCtx = null;
+let _alertBuffer = null;
 
 /**
- * Pre-create and preload the alert audio element.
+ * Pre-create and preload the alert audio buffer.
  * Call during first user interaction to authorize playback on mobile.
  */
 export function preloadAlertAudio() {
+  if (!_audioCtx && typeof AudioContext !== 'undefined') {
+    try {
+      _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    } catch (_) {
+      _audioCtx = null;
+    }
+  }
+
+  if (_audioCtx && !_alertBuffer) {
+    fetch('sounds/NDRRMC-Alert.mp3')
+      .then(res => res.arrayBuffer())
+      .then(buffer => _audioCtx.decodeAudioData(buffer))
+      .then(decoded => { _alertBuffer = decoded; })
+      .catch(() => { _alertBuffer = null; });
+  }
+
   if (!_alertAudio) {
     try {
       _alertAudio = new Audio();
       _alertAudio.preload = 'auto';
-    } catch (_) { return; }
+      _alertAudio.src = 'sounds/NDRRMC-Alert.mp3';
+      _alertAudio.load();
+    } catch (_) { _alertAudio = null; }
   }
-  try {
-    _alertAudio.src = 'sounds/NDRRMC-Alert.mp3';
-    _alertAudio.load();
-  } catch (_) {}
 }
 
 export function playAlertSound(type, soundEnabled, volume = 0.3) {
@@ -31,19 +47,66 @@ export function playAlertSound(type, soundEnabled, volume = 0.3) {
   const playSrc = 'sounds/NDRRMC-Alert.mp3';
   const vol = Math.max(0, Math.min(1, volume));
 
-  // Strategy 1: Use dedicated _alertAudio element
+  const resumeAmbientAfter = (wasPlaying, prevSrc, prevVol, prevLoop) => {
+    if (!wasPlaying || !_ambientAudio || !prevSrc) return;
+    _ambientAudio.src = prevSrc;
+    _ambientAudio.volume = prevVol;
+    _ambientAudio.loop = prevLoop;
+    _ambientAudio.currentTime = 0;
+    _ambientAudio.play().catch(() => {});
+    if (!prevLoop) {
+      _ambientAudio.addEventListener('ended', _playNextAmbient);
+    }
+    _notifyTrack(prevSrc);
+  };
+
+  const pauseAmbientForAlert = () => {
+    const wasPlaying = _ambientAudio && !_ambientAudio.paused;
+    const prevSrc = _ambientAudio ? _ambientAudio.src : null;
+    const prevVol = _ambientAudio ? _ambientAudio.volume : 0;
+    const prevLoop = _ambientAudio ? _ambientAudio.loop : false;
+    if (wasPlaying && _ambientAudio) {
+      _ambientAudio.removeEventListener('ended', _playNextAmbient);
+      _ambientAudio.pause();
+    }
+    return { wasPlaying, prevSrc, prevVol, prevLoop };
+  };
+
+  const tryAudioContext = () => {
+    if (!_audioCtx || !_alertBuffer) return Promise.reject();
+    if (_audioCtx.state === 'suspended') {
+      _audioCtx.resume().catch(() => {});
+    }
+    const { wasPlaying, prevSrc, prevVol, prevLoop } = pauseAmbientForAlert();
+    const source = _audioCtx.createBufferSource();
+    source.buffer = _alertBuffer;
+    const gain = _audioCtx.createGain();
+    gain.gain.value = vol;
+    source.connect(gain).connect(_audioCtx.destination);
+    source.onended = () => resumeAmbientAfter(wasPlaying, prevSrc, prevVol, prevLoop);
+    source.start(0);
+    return Promise.resolve();
+  };
+
   const tryAlertAudio = () => {
     if (!_alertAudio) {
-      _alertAudio = new Audio();
-      _alertAudio.preload = 'auto';
+      try {
+        _alertAudio = new Audio();
+        _alertAudio.preload = 'auto';
+      } catch (_) { return Promise.reject(); }
     }
+    const { wasPlaying, prevSrc, prevVol, prevLoop } = pauseAmbientForAlert();
     _alertAudio.src = playSrc;
     _alertAudio.volume = vol;
     _alertAudio.currentTime = 0;
-    return _alertAudio.play();
+    return _alertAudio.play().then(() => {
+      _alertAudio.onended = () => {
+        _alertAudio.onended = null;
+        resumeAmbientAfter(wasPlaying, prevSrc, prevVol, prevLoop);
+      };
+    });
   };
 
-  // Strategy 2: Fall back to ambient audio (already has playback permission)
   const tryAmbientAudio = () => {
     if (!_ambientAudio) return Promise.reject();
     const wasPlaying = !_ambientAudio.paused && !!_ambientAudio.src;
@@ -57,7 +120,6 @@ export function playAlertSound(type, soundEnabled, volume = 0.3) {
     _ambientAudio.currentTime = 0;
     _ambientAudio.loop = false;
     return _ambientAudio.play().then(() => {
-      // Restore ambient when alert finishes
       _ambientAudio.onended = () => {
         _ambientAudio.onended = null;
         if (wasPlaying && prevSrc && prevSrc !== playSrc) {
@@ -76,9 +138,10 @@ export function playAlertSound(type, soundEnabled, volume = 0.3) {
   };
 
   try {
-    tryAlertAudio().catch(() => {
-      tryAmbientAudio().catch(() => {});
-    });
+    tryAudioContext()
+      .catch(() => tryAlertAudio())
+      .catch(() => tryAmbientAudio())
+      .catch(() => {});
   } catch (_) { /* audio not supported */ }
 }
 
@@ -93,7 +156,7 @@ const AMBIENT_FILES = [
   'sounds/Ligtas.mp3',
   'sounds/Javilerto.mp3'
 ];
-const OPENING_FILE = 'sounds/Sabay_sabay_Tayong_Bida.mp3';
+const OPENING_FILE = null;
 
 /** Pretty name for track display */
 function _trackLabel(path) {
@@ -189,7 +252,7 @@ export function preloadAmbient(track) {
   try {
     _ambientAudio = new Audio();
     _ambientAudio.preload = 'auto';
-    _ambientAudio.src = track || OPENING_FILE;
+    _ambientAudio.src = track || AMBIENT_FILES[0];
     _ambientAudio.volume = _ambientVolume;
     // Don't play — autoplay is blocked. Just let it buffer.
   } catch (_) {}
@@ -225,15 +288,10 @@ export function startAmbientSound(track) {
       _applyPlaybackMode();
       _notifyTrack(track);
     } else {
-      // No specific track — opening first, then shuffled ambient
+      // No specific track — start shuffled ambient immediately
       _trackQueue = _shuffle(AMBIENT_FILES);
-      _ambientAudio.src = OPENING_FILE;
-      _ambientAudio.volume = _ambientVolume;
-      _ambientAudio.play().catch(() => {});
-      // When opening ends, play shuffled ambient
-      _ambientAudio.addEventListener('ended', _playNextAmbient);
+      _playNextAmbient();
       _applyPlaybackMode();
-      _notifyTrack(OPENING_FILE);
     }
   } catch (_) {}
 }
