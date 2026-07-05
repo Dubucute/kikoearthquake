@@ -701,7 +701,7 @@ body.dark-mode .quiz-review { background: rgba(40,40,60,.75); border-color: rgba
 .ql-bl-mag { width: 46px; text-align: center; }
 .ql-bl-int { width: 36px; text-align: center; }
 .ql-bl-place { flex: 1; }
-.ql-bl-dist { width: 60px; text-align: right; }
+.ql-bl-dist { width: 70px; text-align: right; margin-right: 58px; }
 #listTitle { flex: 1; }
 .sort-wrap { position: relative; }
 .sort-btn {
