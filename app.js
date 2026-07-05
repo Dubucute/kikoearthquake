@@ -1219,9 +1219,9 @@ class JaviAlertApp {
         this._lastFetchTime = Date.now();
         await this.updateUI(data);
 
-        // Alert AFTER mood is determined — only fire if mood is warning/danger
+        // Alert AFTER mood is determined — fire for any new quake
         const newQuakes = this._detectNewQuakes(data.quakes);
-        if (newQuakes.length > 0 && this.currentMood !== 'safe') {
+        if (newQuakes.length > 0) {
           this._alertNewQuakes(newQuakes);
         }
       } catch (err) {
@@ -1284,8 +1284,13 @@ class JaviAlertApp {
     }
 
     _detectNewQuakes(quakes) {
-      // On first load, knownQuakeIds is empty — treat all as known, no alerts
-      if (this.knownQuakeIds.size === 0) return [];
+      // On first load, alert for any mag 3+ or intensity 3+ quakes (within last 24h)
+      if (this.knownQuakeIds.size === 0) {
+        const cutoff = Date.now() - 86400000; // 24h
+        return quakes.filter(q =>
+          (q.mag >= 3 || q.intensity >= 3) && q.time.getTime() > cutoff
+        );
+      }
       return quakes.filter((q) => !this.knownQuakeIds.has(q.id));
     }
 
