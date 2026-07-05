@@ -2418,12 +2418,12 @@ class JaviAlertApp {
       const javiIcon = await this._loadImage('icons/javi-icon.png');
 
       // ── Load static map tiles ──
-      const mapTiles = await this._loadMapTiles(q.lat, q.lon, 8, 3);
+      const mapTiles = await this._loadMapTiles(q.lat, q.lon, 8, 2);
 
       // Build a canvas card and show share overlay
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      const w = 700, h = 520;
+      const w = 600, h = 420;
       canvas.width = w * 2; canvas.height = h * 2;
       ctx.scale(2, 2); // retina
 
@@ -2471,9 +2471,9 @@ class JaviAlertApp {
       this._roundRect(ctx, 16, 16, w - 32, h - 32, 18);
       ctx.stroke();
 
-      // ── Map tiles (right side, fills entire right half of card) ──
+      // ── Map tiles (right side, contained within card) ──
       const cardL = 16, cardR = w - 16, cardT = 16, cardB = h - 16;
-      const mapX = 370, mapY = cardT, mapW = cardR - mapX, mapH = cardB - cardT;
+      const mapX = 320, mapY = cardT + 10, mapW = cardR - mapX - 10, mapH = 230;
       ctx.save();
       // Clip map to card's right side with rounded top-right and bottom-right corners
       ctx.beginPath();
@@ -2493,8 +2493,8 @@ class JaviAlertApp {
       ctx.strokeStyle = dark ? '#444' : '#dfe6e9';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.moveTo(mapX, cardT + 18);
-      ctx.lineTo(mapX, cardB - 18);
+      ctx.moveTo(mapX, mapY + 12);
+      ctx.lineTo(mapX, mapY + mapH - 12);
       ctx.stroke();
 
       // ── Epicenter pin on map (center) ──
@@ -2529,7 +2529,7 @@ class JaviAlertApp {
       ctx.fillStyle = dark ? '#888' : '#636e72';
       ctx.font = '10px Fredoka, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(q.lat.toFixed(2) + '°N  ' + q.lon.toFixed(2) + '°E', mapX + mapW / 2, cardB - 10);
+      ctx.fillText(q.lat.toFixed(2) + '°N  ' + q.lon.toFixed(2) + '°E', mapX + mapW / 2, mapY + mapH + 16);
 
       // ── Javi icon (top-right) ──
       if (javiIcon) {
