@@ -2,6 +2,21 @@
 
 A progressive web app that monitors nearby earthquakes using USGS data and provides safety alerts in Tagalog through Javi, a friendly Filipino character.
 
+## AI provider configuration
+
+Javi tries multiple AI providers in order until one succeeds. Set any combination of these API keys in Vercel — the more you configure, the more reliable Javi becomes.
+
+### Provider chain (tried in order)
+
+| Order | Provider | Env variable(s) | Limit | Notes |
+|---|---|---|---|---|
+| 1st | **NVIDIA** | `NVIDIA_API_KEY` | RPM only, no daily cap | Fastest, try this first |
+| 2nd | **Groq** | `GROQ_API_KEY` | Daily + RPM | Very fast inference |
+| 3rd | **Google AI Studio** | `GOOGLE_AI_STUDIO_API_KEY` (or `GEMINI_API_KEY`), `GOOGLE_AI_STUDIO_MODEL` | Daily | Model defaults to `gemini-2.0-flash` |
+| 4th | **Hugging Face** | `HF_TOKEN` | Rate-limited | Final fallback |
+
+All four are tried in that order. The first one to return a reply wins. If all fail, Javi tells the user to try again later.
+
 ## Features
 
 - **Real-time earthquake monitoring** — polls USGS API every 5 minutes

@@ -1,12 +1,30 @@
-// ─── Ask Javi — Hugging Face OpenAI-compatible router ────────
-// HF_TOKEN stored as Vercel env var — NEVER in client-side code.
+// ─── Ask Javi — Multi-provider AI chat API ───────────────────
 
-const BASE_URL = 'https://router.huggingface.co/v1';
-const MODELS = [
-  'moonshotai/Kimi-K2-Instruct-0905',
-  'Qwen/Qwen2.5-7B-Instruct',
-  'mistralai/Mistral-7B-Instruct-v0.3',
-  'google/gemma-2-2b-it',
+// ─── Provider definitions ────────────────────────────────────
+const PROVIDERS = [
+  {
+    name: 'nvidia',
+    baseUrl: 'https://integrate.api.nvidia.com/v1',
+    apiKeyEnv: 'NVIDIA_API_KEY',
+    models: ['nvidia/llama-3.1-nemotron-70b-instruct', 'mistralai/mixtral-8x22b-instruct-v0.1'],
+  },
+  {
+    name: 'groq',
+    baseUrl: 'https://api.groq.com/openai/v1',
+    apiKeyEnv: 'GROQ_API_KEY',
+    models: ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'mixtral-8x7b-32768'],
+  },
+  {
+    name: 'huggingface',
+    baseUrl: 'https://router.huggingface.co/v1',
+    apiKeyEnv: 'HF_TOKEN',
+    models: [
+      'moonshotai/Kimi-K2-Instruct-0905',
+      'Qwen/Qwen2.5-7B-Instruct',
+      'mistralai/Mistral-7B-Instruct-v0.3',
+      'google/gemma-2-2b-it',
+    ],
+  },
 ];
 
 // ─── CORS helper ──────────────────────────────────────────────
@@ -24,6 +42,125 @@ function setCorsHeaders(res, origin) {
   }
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+}
+
+function buildSystemPrompt(quakeContext) {
+  let systemContent = SYSTEM_PROMPT;
+  if (quakeContext) {
+    systemContent += '\n\nHere is the current earthquake data for the user:\n' + quakeContext;
+  }
+  return systemContent;
+}
+
+
+/** Try an OpenAI-compatible provider (NVIDIA, Groq, Hugging Face) */
+async function callOpenAICompatible(provider, messages, quakeContext) {
+  const apiKey = process.env[provider.apiKeyEnv];
+  if (!apiKey) {
+    throw new Error(`${provider.apiKeyEnv} is not configured`);
+  }
+
+  const systemContent = buildSystemPrompt(quakeContext);
+  const chatMessages = [
+    { role: 'system', content: systemContent },
+    ...messages.slice(-8),
+  ];
+
+  let lastError = null;
+  for (const model of provider.models) {
+    try {
+      const res = await fetch(`${provider.baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model,
+          messages: chatMessages,
+          max_tokens: 300,
+          temperature: 0.7,
+        }),
+      });
+
+      if (!res.ok) {
+        const errText = await res.text().catch(() => '');
+        lastError = `${provider.name}/${model} returned ${res.status}: ${errText.slice(0, 200)}`;
+        console.warn(lastError);
+        continue;
+      }
+
+      const data = await res.json();
+      const candidate = data.choices?.[0]?.message?.content?.trim();
+
+      if (candidate) {
+        return candidate;
+      }
+      lastError = `${provider.name}/${model} returned empty response`;
+      console.warn(lastError);
+    } catch (err) {
+      lastError = `${provider.name}/${model} threw: ${err.message}`;
+      console.warn(lastError);
+    }
+  }
+  throw new Error(`All models failed for ${provider.name}. Last: ${lastError}`);
+}
+
+/** Build a Gemini-format contents array from our messages */
+function toGeminiMessages(messages) {
+  const geminiContents = [];
+  const sliced = (messages || []).slice(-8);
+
+  for (const msg of sliced) {
+    if (!msg || typeof msg.content !== 'string') continue;
+    if (msg.role === 'user') {
+      geminiContents.push({ role: 'user', parts: [{ text: msg.content }] });
+    } else if (msg.role === 'assistant') {
+      geminiContents.push({ role: 'model', parts: [{ text: msg.content }] });
+    }
+  }
+  return geminiContents;
+}
+
+async function callGoogleAI(messages, quakeContext) {
+  const apiKey = process.env.GOOGLE_AI_STUDIO_API_KEY || process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error('GOOGLE_AI_STUDIO_API_KEY or GEMINI_API_KEY is not configured');
+  }
+
+  const model = process.env.GOOGLE_AI_STUDIO_MODEL || 'gemini-2.0-flash';
+  const systemContent = buildSystemPrompt(quakeContext);
+  const geminiContents = toGeminiMessages(messages);
+
+  // Prepend system as a user message so Gemini gets the rules
+  geminiContents.unshift({ role: 'user', parts: [{ text: systemContent }] });
+  geminiContents.push({ role: 'model', parts: [{ text: 'Got it! Let me respond to the user.' }] });
+
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: geminiContents,
+      generationConfig: { temperature: 0.7 }
+    })
+  });
+
+  if (!res.ok) {
+    const errText = await res.text().catch(() => '');
+    throw new Error(`Google AI Studio error ${res.status}: ${errText.slice(0, 200)}`);
+  }
+
+  const data = await res.json();
+  const candidate = data.candidates?.[0]?.content?.parts
+    ?.map((part) => part.text)
+    ?.join('')
+    ?.trim();
+
+  if (!candidate) {
+    throw new Error('Google AI Studio returned an empty response');
+  }
+
+  return candidate;
 }
 
 // ─── System prompt ────────────────────────────────────────────
@@ -56,12 +193,6 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const apiKey = process.env.HF_TOKEN;
-  if (!apiKey) {
-    console.error('HF_TOKEN not set in environment variables');
-    return res.status(500).json({ error: 'Server configuration error' });
-  }
-
   try {
     let parsedBody;
     try {
@@ -78,69 +209,74 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'messages array is required' });
     }
 
-    // Build system prompt with earthquake context if available
-    let systemContent = SYSTEM_PROMPT;
-    if (quakeContext) {
-      systemContent += '\n\nHere is the current earthquake data for the user:\n' + quakeContext;
+    // ─── Provider chain ─────────────────────────────────────
+    // Try each provider in order. The first successful reply wins.
+    let reply = null;
+    const errors = [];
+
+    // 1. NVIDIA (RPM only, no daily cap)
+    if (!reply) {
+      const nvidia = PROVIDERS.find(p => p.name === 'nvidia');
+      if (process.env[nvidia.apiKeyEnv]) {
+        try {
+          reply = await callOpenAICompatible(nvidia, messages, quakeContext);
+          console.log('✅ NVIDIA replied');
+        } catch (e) {
+          errors.push(e.message);
+          console.warn('NVIDIA failed:', e.message);
+        }
+      }
     }
 
-    // Build messages array with system prompt + conversation history
-    const chatMessages = [
-      { role: 'system', content: systemContent },
-      ...messages.slice(-8),
-    ];
-
-    // Try each model in order until one works
-    let lastError = null;
-    let reply = null;
-
-    for (const model of MODELS) {
-      console.log('Trying model:', model, '| msgCount:', chatMessages.length);
-      try {
-        const hfRes = await fetch(`${BASE_URL}/chat/completions`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model,
-            messages: chatMessages,
-            max_tokens: 300,
-            temperature: 0.7,
-          }),
-        });
-
-        if (!hfRes.ok) {
-          const errText = await hfRes.text().catch(() => '');
-          lastError = `Model ${model} returned ${hfRes.status}: ${errText.slice(0, 200)}`;
-          console.warn('Model failed:', lastError);
-          continue; // Try next model
+    // 2. Groq (Daily + RPM)
+    if (!reply) {
+      const groq = PROVIDERS.find(p => p.name === 'groq');
+      if (process.env[groq.apiKeyEnv]) {
+        try {
+          reply = await callOpenAICompatible(groq, messages, quakeContext);
+          console.log('✅ Groq replied');
+        } catch (e) {
+          errors.push(e.message);
+          console.warn('Groq failed:', e.message);
         }
+      }
+    }
 
-        const data = await hfRes.json();
-        const candidate = data.choices?.[0]?.message?.content?.trim();
-
-        if (candidate) {
-          reply = candidate;
-          console.log('Model succeeded:', model);
-          break; // Got a good response
-        } else {
-          lastError = `Model ${model} returned empty response`;
-          console.warn(lastError);
-          continue; // Try next model
+    // 3. Google AI Studio (Daily)
+    if (!reply) {
+      const hasGoogleKey = process.env.GOOGLE_AI_STUDIO_API_KEY || process.env.GEMINI_API_KEY;
+      if (hasGoogleKey) {
+        try {
+          reply = await callGoogleAI(messages, quakeContext);
+          console.log('✅ Google AI Studio replied');
+        } catch (e) {
+          errors.push(e.message);
+          console.warn('Google AI Studio failed:', e.message);
         }
-      } catch (modelErr) {
-        lastError = `Model ${model} threw: ${modelErr.message}`;
-        console.warn(lastError);
-        continue; // Try next model
+      }
+    }
+
+    // 4. Hugging Face (rate-limited, final fallback)
+    if (!reply) {
+      const hf = PROVIDERS.find(p => p.name === 'huggingface');
+      if (process.env[hf.apiKeyEnv]) {
+        try {
+          reply = await callOpenAICompatible(hf, messages, quakeContext);
+          console.log('✅ Hugging Face replied');
+        } catch (e) {
+          errors.push(e.message);
+          console.warn('Hugging Face failed:', e.message);
+        }
       }
     }
 
     if (!reply) {
-      console.error('All models failed. Last error:', lastError);
+      console.error('All providers failed:', errors.join(' | '));
+      const hasAnyKey = PROVIDERS.some(p => process.env[p.apiKeyEnv]);
       return res.status(200).json({
-        response: 'Sorry, wala akong maisip na sagot ngayon. Puwede mo bang ulitin ang tanong mo?',
+        response: hasAnyKey
+          ? 'Hmm, all AI services are busy right now. Can you try again in a moment? 🙏'
+          : 'Hmm, I need an AI provider to be configured first! Ask the dev to set one up.',
       });
     }
 
