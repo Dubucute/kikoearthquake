@@ -1323,7 +1323,7 @@ class JaviAlertApp {
       }
     }
 
-    /** Show a notification popup that auto-positions above or below the chat head */
+    /** Show a notification popup — left of head when head is on right side, right of head when on left side */
     _showChatHeadNotif(title, body) {
       const notif = document.getElementById('chatHeadNotif');
       const titleEl = document.getElementById('chatHeadNotifTitle');
@@ -1335,22 +1335,20 @@ class JaviAlertApp {
 
       // Remove hidden FIRST so offsetWidth works for reflow
       notif.classList.remove('hidden');
-      notif.classList.remove('chat-head-notif-above', 'chat-head-notif-below');
+      notif.classList.remove('chat-head-notif-left', 'chat-head-notif-right');
 
       // Force reflow so browser registers the class removal before adding new class
       void notif.offsetWidth;
 
-      // Determine position relative to the chat head
+      // Determine position: if head is on RIGHT half → popup LEFT; if on LEFT half → popup RIGHT
       const head = document.getElementById('chatHead');
       if (head) {
         const rect = head.getBoundingClientRect();
-        const headCenterY = rect.top + rect.height / 2;
-        const viewportMid = window.innerHeight / 2;
-        // If head is in top half → show below; if in bottom half → show above
-        const showAbove = headCenterY > viewportMid;
-        notif.classList.add(showAbove ? 'chat-head-notif-above' : 'chat-head-notif-below');
+        const headCenterX = rect.left + rect.width / 2;
+        const showLeft = headCenterX > window.innerWidth / 2;
+        notif.classList.add(showLeft ? 'chat-head-notif-left' : 'chat-head-notif-right');
       } else {
-        notif.classList.add('chat-head-notif-above');
+        notif.classList.add('chat-head-notif-left');
       }
 
       // Auto-hide after 5 seconds
