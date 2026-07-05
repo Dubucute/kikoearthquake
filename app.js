@@ -1323,7 +1323,7 @@ class JaviAlertApp {
       }
     }
 
-    /** Show a notification popup above the chat head */
+    /** Show a notification popup that auto-positions above or below the chat head */
     _showChatHeadNotif(title, body) {
       const notif = document.getElementById('chatHeadNotif');
       const titleEl = document.getElementById('chatHeadNotifTitle');
@@ -1333,11 +1333,22 @@ class JaviAlertApp {
       titleEl.textContent = title || 'Javi';
       bodyEl.textContent = body || '';
 
-      // Remove hidden and re-trigger animation
+      // Determine position relative to the chat head
+      const head = document.getElementById('chatHead');
+      if (head) {
+        const rect = head.getBoundingClientRect();
+        const headCenterY = rect.top + rect.height / 2;
+        const viewportMid = window.innerHeight / 2;
+        // If head is in top half → show below; if in bottom half → show above
+        const showAbove = headCenterY > viewportMid;
+        notif.classList.remove('chat-head-notif-above', 'chat-head-notif-below');
+        // Force reflow to restart animation
+        void notif.offsetWidth;
+        notif.classList.add(showAbove ? 'chat-head-notif-above' : 'chat-head-notif-below');
+      }
+
+      // Remove hidden
       notif.classList.remove('hidden');
-      notif.classList.remove('chat-head-notif');
-      void notif.offsetWidth;
-      notif.classList.add('chat-head-notif');
 
       // Auto-hide after 5 seconds
       if (this._notifTimer) clearTimeout(this._notifTimer);
