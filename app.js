@@ -265,6 +265,7 @@ class JaviAlertApp {
       this._initChatHeadDrag();
       document.getElementById('chatModalClose').addEventListener('click', () => {
         document.getElementById('chatModal').classList.add('hidden');
+        document.getElementById('chatModalCard').classList.remove('chat-fullscreen');
         this._unlockBodyScroll();
         // If bot is still loading, mark that there may be unread messages
         if (this.chatLoading) {
@@ -274,11 +275,22 @@ class JaviAlertApp {
       document.getElementById('chatModal').addEventListener('click', (e) => {
         if (e.target === e.currentTarget) {
           e.currentTarget.classList.add('hidden');
+          document.getElementById('chatModalCard').classList.remove('chat-fullscreen');
           this._unlockBodyScroll();
           if (this.chatLoading) {
             this._pendingClose = true;
           }
         }
+      });
+      document.getElementById('chatFullscreenBtn').addEventListener('click', () => {
+        const card = document.getElementById('chatModalCard');
+        const icon = document.getElementById('chatFullscreenIcon');
+        card.classList.toggle('chat-fullscreen');
+        const isFull = card.classList.contains('chat-fullscreen');
+        icon.setAttribute('data-lucide', isFull ? 'minimize-2' : 'maximize-2');
+        try { lucide.createIcons(); } catch (_) {}
+        // Re-render messages to fit new size
+        this._renderChatMessages();
       });
       document.getElementById('chatSendBtn').addEventListener('click', () => this._sendChatMessage());
       document.getElementById('chatInput').addEventListener('keydown', (e) => {

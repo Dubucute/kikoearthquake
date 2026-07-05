@@ -2316,6 +2316,31 @@ body.dark-mode .scroll-top-btn i {
   flex-direction: column;
   overflow: hidden;
 }
+.chat-modal-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  padding: 6px 8px 0;
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2;
+}
+/* Fullscreen mode */
+.chat-modal-card.chat-fullscreen {
+  max-width: 100vw;
+  max-height: 100vh;
+  width: 100vw;
+  height: 100vh;
+  border-radius: 0;
+  border: none;
+}
+.chat-modal-card.chat-fullscreen .chat-messages {
+  max-height: none;
+  min-height: 0;
+  flex: 1;
+}
 .chat-messages {
   flex: 1;
   overflow-y: auto;

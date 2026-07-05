@@ -324,8 +324,13 @@
 
   <!-- Ask Javi chat modal -->
   <div class="modal-overlay hidden" id="chatModal" role="dialog" aria-modal="true" aria-label="Ask Javi">
-    <div class="modal-card chat-modal-card">
-      <button class="modal-close" id="chatModalClose" aria-label="Close">&times;</button>
+    <div class="modal-card chat-modal-card" id="chatModalCard">
+      <div class="chat-modal-topbar">
+        <button class="modal-close" id="chatModalClose" aria-label="Close">&times;</button>
+        <button class="modal-close chat-modal-fullscreen-btn" id="chatFullscreenBtn" aria-label="Toggle fullscreen">
+          <i data-lucide="maximize-2" aria-hidden="true" id="chatFullscreenIcon"></i>
+        </button>
+      </div>
       <div class="modal-header">
         <i data-lucide="message-circle" aria-hidden="true" id="chatModalIcon"></i>
         <h2 class="modal-title">Ask Javi</h2>
