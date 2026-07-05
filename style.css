@@ -1827,9 +1827,16 @@ body.dark-mode .s12 { animation-delay: 0.8s; }
    ═══════════════════════════════════════════════════════════════ */
 .settings-modal-card {
   max-width: 360px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
 }
 .settings-body {
   padding: 6px 14px 10px;
+  overflow-y: auto;
+  flex: 1;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 .settings-row {
   display: flex;
@@ -2315,17 +2322,24 @@ body.dark-mode .scroll-top-btn i {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  position: relative;
 }
 .chat-modal-topbar {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 4px;
-  padding: 6px 8px 0;
-  position: absolute;
-  top: 0;
-  right: 0;
-  z-index: 2;
+  gap: 6px;
+  padding: 8px 10px 0;
+  flex-shrink: 0;
+}
+.chat-modal-topbar .modal-close {
+  position: static !important;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+}
+.chat-modal-card .modal-header {
+  padding-top: 12px;
 }
 /* Fullscreen mode */
 .chat-modal-card.chat-fullscreen {
