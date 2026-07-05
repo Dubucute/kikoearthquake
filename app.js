@@ -1284,45 +1284,45 @@ class JaviAlertApp {
     }
 
     _detectNewQuakes(quakes) {
-      // On first load, alert for any mag 3+ or intensity 3+ quakes (within last 24h)
+      // On first load, detect ALL quakes from last 24h
       if (this.knownQuakeIds.size === 0) {
         const cutoff = Date.now() - 86400000; // 24h
-        return quakes.filter(q =>
-          (q.mag >= 3 || q.intensity >= 3) && q.time.getTime() > cutoff
-        );
+        return quakes.filter(q => q.time.getTime() > cutoff);
       }
       return quakes.filter((q) => !this.knownQuakeIds.has(q.id));
     }
 
     _alertNewQuakes(newQuakes) {
-      // Determine alert level — uses intensity AND magnitude
+      // Determine the biggest/most significant new quake
       const newest = newQuakes.reduce((a, b) => a.time > b.time ? a : b);
+      // Play NDRRMC alarm only for mag >= 3 or intensity >= 3
+      const hasAlarm = newest.mag >= 3 || newest.intensity >= 3;
       const alertType = (newest.intensity >= 5 || newest.mag >= 5) ? 'danger' :
-                        (newest.intensity >= 3 || newest.mag >= 3) ? 'warning' : null;
+                        hasAlarm ? 'warning' : 'info';
 
-      // Play alert sound
-      if (alertType) {
+      // Play NDRRMC alarm ONLY for warning/danger (mag 3+)
+      if (alertType === 'warning' || alertType === 'danger') {
         playAlertSound(alertType, this.soundEnabled, this.volumeLevel);
       }
 
-      // Haptic feedback on alert
-      this._hapticAlert(alertType);
+      // Haptic feedback on significant alerts only
+      if (alertType === 'warning' || alertType === 'danger') {
+        this._hapticAlert(alertType);
+      }
 
-      // Show browser notification (works on Android Chrome, not on iOS Safari)
+      // Show browser notification for ALL new quakes
       if ('Notification' in window && Notification.permission === 'granted') {
         const count = newQuakes.length;
         const intLabel = PEIS_LABELS[newest.intensity] || '';
         const title = count === 1 ? 'New earthquake detected!' : count + ' new earthquakes detected!';
-        const body = intLabel + ' — ' + newest.mag.toFixed(1) + ' mag at ' + newest.place + ' (' + newest.dist + ' km away)';
+        const body = newest.mag.toFixed(1) + ' mag — ' + intLabel + ' at ' + newest.place + ' (' + newest.dist + ' km away)';
         try {
           new Notification(title, { body, icon: 'icons/javi-icon.png' });
         } catch (_) { /* ignore */ }
       }
 
-      // Always show in-app toast (critical for iOS where web notifications don't work)
-      if (alertType) {
-        this._showNotifToast(alertType, newest);
-      }
+      // Always show in-app toast for ALL new quakes
+      this._showNotifToast(alertType, newest);
 
       // Trigger server-side push for background delivery
       this._triggerServerPush(newest, newQuakes.length);
@@ -1340,8 +1340,8 @@ class JaviAlertApp {
       bubble.innerHTML = '<i data-lucide="bell" aria-hidden="true"></i> ' + msg;
       try { lucide.createIcons(); } catch (_) { /* ignore */ }
 
-      // Proactive alert: push a personalized message to the chat
-      if (alertType) {
+      // Proactive alert: push a personalized message to the chat (only for mag 3+)
+      if (alertType === 'warning' || alertType === 'danger') {
         this._pushProactiveAlert(newest, alertType);
       }
     }
