@@ -449,11 +449,12 @@ class JaviAlertApp {
         document.getElementById('offlineBanner').classList.remove('hidden');
       }
 
-      // Listen for postMessage from service worker (notification click → play sound)
+      // Listen for postMessage from service worker (notification/cron → play sound + refresh)
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.addEventListener('message', (e) => {
           if (e.data && e.data.action === 'playAlertSound') {
             playAlertSound(e.data.alertType, this.soundEnabled, this.volumeLevel);
+            this.loadData();
           }
         });
       }
@@ -488,10 +489,8 @@ class JaviAlertApp {
       // Init map (needs userLat/Lon from location)
       this._initMap();
 
-      // Auto-refresh (respect setting)
-      if (this.autoRefresh) {
-        this.refreshTimer = setInterval(() => this.loadData(), CONFIG.AUTO_REFRESH_MS);
-      }
+// Auto-refresh to stay in sync with server-side cron checks
+this.refreshTimer = setInterval(() => this.loadData(), 300000);
 
       // Hide loading overlay (cancel safety timer first)
       clearTimeout(safetyTimer);

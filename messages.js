@@ -92,7 +92,13 @@ export const SAFETY_TIPS_TL = [
 ];
 
 // ─── CHANGELOG ───────────────────────────────────────────────
-export const CHANGELOG = [  { ver: 'v1.109', date: '2026-07-05', items: [
+export const CHANGELOG = [ { ver: 'v1.111', date: '2026-07-06', items: [
+    'Fix: Cron push notifications now match actual nearest/newest significant quake',
+    'Fix: Removed misleading multi-quake count in push title',
+    'Fix: App now refreshes quake list when notification sound triggers',
+    'Updated: Service worker cache bumped to v1.111'
+  ]},
+  { ver: 'v1.110', date: '2026-07-06', items: [
     'Fix: NDRRMC alarm not playing — reverted AudioContext (buffer wasn\'t ready in time)',
     'Fix: Back to HTMLAudioElement for alert — reliable playback on mobile',
     'Kept: Ambient music pauses during alarm, resumes after',
