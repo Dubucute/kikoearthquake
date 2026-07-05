@@ -117,6 +117,7 @@ export const CHANGELOG = [
     'Updated: System prompt fixes — correct language matching, limited emoji usage',
     'Updated: Service worker cache bumped to v1.63'
   ]},
+  { ver: 'v1.33', date: '2026-07-04', items: [
     'Fix: Javi character uses PNG only (no more GIFs for smoother performance)',
     'Updated: Service worker cache version bumped to v1.33'
   ]},
