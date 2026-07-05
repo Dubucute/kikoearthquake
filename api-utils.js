@@ -97,10 +97,10 @@ export const PEIS_SHORT = [
 ];
 
 export function getPHIVOLCSIntensity(mag, distanceKm) {
-  // Empirical approximation based on PHIVOLCS intensity-distance tables
-  // Any quake that passes the tiered filter is at least "felt" (intensity I)
+  // Empirical approximation based on PHIVOLCS/USGS intensity-distance tables
+  // MMI ≈ 1.0 + 1.5 × Mag − 2.0 × log₁₀(Distance)
   const dist = Math.max(distanceKm, 1); // avoid log(0)
-  const felt = mag - Math.log10(dist) - 1.0;
+  const felt = 1.0 + 1.5 * mag - 2.0 * Math.log10(dist);
   const level = Math.round(Math.max(1, Math.min(10, felt)));
   return level;
 }
