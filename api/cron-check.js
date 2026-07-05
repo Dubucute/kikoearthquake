@@ -21,68 +21,68 @@ if (vapidPublicKey && vapidPrivateKey) {
   } catch (_) { /* invalid keys */ }
 }
 
-// ─── Fetch PHIVOLCS HTML (reuses same logic as phivolcs-quakes.js) ───
-function fetchPHIVOLCS() {
+// ─── Shared fetch + parse (same proven logic as phivolcs-quakes.js) ───
+function nodeFetch(url, timeoutMs) {
   return new Promise((resolve, reject) => {
-    const req = https.get('https://earthquake.phivolcs.dost.gov.ph/', {
+    const mod = url.startsWith('https') ? https : http;
+    const req = mod.get(url, {
+      rejectUnauthorized: false,
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml',
-        'Accept-Language': 'en-US,en;q=0.9',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
       },
-      rejectUnauthorized: false,
-      timeout: 15000,
+      timeout: timeoutMs,
     }, (res) => {
-      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-        // Follow redirect
-        const redirectReq = https.get(res.headers.location, { rejectUnauthorized: false, timeout: 15000 }, (redirRes) => {
-          let data = '';
-          redirRes.on('data', chunk => data += chunk);
-          redirRes.on('end', () => resolve(data));
-        });
-        redirectReq.on('error', reject);
-        return;
-      }
       let data = '';
-      res.on('data', chunk => data += chunk);
-      res.on('end', () => resolve(data));
+      res.on('data', (chunk) => { data += chunk; });
+      res.on('end', () => resolve({ ok: res.statusCode >= 200 && res.statusCode < 300, status: res.statusCode, text: () => data }));
     });
-    req.on('error', reject);
-    req.on('timeout', () => { req.destroy(); reject(new Error('timeout')); });
+    req.on('error', (err) => reject(new Error('Request failed: ' + err.message)));
+    req.on('timeout', () => { req.destroy(); reject(new Error('Request timed out')); });
   });
 }
 
-function parseQuakes(html) {
+function stripHtml(html) {
+  return html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&#\d+;/g, '').replace(/\u00A0/g, ' ').replace(/\u00C2/g, '').trim();
+}
+
+function parsePhivolcsDate(dateStr) {
+  const match = dateStr.match(/(\d+)\s+(\w+)\s+(\d+)\s*-\s*(\d+):(\d+)\s*(AM|PM)/i);
+  if (!match) return null;
+  const months = { january:0, february:1, march:2, april:3, may:4, june:5, july:6, august:7, september:8, october:9, november:10, december:11 };
+  const [, day, month, year, hour, min, ampm] = match;
+  let h = parseInt(hour);
+  if (ampm.toUpperCase() === 'PM' && h < 12) h += 12;
+  if (ampm.toUpperCase() === 'AM' && h === 12) h = 0;
+  return new Date(parseInt(year), months[month.toLowerCase()], parseInt(day), h, parseInt(min));
+}
+
+function parsePhivolcsTable(html) {
   const quakes = [];
-  const rowRegex = /<tr>\s*<td[^>]*>.*?<a href="([^"]+)".*?<span[^>]*>([^<]+)<\/span>.*?<\/td>\s*<td[^>]*>\s*([\d.]+)\s*<\/td>\s*<td[^>]*>\s*([\d.]+)\s*<\/td>\s*<td[^>]*>\s*(\d+)\s*<\/td>\s*<td[^>]*>\s*([\d.]+)\s*<\/td>\s*<td[^>]*>\s*(\d+)\s*([^<]*)<\/td>/gs;
-  let match;
-  while ((match = rowRegex.exec(html)) !== null) {
-    const [, url, dateStr, lat, lon, depth, mag, distNum, distDir] = match;
-    const dist = parseInt(distNum);
-    const id = url.replace(/\.html$/, '').replace(/\//g, '-');
-    // Parse date
-    const dateMatch = dateStr.trim().match(/(\d+)\s+(\w+)\s+(\d+)\s+-\s+(\d+):(\d+)\s+(AM|PM)/i);
-    let time = Date.now();
-    if (dateMatch) {
-      const months = { January:0, February:1, March:2, April:3, May:4, June:5, July:6, August:7, September:8, October:9, November:10, December:11 };
-      const [, day, month, year, hour, min, ampm] = dateMatch;
-      let h = parseInt(hour);
-      if (ampm.toUpperCase() === 'PM' && h < 12) h += 12;
-      if (ampm.toUpperCase() === 'AM' && h === 12) h = 0;
-      time = new Date(parseInt(year), months[month], parseInt(day), h, parseInt(min)).getTime();
-    }
-    const place = distDir.trim().replace(/\s+/g, ' ');
-    quakes.push({
-      id: `ph-${id}`,
-      mag: parseFloat(mag),
-      place: `${dist} km ${place}`,
-      time,
-      lat: parseFloat(lat),
-      lon: parseFloat(lon),
-      depth: parseInt(depth),
-      dist,
-      url: `https://earthquake.phivolcs.dost.gov.ph/${url}`,
-    });
+  const rowMatches = html.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi);
+  for (const rowMatch of rowMatches) {
+    const row = rowMatch[1];
+    if (!row.includes('auto-style99') || row.includes('<th')) continue;
+    const linkMatch = row.match(/<a[^>]+href="([^"]*)"[^>]*>[\s\S]*?<span[^>]*class="auto-style99"[^>]*>([^<]*)<\/span>/i);
+    if (!linkMatch) continue;
+    const href = linkMatch[1].trim();
+    const dateStr = linkMatch[2].trim();
+    const tdMatches = row.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/gi);
+    const cells = [];
+    for (const td of tdMatches) cells.push(td[1]);
+    if (cells.length < 6) continue;
+    const lat = parseFloat(stripHtml(cells[1]));
+    const lon = parseFloat(stripHtml(cells[2]));
+    const depth = parseInt(stripHtml(cells[3]), 10);
+    const mag = parseFloat(stripHtml(cells[4]));
+    const locationRaw = stripHtml(cells[5]);
+    if (isNaN(lat) || isNaN(lon) || isNaN(mag)) continue;
+    const time = parsePhivolcsDate(dateStr);
+    if (!time) continue;
+    const url = href.startsWith('http') ? href : 'https://earthquake.phivolcs.dost.gov.ph/' + href.replace(/\\/g, '/');
+    const id = 'ph-' + href.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+    quakes.push({ id, mag, place: locationRaw, time: time.getTime(), lat, lon, depth: isNaN(depth) ? 0 : depth, url });
   }
   return quakes;
 }
@@ -115,8 +115,10 @@ export default async function handler(req, res) {
     const database = await getDb();
 
     // 1. Fetch latest quakes from PHIVOLCS
-    const html = await fetchPHIVOLCS();
-    const quakes = parseQuakes(html);
+    const response = await nodeFetch('https://earthquake.phivolcs.dost.gov.ph/', 15000);
+    if (!response.ok) throw new Error('PHIVOLCS returned ' + response.status);
+    const html = await response.text();
+    const quakes = parsePhivolcsTable(html);
 
     if (!quakes.length) {
       return res.json({ ok: true, message: 'No quakes parsed', sent: 0 });

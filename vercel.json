@@ -3,6 +3,17 @@
   "buildCommand": "echo 'Static site - no build needed'",
   "outputDirectory": ".",
   "framework": null,
+  "functions": {
+    "api/cron-check.js": {
+      "maxDuration": 30
+    },
+    "api/phivolcs-quakes.js": {
+      "maxDuration": 30
+    },
+    "api/push-send.js": {
+      "maxDuration": 30
+    }
+  },
   "rewrites": [
     {
       "source": "/api/(.*)",
