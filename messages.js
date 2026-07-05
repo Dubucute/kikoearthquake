@@ -93,6 +93,13 @@ export const SAFETY_TIPS_TL = [
 
 // ─── CHANGELOG ───────────────────────────────────────────────
 export const CHANGELOG = [
+  { ver: 'v1.64', date: '2026-07-05', items: [
+    'New: PHIVOLCS as primary earthquake data source — more accurate for PH',
+    'New: /api/phivolcs-quakes — serverless parser that scrapes PHIVOLCS HTML table into live quake data',
+    'New: USGS fallback — auto-falls back to USGS if PHIVOLCS is unreachable or returns no data',
+    'Fix: Location distance now computed from real PHIVOLCS coordinates (not hardcoded text)',
+    'Updated: Service worker cache bumped to v1.64'
+  ]},
   { ver: 'v1.63', date: '2026-07-05', items: [
     'New: Javi Chat Head — floating draggable button on screen (like Messenger)',
     'New: Chat Head drag with edge-snap — position saved across sessions',

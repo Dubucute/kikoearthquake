@@ -53,12 +53,13 @@ export function getDistance(lat1, lon1, lat2, lon2) {
 }
 
 export function parsePlaceName(raw) {
-  // USGS format: "20 km SSW of La Paz, Philippines"
-  const match = raw.match(/^([\d.]+)\s*km\s+(\w+)\s+of\s+(.+)$/i);
+  // USGS format:         "20 km SSW of La Paz, Philippines"
+  // PHIVOLCS format:     "029 km N 74° E of Sablayan (Occidental Mindoro)"
+  const match = raw.match(/^([\d.]+)\s*km\s+(.+?)\s+of\s+(.+)$/i);
   if (match) {
     return {
       distance: parseFloat(match[1]),
-      direction: match[2].toUpperCase(),
+      direction: match[2].trim().toUpperCase(),
       place: match[3].trim()
     };
   }

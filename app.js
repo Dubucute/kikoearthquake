@@ -860,6 +860,18 @@ class JaviAlertApp {
 
     // ─── FETCH EARTHQUAKE DATA ─────────────────────────────────
     async fetchEarthquakeData() {
+      // Primary: PHIVOLCS (more accurate for PH earthquakes)
+      try {
+        const phivRes = await fetch('/api/phivolcs-quakes');
+        const phivData = await phivRes.json();
+        if (phivData.features && phivData.features.length > 0) {
+          return phivData.features;
+        }
+      } catch (_) {
+        // PHIVOLCS failed — fall through to USGS
+      }
+
+      // Fallback: USGS
       const degRadius = 500 / 111.2;
       const usgsUrl = API.USGS +
         '?format=geojson' +

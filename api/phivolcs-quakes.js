@@ -1,0 +1,145 @@
+/**
+ * PHIVOLCS Earthquake Data Proxy
+ *
+ * Fetches the PHIVOLCS earthquake listing page, parses the HTML table,
+ * and returns data in a GeoJSON-like format matching USGS structure.
+ *
+ * This is the PRIMARY data source — more accurate for PH earthquakes.
+ * USGS is used as fallback.
+ */
+
+const PHIVOLCS_URL = 'https://earthquake.phivolcs.dost.gov.ph/';
+const BASE_URL = 'https://earthquake.phivolcs.dost.gov.ph/';
+const FETCH_TIMEOUT_MS = 10000;
+
+export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Cache-Control', 'public, max-age=120, s-maxage=120');
+
+  try {
+    const response = await fetch(PHIVOLCS_URL, {
+      headers: { 'User-Agent': 'JaviAlert/1.0' },
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    });
+
+    if (!response.ok) {
+      throw new Error(`PHIVOLCS returned ${response.status}`);
+    }
+
+    const html = await response.text();
+    const features = parsePhivolcsTable(html);
+
+    res.status(200).json({ features });
+  } catch (err) {
+    console.error('PHIVOLCS fetch error:', err.message);
+    // Return empty features so the app can fall back to USGS
+    res.status(200).json({ features: [], _error: err.message });
+  }
+}
+
+/**
+ * Parse the PHIVOLCS HTML table into GeoJSON-like feature objects.
+ */
+function parsePhivolcsTable(html) {
+  const features = [];
+
+  // Split into table rows
+  const rowMatches = html.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi);
+
+  for (const rowMatch of rowMatches) {
+    const row = rowMatch[1];
+
+    // Skip header rows (contain <th>) and rows without quake data
+    if (!row.includes('auto-style99') || row.includes('<th')) continue;
+
+    // Extract date link
+    const linkMatch = row.match(/<a[^>]+href="([^"]*)"[^>]*>[\s\S]*?<span[^>]*class="auto-style99"[^>]*>([^<]*)<\/span>/i);
+    if (!linkMatch) continue;
+
+    const href = linkMatch[1].trim();
+    const dateStr = linkMatch[2].trim();
+
+    // Extract all <td> cells
+    const tdMatches = row.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/gi);
+    const cells = [];
+    for (const td of tdMatches) {
+      cells.push(td[1]);
+    }
+
+    // Need at least 6 cells: date, lat, lon, depth, mag, location
+    if (cells.length < 6) continue;
+
+    // Parse coordinates and magnitude
+    const lat = parseFloat(stripHtml(cells[1]).trim());
+    const lon = parseFloat(stripHtml(cells[2]).trim());
+    const depth = parseInt(stripHtml(cells[3]).trim(), 10);
+    const mag = parseFloat(stripHtml(cells[4]).trim());
+    const locationRaw = stripHtml(cells[5]).trim();
+
+    // Validate required fields
+    if (isNaN(lat) || isNaN(lon) || isNaN(mag)) continue;
+
+    // Parse date as Philippine Time (UTC+8)
+    const time = parsePhivolcsDate(dateStr);
+    if (!time) continue;
+
+    // Build absolute URL
+    const url = href.startsWith('http') ? href : BASE_URL + href.replace(/\\/g, '/');
+
+    // Generate a stable ID from the URL path
+    const id = 'ph-' + href.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+
+    features.push({
+      type: 'Feature',
+      id,
+      properties: {
+        mag,
+        place: locationRaw,
+        time: time.getTime(),
+        url,
+      },
+      geometry: {
+        type: 'Point',
+        coordinates: [lon, lat, isNaN(depth) ? 0 : depth],
+      },
+    });
+  }
+
+  return features;
+}
+
+/**
+ * Strip HTML tags, returning only text content.
+ */
+function stripHtml(html) {
+  return html.replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, ' ').trim();
+}
+
+/**
+ * Parse PHIVOLCS date format: "05 July 2026 - 02:52 PM"
+ * Returns Date object (UTC-corrected from Philippine Time UTC+8).
+ */
+function parsePhivolcsDate(str) {
+  const match = str.match(/^(\d+)\s+(\w+)\s+(\d+)\s*-\s*(\d+):(\d+)\s*(AM|PM)$/i);
+  if (!match) return null;
+
+  const day = parseInt(match[1], 10);
+  const monthStr = match[2];
+  const year = parseInt(match[3], 10);
+  let hour = parseInt(match[4], 10);
+  const min = parseInt(match[5], 10);
+  const ampm = match[6].toUpperCase();
+
+  if (ampm === 'PM' && hour < 12) hour += 12;
+  if (ampm === 'AM' && hour === 12) hour = 0;
+
+  const months = {
+    january: 0, february: 1, march: 2, april: 3, may: 4, june: 5,
+    july: 6, august: 7, september: 8, october: 9, november: 10, december: 11,
+  };
+  const month = months[monthStr.toLowerCase()];
+  if (month === undefined) return null;
+
+  // Philippine Time is UTC+8 — store as UTC internally
+  return new Date(Date.UTC(year, month, day, hour - 8, min));
+}
