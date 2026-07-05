@@ -2619,3 +2619,167 @@ body.dark-mode .chat-quick-btn {
 body.dark-mode .chat-bubble-typing .chat-bubble-inner::after {
   color: #ff9f7c;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   JAVI CHAT HEAD — floating button bottom-right with notif popup
+   ═══════════════════════════════════════════════════════════════ */
+.chat-head {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 10000;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: chatHeadPop .4s cubic-bezier(.34,1.56,.64,1);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+@keyframes chatHeadPop {
+  0% { transform: scale(0); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.chat-head-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 3px solid #2d3436;
+  box-shadow: 4px 4px 0px #2d3436, 0 4px 16px rgba(0,0,0,.15);
+  object-fit: cover;
+  background: #fff;
+  transition: transform .15s, box-shadow .15s;
+}
+.chat-head:active .chat-head-icon {
+  transform: scale(.92);
+  box-shadow: 1px 1px 0px #2d3436;
+}
+
+/* Unread badge */
+.chat-head-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 22px;
+  height: 22px;
+  border-radius: 11px;
+  background: #e17055;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: 'Fredoka', sans-serif;
+  line-height: 22px;
+  text-align: center;
+  padding: 0 5px;
+  border: 2px solid #2d3436;
+  box-shadow: 2px 2px 0px #2d3436;
+  z-index: 1;
+  animation: badgePop .3s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes badgePop {
+  0% { transform: scale(0); }
+  100% { transform: scale(1); }
+}
+.chat-head-badge.hidden {
+  display: none;
+}
+
+/* Notification popup above chat head */
+.chat-head-notif {
+  position: absolute;
+  bottom: 68px;
+  right: 0;
+  width: 260px;
+  z-index: 9999;
+  animation: notifSlideUp .35s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes notifSlideUp {
+  0% { transform: translateY(16px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+.chat-head-notif.hidden {
+  display: none;
+}
+.chat-head-notif-inner {
+  background: #fff;
+  border: 3px solid #2d3436;
+  border-radius: 16px;
+  padding: 12px 14px;
+  box-shadow: 4px 4px 0 #2d3436, 0 6px 24px rgba(0,0,0,.15);
+  position: relative;
+}
+.chat-head-notif-inner::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  right: 22px;
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border-right: 3px solid #2d3436;
+  border-bottom: 3px solid #2d3436;
+  transform: rotate(45deg);
+  border-radius: 0 0 3px 0;
+}
+.chat-head-notif-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #2d3436;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.chat-head-notif-title::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #00b894;
+  display: inline-block;
+  animation: notifDot 1.2s ease-in-out infinite;
+}
+@keyframes notifDot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .3; }
+}
+.chat-head-notif-body {
+  font-size: 13px;
+  color: #636e72;
+  line-height: 1.4;
+  font-weight: 500;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  word-break: break-word;
+}
+
+/* Dark mode chat head */
+body.dark-mode .chat-head-icon {
+  border-color: #555;
+  box-shadow: 4px 4px 0px #555, 0 4px 16px rgba(0,0,0,.35);
+}
+body.dark-mode .chat-head:active .chat-head-icon {
+  box-shadow: 1px 1px 0px #555;
+}
+body.dark-mode .chat-head-badge {
+  border-color: #555;
+}
+body.dark-mode .chat-head-notif-inner {
+  background: #2a2a3e;
+  border-color: #555;
+  box-shadow: 4px 4px 0 #555, 0 6px 24px rgba(0,0,0,.35);
+}
+body.dark-mode .chat-head-notif-inner::after {
+  background: #2a2a3e;
+  border-color: #555;
+}
+body.dark-mode .chat-head-notif-title {
+  color: #eee;
+}
+body.dark-mode .chat-head-notif-body {
+  color: #aaa;
+}
+
+/* Hide chat head on small screens when action bar might overlap? Keep it always visible. */

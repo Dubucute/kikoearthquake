@@ -45,6 +45,9 @@ class JaviAlertApp {
       // Chat state
       this.chatMessages = [];
       this.chatLoading = false;
+      this.unreadCount = 0;
+      this._notifTimer = null;
+      this._pendingClose = false;
 
       // Bind
       this.init = this.init.bind(this);
@@ -90,6 +93,8 @@ class JaviAlertApp {
       this._detectLanguage = this._detectLanguage.bind(this);
       this._fallbackResponse = this._fallbackResponse.bind(this);
       this._quickReply = this._quickReply.bind(this);
+      this._updateChatHeadBadge = this._updateChatHeadBadge.bind(this);
+      this._showChatHeadNotif = this._showChatHeadNotif.bind(this);
     }
 
     /** Get current language: tl, en, or ceb */
@@ -253,11 +258,21 @@ class JaviAlertApp {
 
       // Ask Javi chat modal
       document.getElementById('pillAskJaviBtn').addEventListener('click', () => this._showChat());
+      document.getElementById('chatHead').addEventListener('click', () => this._showChat());
       document.getElementById('chatModalClose').addEventListener('click', () => {
         document.getElementById('chatModal').classList.add('hidden');
+        // If bot is still loading, mark that there may be unread messages
+        if (this.chatLoading) {
+          this._pendingClose = true;
+        }
       });
       document.getElementById('chatModal').addEventListener('click', (e) => {
-        if (e.target === e.currentTarget) e.currentTarget.classList.add('hidden');
+        if (e.target === e.currentTarget) {
+          e.currentTarget.classList.add('hidden');
+          if (this.chatLoading) {
+            this._pendingClose = true;
+          }
+        }
       });
       document.getElementById('chatSendBtn').addEventListener('click', () => this._sendChatMessage());
       document.getElementById('chatInput').addEventListener('keydown', (e) => {
@@ -1290,6 +1305,41 @@ class JaviAlertApp {
       }
     }
 
+    /** Update the unread badge on the chat head */
+    _updateChatHeadBadge() {
+      const badge = document.getElementById('chatHeadBadge');
+      if (!badge) return;
+      if (this.unreadCount > 0) {
+        badge.textContent = this.unreadCount > 99 ? '99+' : String(this.unreadCount);
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+    }
+
+    /** Show a notification popup above the chat head */
+    _showChatHeadNotif(title, body) {
+      const notif = document.getElementById('chatHeadNotif');
+      const titleEl = document.getElementById('chatHeadNotifTitle');
+      const bodyEl = document.getElementById('chatHeadNotifBody');
+      if (!notif || !titleEl || !bodyEl) return;
+
+      titleEl.textContent = title || 'Javi';
+      bodyEl.textContent = body || '';
+
+      // Remove hidden and re-trigger animation
+      notif.classList.remove('hidden');
+      notif.classList.remove('chat-head-notif');
+      void notif.offsetWidth;
+      notif.classList.add('chat-head-notif');
+
+      // Auto-hide after 5 seconds
+      if (this._notifTimer) clearTimeout(this._notifTimer);
+      this._notifTimer = setTimeout(() => {
+        notif.classList.add('hidden');
+      }, 5000);
+    }
+
     /** Push a proactive earthquake alert into the chat */
     _pushProactiveAlert(quake, alertType) {
       const mag = quake.mag.toFixed(1);
@@ -1313,6 +1363,18 @@ class JaviAlertApp {
       const lastMsgs = this.chatMessages.slice(-2).map(m => m.content).join(' ');
       if (!lastMsgs.includes(quake.id) && !lastMsgs.includes(mag + ' magnitude')) {
         this.chatMessages.push({ role: 'assistant', content: chatMsg, _quakeId: quake.id });
+
+        // If chat is closed, show notification popup on chat head
+        const chatModal = document.getElementById('chatModal');
+        const chatHidden = !chatModal || chatModal.classList.contains('hidden');
+        if (chatHidden) {
+          this.unreadCount++;
+          this._updateChatHeadBadge();
+          const shortMsg = alertType === 'danger'
+            ? '🚨 ' + mag + ' mag earthquake near ' + place + '!'
+            : '⚠️ ' + mag + ' mag quake near ' + place;
+          this._showChatHeadNotif('⚠️ Earthquake Alert', shortMsg);
+        }
       }
     }
 
@@ -3166,6 +3228,16 @@ class JaviAlertApp {
       const modal = document.getElementById('chatModal');
       if (!modal) return;
 
+      // Clear unread badge when opening chat
+      this.unreadCount = 0;
+      this._pendingClose = false;
+      this._updateChatHeadBadge();
+
+      // Hide notification popup
+      const notif = document.getElementById('chatHeadNotif');
+      if (notif) notif.classList.add('hidden');
+      if (this._notifTimer) clearTimeout(this._notifTimer);
+
       // Load chat memory — only when no user messages yet
       const hasUserMsg = this.chatMessages.some(m => m.role === 'user');
       if (!hasUserMsg) {
@@ -3257,6 +3329,18 @@ class JaviAlertApp {
         // Save to memory
         this._saveChatMemory(text, response);
 
+        // If chat was closed while waiting, show notification on chat head
+        const chatModal = document.getElementById('chatModal');
+        const chatHidden = !chatModal || chatModal.classList.contains('hidden');
+        if (chatHidden || this._pendingClose) {
+          this.unreadCount++;
+          this._updateChatHeadBadge();
+          // Show the first few words as preview
+          const preview = response.length > 80 ? response.slice(0, 80) + '…' : response;
+          this._showChatHeadNotif('Javi replied', preview);
+        }
+        this._pendingClose = false;
+
         // Scroll to bottom
         if (msgs) msgs.scrollTop = msgs.scrollHeight;
       } catch (err) {
@@ -3268,6 +3352,17 @@ class JaviAlertApp {
         this.chatMessages.push({ role: 'assistant', content: fallback });
         this._renderChatMessages(true);
         this._saveChatMemory(text, fallback);
+
+        // If chat was closed while waiting, notify on chat head
+        const chatModal = document.getElementById('chatModal');
+        const chatHidden = !chatModal || chatModal.classList.contains('hidden');
+        if (chatHidden || this._pendingClose) {
+          this.unreadCount++;
+          this._updateChatHeadBadge();
+          this._showChatHeadNotif('Javi replied', 'Tap to see my response!');
+        }
+        this._pendingClose = false;
+
         if (msgs) msgs.scrollTop = msgs.scrollHeight;
       } finally {
         this.chatLoading = false;
