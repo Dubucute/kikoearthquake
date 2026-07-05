@@ -1198,20 +1198,29 @@ class JaviAlertApp {
       const ico = document.getElementById('refreshIcon');
       const quakeContainer = document.getElementById('quakeList');
 
-      bubble.className = 'bubble loading';
-      bubble.innerHTML = '<i data-lucide="search" aria-hidden="true"></i> Checking for earthquakes...';
-      try { lucide.createIcons(); } catch (_) { /* ignore */ }
+      // Show cached data instantly (if available)
+      const cached = this._loadCachedData();
+      if (cached && cached.features) {
+        const cData = this.processQuakeData(cached.features);
+        this._saveKnownQuakeIds(cData.quakes);
+        await this.updateUI(cData);
+        // Don't show skeleton — we already have data
+      } else {
+        // No cache — show skeleton loaders
+        bubble.className = 'bubble loading';
+        bubble.innerHTML = '<i data-lucide="search" aria-hidden="true"></i> Checking for earthquakes...';
+        try { lucide.createIcons(); } catch (_) { /* ignore */ }
+        if (quakeContainer) quakeContainer.innerHTML = this._getSkeletonHTML();
+      }
 
       ico.classList.add('spin');
-
-      // Show skeleton loaders in the quake list
-      if (quakeContainer) {
-        quakeContainer.innerHTML = this._getSkeletonHTML();
-      }
 
       try {
         const features = await this.fetchEarthquakeData();
         const data = this.processQuakeData(features);
+
+        // Cache the fresh data for next load
+        this._saveCachedData(features);
 
         // Update known IDs
         this._saveKnownQuakeIds(data.quakes);
@@ -1225,6 +1234,14 @@ class JaviAlertApp {
           this._alertNewQuakes(newQuakes);
         }
       } catch (err) {
+        // If fetch fails but we already showed cached data, don't show error
+        if (cached && cached.features) {
+          ico.classList.remove('spin');
+          bubble.className = 'bubble';
+          bubble.innerHTML = '<i data-lucide="info" aria-hidden="true"></i> Showing cached data — refresh failed.';
+          try { lucide.createIcons(); } catch (_) { /* ignore */ }
+          return;
+        }
         bubble.className = 'bubble';
         bubble.innerHTML = '<i data-lucide="alert-circle" aria-hidden="true"></i> Could not load data. Check your connection.';
         try { lucide.createIcons(); } catch (_) { /* ignore */ }
@@ -1248,6 +1265,24 @@ class JaviAlertApp {
           }
         }
       }
+    }
+
+    // ─── CLIENT-SIDE DATA CACHE ──────────────────────────────
+    _loadCachedData() {
+      try {
+        const raw = localStorage.getItem('javiQuakeCache');
+        if (!raw) return null;
+        const cached = JSON.parse(raw);
+        // Cache expires after 30 minutes
+        if (Date.now() - (cached.ts || 0) > 1800000) return null;
+        return cached;
+      } catch (_) { return null; }
+    }
+
+    _saveCachedData(features) {
+      try {
+        localStorage.setItem('javiQuakeCache', JSON.stringify({ ts: Date.now(), features }));
+      } catch (_) { /* ignore quota errors */ }
     }
 
     _getSkeletonHTML() {
