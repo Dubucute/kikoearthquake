@@ -1,4 +1,4 @@
-const CACHE = 'quake-buddy-v1.104';
+const CACHE = 'quake-buddy-v1.106';
 const ASSETS = [
   '/', '/index.html', '/manifest.json',
   '/style.css', '/style.css?v=2', '/app.js',
@@ -83,25 +83,24 @@ self.addEventListener('notificationclick', e => {
   e.notification.close();
   const urlToOpen = e.notification.data?.url || '/';
   const alertType = e.notification.data?.alertType;
+  const fullUrl = self.location.origin + urlToOpen;
+
   e.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
+      // Try to find an existing JaviAlert window
       for (const client of clientList) {
-        if (client.url.startsWith(self.location.origin) && 'focus' in client) {
+        if (client.url.startsWith(self.location.origin)) {
+          // Send alert sound message then focus
           if (alertType) {
             client.postMessage({ action: 'playAlertSound', alertType });
           }
-          return client.focus();
+          client.focus();
+          client.navigate(fullUrl);
+          return;
         }
       }
-      if (clients.openWindow) {
-        return clients.openWindow(urlToOpen).then(newWin => {
-          if (newWin && alertType) {
-            newWin.onload = () => {
-              newWin.postMessage({ action: 'playAlertSound', alertType });
-            };
-          }
-        });
-      }
+      // No existing window — open a new one
+      return clients.openWindow(fullUrl);
     })
   );
 });
