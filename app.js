@@ -2497,8 +2497,18 @@ class JaviAlertApp {
       ctx.lineTo(mapX, mapY + mapH - 12);
       ctx.stroke();
 
-      // ── Epicenter pin on map (center) ──
-      const pinCX = mapX + mapW / 2, pinCY = mapY + mapH / 2;
+      // ── Epicenter pin on map (accurate position from lat/lon) ──
+      // Recalculate fractional tile position to place pin accurately
+      const tileN = Math.pow(2, 7); // zoom 7
+      const tileXf = (q.lon + 180) / 360 * tileN;
+      const tileYf = (1 - Math.log(Math.tan(q.lat * Math.PI / 180) + 1 / Math.cos(q.lat * Math.PI / 180)) / Math.PI) / 2 * tileN;
+      const epicFracX = tileXf - Math.floor(tileXf); // 0..1 within tile
+      const epicFracY = tileYf - Math.floor(tileYf);
+      const gridTotal = 256 * 3; // 3x3 grid, 256px tiles = 768px
+      const epicPxX = 256 + epicFracX * 256; // pixel on tile canvas (half=1 → starts at 256)
+      const epicPxY = 256 + epicFracY * 256;
+      const pinCX = mapX + (epicPxX / gridTotal) * mapW;
+      const pinCY = mapY + (epicPxY / gridTotal) * mapH;
       // Pulsing ring
       ctx.globalAlpha = 0.25;
       ctx.fillStyle = '#e17055';
