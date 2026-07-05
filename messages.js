@@ -93,6 +93,10 @@ export const SAFETY_TIPS_TL = [
 
 // ─── CHANGELOG ───────────────────────────────────────────────
 export const CHANGELOG = [
+  { ver: 'v1.66', date: '2026-07-05', items: [
+    'Fix: PHIVOLCS API SSL cert issue — added rejectUnauthorized:false for PHIVOLCS self-signed cert',
+    'Updated: Service worker cache bumped to v1.66'
+  ]},
   { ver: 'v1.65', date: '2026-07-05', items: [
     'Fix: PHIVOLCS API on Vercel — switched to Node.js https module (Vercel fetch can\'t reach PHIVOLCS)',
     'Updated: Service worker cache bumped to v1.65'
