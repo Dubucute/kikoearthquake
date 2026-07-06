@@ -1,7 +1,14 @@
-// Provider chain: NVIDIA → Groq → OpenRouter → HuggingFace (optimized for RP/translation)
+// Provider chain: OpenRouter → NVIDIA → Groq → HuggingFace (large models for text/translation)
 
 // ─── Provider definitions ────────────────────────────────────
 const PROVIDERS = [
+  {
+    name: 'openrouter',
+    baseUrl: 'https://openrouter.ai/api/v1',
+    apiKeyEnv: 'OPENROUTER_API_KEY',
+    maxTokens: 4096,
+    models: ['poolside/laguna-m.1:free', 'nvidia/nemotron-3-super-120b-a12b:free', 'openai/gpt-oss-120b:free', 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free'],
+  },
   {
     name: 'nvidia',
     baseUrl: 'https://integrate.api.nvidia.com/v1',
@@ -15,13 +22,6 @@ const PROVIDERS = [
     apiKeyEnv: 'GROQ_API_KEY',
     maxTokens: 2048,
     models: ['llama-3.1-8b-instant'],
-  },
-  {
-    name: 'openrouter',
-    baseUrl: 'https://openrouter.ai/api/v1',
-    apiKeyEnv: 'OPENROUTER_API_KEY',
-    maxTokens: 2048,
-    models: ['meta-llama/llama-3.1-8b-instruct', 'mistralai/mistral-7b-instruct', 'google/gemma-2-9b-it', 'microsoft/phi-3-mini-4k-instruct'],
   },
   {
     name: 'huggingface',
@@ -55,7 +55,7 @@ function buildSystemPrompt(quakeContext, lang) {
     const langName = { tl: 'Tagalog', ceb: 'Cebuano' }[lang] || lang;
     systemContent += '\n\nIMPORTANT: The user\'s language is ' + langName + '. This is NOT optional — you MUST reply entirely in ' + langName + '.';
     if (lang === 'ceb') {
-      systemContent += ' Use Cebuano (Bisaya) words like: unsa, mao, bitaw, sige, nya, kay, dili, wala, naa, ako, imo, siya, kami, kita, kini, kana, adlaw, gabii, unsaon. Never use Tagalog or English words.';
+      systemContent += ' Use natural Bisaya words and expressions like: unsa, mao, bitaw, sige, nya, kay, dili, wala, naa, ako, imo, siya, kami, kita, kini, kana, adlaw, gabii, unsaon. Use playful Bisaya words like "hala", "mao ba", "bitaw", "sige", "nya", "aguy", "sus", "hala oy", "aw" sometimes. Never use Tagalog or English words.';
     }
   }
   if (quakeContext) {
@@ -119,12 +119,12 @@ async function callOpenAICompatible(provider, messages, quakeContext, lang) {
   throw new Error(`All models failed for ${provider.name}. Last: ${lastError}`);
 }
 
-// Provider chain: NVIDIA → Groq → OpenRouter → HuggingFace
+// Provider chain: OpenRouter → NVIDIA → Groq → HuggingFace
 
 // ─── System prompt ────────────────────────────────────────────
 const SYSTEM_PROMPT =
   'LANGUAGE RULE — This is the most important rule. You MUST match the user\'s language EXACTLY:\n' +
-  '  - If they write in Cebuano (Bisaya): reply in Cebuano. Use words like "unsa", "mao", "bitaw", "sige", "nya", "kay", "sa", "og", "ang", "mga", "dili", "wala", "naa", "ako", "imo", "siya", "kami", "kita", "kini", "kana".\n' +
+  '  - If they write in Cebuano (Bisaya): reply in Cebuano.\n' +
   '  - If they write in Tagalog: reply in Tagalog.\n' +
   '  - If they write in English: reply in English.\n' +
   '  - NEVER switch languages. NEVER reply in English if the user wrote in Cebuano.\n' +
@@ -134,7 +134,6 @@ const SYSTEM_PROMPT =
   'homework like a smart classmate. If it\'s about life, chat like a cute kid. ' +
   'If it\'s about earthquakes, share what you know simply. ' +
   'Talk like a child — simple words, cute, playful, a bit messy. ' +
-  'Use playful Bisaya words like "hala", "mao ba", "bitaw", "sige", "nya", "aguy", "sus", "hala oy", "aw" sometimes. ' +
   'Be sweet, hyper, and fun. ' +
   'Use emojis sparingly — one at most per message, and only when it really fits. ' +
   'When earthquake context data is provided below, you can use it but explain simply. ' +
@@ -175,35 +174,7 @@ export default async function handler(req, res) {
     let reply = null;
     const errors = [];
 
-    // 1. NVIDIA (RPM only, no daily cap)
-    if (!reply) {
-      const nvidia = PROVIDERS.find(p => p.name === 'nvidia');
-      if (process.env[nvidia.apiKeyEnv]) {
-        try {
-          reply = await callOpenAICompatible(nvidia, messages, quakeContext, lang);
-          console.log('✅ NVIDIA replied');
-        } catch (e) {
-          errors.push(e.message);
-          console.warn('NVIDIA failed:', e.message);
-        }
-      }
-    }
-
-    // 2. Groq (Daily + RPM)
-    if (!reply) {
-      const groq = PROVIDERS.find(p => p.name === 'groq');
-      if (process.env[groq.apiKeyEnv]) {
-        try {
-          reply = await callOpenAICompatible(groq, messages, quakeContext, lang);
-          console.log('✅ Groq replied');
-        } catch (e) {
-          errors.push(e.message);
-          console.warn('Groq failed:', e.message);
-        }
-      }
-    }
-
-    // 3. OpenRouter (great free RP models)
+    // 1. OpenRouter (largest models: 30B–120B, best for text/translation)
     if (!reply) {
       const or = PROVIDERS.find(p => p.name === 'openrouter');
       if (process.env[or.apiKeyEnv]) {
@@ -217,7 +188,35 @@ export default async function handler(req, res) {
       }
     }
 
-    // 4. Hugging Face (rate-limited, final fallback)
+    // 2. NVIDIA (fallback)
+    if (!reply) {
+      const nvidia = PROVIDERS.find(p => p.name === 'nvidia');
+      if (process.env[nvidia.apiKeyEnv]) {
+        try {
+          reply = await callOpenAICompatible(nvidia, messages, quakeContext, lang);
+          console.log('✅ NVIDIA replied');
+        } catch (e) {
+          errors.push(e.message);
+          console.warn('NVIDIA failed:', e.message);
+        }
+      }
+    }
+
+    // 3. Groq (fallback)
+    if (!reply) {
+      const groq = PROVIDERS.find(p => p.name === 'groq');
+      if (process.env[groq.apiKeyEnv]) {
+        try {
+          reply = await callOpenAICompatible(groq, messages, quakeContext, lang);
+          console.log('✅ Groq replied');
+        } catch (e) {
+          errors.push(e.message);
+          console.warn('Groq failed:', e.message);
+        }
+      }
+    }
+
+    // 4. Hugging Face (final fallback)
     if (!reply) {
       const hf = PROVIDERS.find(p => p.name === 'huggingface');
       if (process.env[hf.apiKeyEnv]) {

@@ -184,8 +184,8 @@ class JaviAlertApp {
         'nyo', 'namin', 'ninyo', 'aming', 'aming', 'inyo', 'kanila', 'kanya'];
       const matchesTl = tagalogWords.filter(w => t.includes(w)).length;
 
-      if (matchesCeb > matchesTl && matchesCeb >= 2) return 'ceb';
-      if (matchesTl > matchesCeb && matchesTl >= 2) return 'tl';
+      if (matchesCeb >= matchesTl + 2 && matchesCeb >= 4) return 'ceb';
+      if (matchesTl >= matchesCeb + 2 && matchesTl >= 4) return 'tl';
       return 'en';
     }
 

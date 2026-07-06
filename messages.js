@@ -92,7 +92,18 @@ export const SAFETY_TIPS_TL = [
 ];
 
 // ─── CHANGELOG ───────────────────────────────────────────────
-export const CHANGELOG = [ { ver: 'v1.122', date: '2026-07-06', items: [
+export const CHANGELOG = [ { ver: 'v1.124', date: '2026-07-06', items: [
+    'Change: OpenRouter is now the first AI provider (was NVIDIA) — massive 30B–120B models',
+    'New: OpenRouter models — poolside/laguna-m.1:free, nemotron-3-super-120b:free, gpt-oss-120b:free, nemotron-3-nano-30b-reasoning:free',
+    'Change: maxTokens increased to 4096 for richer replies',
+    'Updated: Service worker cache bumped to v1.124'
+  ]},
+  { ver: 'v1.123', date: '2026-07-06', items: [
+    'Fix: Bisaya playful words now only used when Cebuano detected — no more random Bisaya in Tagalog replies',
+    'Fix: Language detection now requires stronger Cebuano signal (min 4 words, at least 2 more than Tagalog)',
+    'Updated: Service worker cache bumped to v1.123'
+  ]},
+  { ver: 'v1.122', date: '2026-07-06', items: [
     'Change: Mixtral 8x7B (NVIDIA) now first model tried in provider chain — smartest model prioritized',
     'Updated: Service worker cache bumped to v1.122'
   ]},
