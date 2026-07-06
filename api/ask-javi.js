@@ -1,4 +1,4 @@
-// ─── Ask Javi — Multi-provider AI chat API ───────────────────
+// Updated provider chain: NVIDIA, Groq, Hugging Face only. Gemini removed.
 
 // ─── Provider definitions ────────────────────────────────────
 const PROVIDERS = [
@@ -6,24 +6,25 @@ const PROVIDERS = [
     name: 'nvidia',
     baseUrl: 'https://integrate.api.nvidia.com/v1',
     apiKeyEnv: 'NVIDIA_API_KEY',
-    models: ['nvidia/llama-3.1-nemotron-70b-instruct', 'mistralai/mixtral-8x22b-instruct-v0.1'],
+    models: ['meta/llama-3.1-8b-instruct', 'mistralai/mixtral-8x7b-instruct-v0.1'],
   },
   {
     name: 'groq',
     baseUrl: 'https://api.groq.com/openai/v1',
     apiKeyEnv: 'GROQ_API_KEY',
-    models: ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'mixtral-8x7b-32768'],
+    models: ['openai/gpt-oss-20b', 'llama-3.1-8b-instant'],
+  },
+  {
+    name: 'cohere',
+    baseUrl: 'https://api.cohere.com/v2',
+    apiKeyEnv: 'COHERE_API_KEY',
+    models: ['command-r-plus-08-2024', 'command-r-08-2024'],
   },
   {
     name: 'huggingface',
     baseUrl: 'https://router.huggingface.co/v1',
     apiKeyEnv: 'HF_TOKEN',
-    models: [
-      'moonshotai/Kimi-K2-Instruct-0905',
-      'Qwen/Qwen2.5-7B-Instruct',
-      'mistralai/Mistral-7B-Instruct-v0.3',
-      'google/gemma-2-2b-it',
-    ],
+    models: ['zai-org/GLM-5.2:novita', 'moonshotai/Kimi-K2-Instruct-0905', 'Qwen/Qwen2.5-7B-Instruct', 'mistralai/Mistral-7B-Instruct-v0.3'],
   },
 ];
 
@@ -78,8 +79,9 @@ async function callOpenAICompatible(provider, messages, quakeContext) {
         body: JSON.stringify({
           model,
           messages: chatMessages,
-          max_tokens: 300,
+          max_tokens: 8192,
           temperature: 0.7,
+          top_p: 0.95,
         }),
       });
 
@@ -106,62 +108,7 @@ async function callOpenAICompatible(provider, messages, quakeContext) {
   throw new Error(`All models failed for ${provider.name}. Last: ${lastError}`);
 }
 
-/** Build a Gemini-format contents array from our messages */
-function toGeminiMessages(messages) {
-  const geminiContents = [];
-  const sliced = (messages || []).slice(-8);
-
-  for (const msg of sliced) {
-    if (!msg || typeof msg.content !== 'string') continue;
-    if (msg.role === 'user') {
-      geminiContents.push({ role: 'user', parts: [{ text: msg.content }] });
-    } else if (msg.role === 'assistant') {
-      geminiContents.push({ role: 'model', parts: [{ text: msg.content }] });
-    }
-  }
-  return geminiContents;
-}
-
-async function callGoogleAI(messages, quakeContext) {
-  const apiKey = process.env.GOOGLE_AI_STUDIO_API_KEY || process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    throw new Error('GOOGLE_AI_STUDIO_API_KEY or GEMINI_API_KEY is not configured');
-  }
-
-  const model = process.env.GOOGLE_AI_STUDIO_MODEL || 'gemini-2.0-flash';
-  const systemContent = buildSystemPrompt(quakeContext);
-  const geminiContents = toGeminiMessages(messages);
-
-  // Prepend system as a user message so Gemini gets the rules
-  geminiContents.unshift({ role: 'user', parts: [{ text: systemContent }] });
-  geminiContents.push({ role: 'model', parts: [{ text: 'Got it! Let me respond to the user.' }] });
-
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: geminiContents,
-      generationConfig: { temperature: 0.7 }
-    })
-  });
-
-  if (!res.ok) {
-    const errText = await res.text().catch(() => '');
-    throw new Error(`Google AI Studio error ${res.status}: ${errText.slice(0, 200)}`);
-  }
-
-  const data = await res.json();
-  const candidate = data.candidates?.[0]?.content?.parts
-    ?.map((part) => part.text)
-    ?.join('')
-    ?.trim();
-
-  if (!candidate) {
-    throw new Error('Google AI Studio returned an empty response');
-  }
-
-  return candidate;
-}
+// Gemini removed — using NVIDIA → Groq → Hugging Face only.
 
 // ─── System prompt ────────────────────────────────────────────
 const SYSTEM_PROMPT =
@@ -242,16 +189,16 @@ export default async function handler(req, res) {
       }
     }
 
-    // 3. Google AI Studio (Daily)
+    // 3. Cohere
     if (!reply) {
-      const hasGoogleKey = process.env.GOOGLE_AI_STUDIO_API_KEY || process.env.GEMINI_API_KEY;
-      if (hasGoogleKey) {
+      const cohere = PROVIDERS.find(p => p.name === 'cohere');
+      if (process.env[cohere.apiKeyEnv]) {
         try {
-          reply = await callGoogleAI(messages, quakeContext);
-          console.log('✅ Google AI Studio replied');
+          reply = await callOpenAICompatible(cohere, messages, quakeContext);
+          console.log('✅ Cohere replied');
         } catch (e) {
           errors.push(e.message);
-          console.warn('Google AI Studio failed:', e.message);
+          console.warn('Cohere failed:', e.message);
         }
       }
     }
