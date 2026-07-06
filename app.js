@@ -19,6 +19,7 @@ class JaviAlertApp {
       this.knownQuakeIds = this._loadKnownQuakeIds();
       this.isDarkMode = localStorage.getItem('javiDarkMode') === 'true';
       this.soundEnabled = localStorage.getItem('javiSoundEnabled') !== 'false';
+      this.notifSound = localStorage.getItem('javiNotifSound') || 'alarm';
       this.moodHistory = this._loadMoodHistory();
       this.magFilter = 0;
       this._pushReady = false;
@@ -43,12 +44,13 @@ class JaviAlertApp {
       };
 
       // Chat state
-      this.chatMessages = [];
+      this.chatMessages = this._loadChatHistory();
       this.chatLoading = false;
       this.unreadCount = 0;
       this._notifTimer = null;
       this._pendingClose = false;
       this._scrollPos = 0;
+      this._lastCheckedTimer = null;
 
       // Bind
       this.init = this.init.bind(this);
@@ -68,7 +70,7 @@ class JaviAlertApp {
       this.showInstallTutorial = this.showInstallTutorial.bind(this);
       this.setupInstallPrompt = this.setupInstallPrompt.bind(this);
       this.toggleDarkMode = this.toggleDarkMode.bind(this);
-      this.toggleSound = this.toggleSound.bind(this);
+      this._setNotifSound = this._setNotifSound.bind(this);
       this.setMagFilter = this.setMagFilter.bind(this);
       this._recordMood = this._recordMood.bind(this);
       this._renderMoodHistory = this._renderMoodHistory.bind(this);
@@ -138,6 +140,29 @@ class JaviAlertApp {
           topics,
         };
         localStorage.setItem('javiChatMemory', JSON.stringify(mem));
+      } catch (_) { /* ignore */ }
+    }
+
+    /** Load full chat history from localStorage */
+    _loadChatHistory() {
+      try {
+        const saved = localStorage.getItem('javiChatHistory');
+        if (saved) {
+          const msgs = JSON.parse(saved);
+          if (Array.isArray(msgs) && msgs.length > 0) {
+            // Only restore if less than 24h old (check first message timestamp)
+            return msgs;
+          }
+        }
+      } catch (_) { /* ignore */ }
+      return [];
+    }
+
+    /** Save full chat history to localStorage (last 30 messages) */
+    _saveChatHistory() {
+      try {
+        const toSave = this.chatMessages.slice(-30);
+        localStorage.setItem('javiChatHistory', JSON.stringify(toSave));
       } catch (_) { /* ignore */ }
     }
 
@@ -325,8 +350,8 @@ class JaviAlertApp {
         document.body.classList.add('dark-mode');
       }
 
-      // Sound icon saved in localStorage
-      this._updateSoundIcon();
+      // Sync notification sound picker with saved preference
+      this._updateSettingsUI();
 
       // Settings button
       document.getElementById('settingsBtn').addEventListener('click', this._showSettings);
@@ -453,7 +478,12 @@ class JaviAlertApp {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.addEventListener('message', (e) => {
           if (e.data && e.data.action === 'playAlertSound') {
-            playAlertSound(e.data.alertType, this.soundEnabled, this.volumeLevel);
+            if (this.notifSound === 'alarm') {
+              playAlertSound(e.data.alertType, this.soundEnabled, this.volumeLevel);
+            } else if (this.notifSound === 'voice') {
+              // Speak generic alert — no quake details from SW
+              this._speakGenericAlert(e.data.alertType);
+            }
             this.loadData();
           }
         });
@@ -971,12 +1001,33 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
       // Update map markers
       this._updateMapMarkers();
 
-      // Last update
-      document.getElementById('lastUpdate').textContent = 'Updated ' + new Date().toLocaleTimeString();
+      // Last update — show relative time
+      this._updateLastChecked();
 
       // Refresh icon
       const ico = document.getElementById('refreshIcon');
       ico.classList.remove('spin');
+    }
+
+    /** Update "Last checked" relative timestamp + start periodic refresher */
+    _updateLastChecked() {
+      const el = document.getElementById('lastUpdate');
+      if (!el) return;
+      const now = Date.now();
+      const diff = now - this._lastFetchTime;
+      if (diff < 60000) {
+        el.textContent = 'Updated just now';
+      } else if (diff < 3600000) {
+        const mins = Math.floor(diff / 60000);
+        el.textContent = 'Updated ' + mins + ' min ago';
+      } else {
+        const hrs = Math.floor(diff / 3600000);
+        el.textContent = 'Updated ' + hrs + 'h ago';
+      }
+      // Start periodic refresher if not already running
+      if (!this._lastCheckedTimer) {
+        this._lastCheckedTimer = setInterval(() => this._updateLastChecked(), 30000);
+      }
     }
 
     // ─── RENDER QUAKE LIST ─────────────────────────────────────
@@ -1375,9 +1426,14 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
       const alertType = (newest.intensity >= 5 || newest.mag >= 5) ? 'danger' :
                         hasAlarm ? 'warning' : 'info';
 
-      // Play NDRRMC alarm ONLY for warning/danger (mag 3+)
+      // Play notification sound based on user preference
       if (alertType === 'warning' || alertType === 'danger') {
-        playAlertSound(alertType, this.soundEnabled, this.volumeLevel);
+        if (this.notifSound === 'alarm') {
+          playAlertSound(alertType, this.soundEnabled, this.volumeLevel);
+        } else if (this.notifSound === 'voice') {
+          this._speakAlert(newest, alertType);
+        }
+        // 'silent' = no sound
       }
 
       // Haptic feedback on significant alerts only
@@ -1387,27 +1443,29 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
 
       console.log('[🔔 NOTIFY] alertType:', alertType, '| hasAlarm:', hasAlarm);
 
-      // Show browser notification for ALL new quakes
-      const notifPerm = ('Notification' in window) ? Notification.permission : 'not-supported';
-      console.log('[🔔 NOTIFY] Notification.permission:', notifPerm);
-      if ('Notification' in window && Notification.permission === 'granted') {
-        const count = newQuakes.length;
-        const intLabel = PEIS_LABELS[newest.intensity] || '';
-        const title = count === 1 ? 'New earthquake detected!' : count + ' new earthquakes detected!';
-        const body = newest.mag.toFixed(1) + ' mag — ' + intLabel + ' at ' + newest.place + ' (' + newest.dist + ' km away)';
-        console.log('[🔔 NOTIFY] Sending browser notification:', title, body);
-        try {
-          new Notification(title, { body, icon: 'icons/javi-icon.png' });
-        } catch (_) { console.log('[🔔 NOTIFY] Browser notification FAILED'); }
-      } else {
-        console.log('[🔔 NOTIFY] Browser notifications NOT granted — skipping');
+      // Show browser notification ONLY for mag 3+ (warning/danger)
+      if (alertType === 'warning' || alertType === 'danger') {
+        const notifPerm = ('Notification' in window) ? Notification.permission : 'not-supported';
+        console.log('[🔔 NOTIFY] Notification.permission:', notifPerm);
+        if ('Notification' in window && Notification.permission === 'granted') {
+          const count = newQuakes.length;
+          const intLabel = PEIS_LABELS[newest.intensity] || '';
+          const title = count === 1 ? 'New earthquake detected!' : count + ' new earthquakes detected!';
+          const body = newest.mag.toFixed(1) + ' mag — ' + intLabel + ' at ' + newest.place + ' (' + newest.dist + ' km away)';
+          console.log('[🔔 NOTIFY] Sending browser notification:', title, body);
+          try {
+            new Notification(title, { body, icon: 'icons/javi-icon.png' });
+          } catch (_) { console.log('[🔔 NOTIFY] Browser notification FAILED'); }
+        } else {
+          console.log('[🔔 NOTIFY] Browser notifications NOT granted — skipping');
+        }
+
+        // Trigger server-side push for background delivery (mag 3+ only)
+        this._triggerServerPush(newest, newQuakes.length);
       }
 
       // Always show in-app toast for ALL new quakes
       this._showNotifToast(alertType, newest);
-
-      // Trigger server-side push for background delivery
-      this._triggerServerPush(newest, newQuakes.length);
 
       // Trigger map ripple effect
       this._triggerQuakeRipple();
@@ -1621,6 +1679,7 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
       const lastMsgs = this.chatMessages.slice(-2).map(m => m.content).join(' ');
       if (!lastMsgs.includes(quake.id) && !lastMsgs.includes(mag + ' magnitude')) {
         this.chatMessages.push({ role: 'assistant', content: chatMsg, _quakeId: quake.id });
+        this._saveChatHistory();
 
         // If chat is closed, show notification popup on chat head
         const chatModal = document.getElementById('chatModal');
@@ -2273,14 +2332,55 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
       }).addTo(this.map);
     }
 
-    // ─── TOGGLE SOUND ─────────────────────────────────────────
-    toggleSound() {
-      this.soundEnabled = !this.soundEnabled;
-      localStorage.setItem('javiSoundEnabled', this.soundEnabled);
-      this._updateSoundIcon();
+    // ─── NOTIFICATION SOUND ────────────────────────────────────
+    _setNotifSound(sound) {
+      this.notifSound = sound;
+      localStorage.setItem('javiNotifSound', sound);
+      // If user picks a sound option, ensure sound is enabled
+      if (sound !== 'silent') {
+        this.soundEnabled = true;
+        localStorage.setItem('javiSoundEnabled', 'true');
+      }
+      this._updateSettingsUI();
     }
-    _updateSoundIcon() {
-      // Sound state updates handled in _updateSettingsUI
+
+    /** Speak earthquake alert using Web Speech API (Javi voice) */
+    _speakAlert(quake, alertType) {
+      if (!this.soundEnabled) return;
+      try {
+        if (!window.speechSynthesis) return;
+        const mag = quake.mag.toFixed(1);
+        const place = quake.place;
+        const dist = quake.dist;
+        const msg = alertType === 'danger'
+          ? 'Danger! ' + mag + ' magnitude earthquake near ' + place + ', ' + dist + ' kilometers away. Drop, cover, and hold on!'
+          : 'Warning. ' + mag + ' magnitude earthquake detected near ' + place + ', ' + dist + ' kilometers away. Stay alert.';
+        const utterance = new SpeechSynthesisUtterance(msg);
+        utterance.lang = 'en-US';
+        utterance.rate = 0.9;
+        utterance.pitch = 1.1;
+        utterance.volume = this.volumeLevel;
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(utterance);
+      } catch (_) { /* speech not supported */ }
+    }
+
+    /** Speak generic alert from SW notification (no quake details available) */
+    _speakGenericAlert(alertType) {
+      if (!this.soundEnabled) return;
+      try {
+        if (!window.speechSynthesis) return;
+        const msg = alertType === 'danger'
+          ? 'Danger! Strong earthquake detected! Drop, cover, and hold on!'
+          : 'Earthquake detected. Please check the app for details.';
+        const utterance = new SpeechSynthesisUtterance(msg);
+        utterance.lang = 'en-US';
+        utterance.rate = 0.9;
+        utterance.pitch = 1.1;
+        utterance.volume = this.volumeLevel;
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(utterance);
+      } catch (_) { /* speech not supported */ }
     }
 
     // ─── PULL-TO-REFRSH ────────────────────────────────────────
@@ -2993,10 +3093,11 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
         this._updateSettingsUI();
       });
 
-      // Sound toggle
-      document.getElementById('settingsSoundToggle').addEventListener('click', () => {
-        this.toggleSound();
-        this._updateSettingsUI();
+      // Notification sound picker (Alarm / Voice / Silent)
+      document.querySelectorAll('.notif-sound-option').forEach(btn => {
+        btn.addEventListener('click', () => {
+          this._setNotifSound(btn.dataset.sound);
+        });
       });
 
       // Ambient toggle
@@ -3337,9 +3438,10 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
       const dt = document.getElementById('settingsDarkToggle');
       if (dt) dt.classList.toggle('active', this.isDarkMode);
 
-      // Sound toggle
-      const st = document.getElementById('settingsSoundToggle');
-      if (st) st.classList.toggle('active', this.soundEnabled);
+      // Notification sound picker (Alarm / Voice / Silent)
+      document.querySelectorAll('.notif-sound-option').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.sound === this.notifSound);
+      });
 
       // Ambient toggle
       const at = document.getElementById('settingsAmbientToggle');
@@ -3823,6 +3925,7 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
 
         // Save to memory
         this._saveChatMemory(text, response);
+        this._saveChatHistory();
 
         // If chat was closed while waiting, show notification on chat head
         const chatModal = document.getElementById('chatModal');
@@ -3847,6 +3950,7 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
         this.chatMessages.push({ role: 'assistant', content: fallback });
         this._renderChatMessages(true);
         this._saveChatMemory(text, fallback);
+        this._saveChatHistory();
 
         // If chat was closed while waiting, notify on chat head
         const chatModal = document.getElementById('chatModal');

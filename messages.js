@@ -92,7 +92,15 @@ export const SAFETY_TIPS_TL = [
 ];
 
 // ─── CHANGELOG ───────────────────────────────────────────────
-export const CHANGELOG = [ { ver: 'v1.113', date: '2026-07-06', items: [
+export const CHANGELOG = [ { ver: 'v1.114', date: '2026-07-06', items: [
+    'New: "Last checked" relative timestamp (Updated X min ago) under quake list',
+    'New: Notification sound picker — Alarm / Voice (speech) / Silent',
+    'New: Push notifications and browser alerts only for magnitude 3+ earthquakes',
+    'New: Javi chat history saved in localStorage (conversation persists across sessions)',
+    'Updated: Alert Sound setting changed from toggle to 3-option picker',
+    'Updated: Service worker cache bumped to v1.114'
+  ]},
+  { ver: 'v1.113', date: '2026-07-06', items: [
     'New: OpenRouter provider added (meta-llama/llama-3.1-8b-instruct, mistralai/mistral-7b-instruct)',
     'New: Added google/gemma-2-9b-it and microsoft/phi-3-mini-4k-instruct to OpenRouter',
     'Removed: Cohere provider (bad RP, not OpenAI-compatible)',

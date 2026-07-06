@@ -421,9 +421,20 @@
             <i data-lucide="bell" aria-hidden="true"></i>
             <span data-i18n="alertSound">Alert Sound</span>
           </div>
-          <button class="settings-toggle" id="settingsSoundToggle" aria-label="Toggle alert sound">
-            <span class="settings-toggle-knob"></span>
-          </button>
+          <div class="notif-sound-picker" id="notifSoundPicker">
+            <button class="notif-sound-option active" data-sound="alarm">
+              <i data-lucide="volume-2" aria-hidden="true"></i>
+              <span>Alarm</span>
+            </button>
+            <button class="notif-sound-option" data-sound="voice">
+              <i data-lucide="mic" aria-hidden="true"></i>
+              <span>Voice</span>
+            </button>
+            <button class="notif-sound-option" data-sound="silent">
+              <i data-lucide="bell-off" aria-hidden="true"></i>
+              <span>Silent</span>
+            </button>
+          </div>
         </div>
         <!-- Push notifications -->
         <div class="settings-row">
