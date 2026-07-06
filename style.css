@@ -792,22 +792,6 @@ body.dark-mode .quiz-review { background: rgba(40,40,60,.75); border-color: rgba
 }
 body.dark-mode .tsunami-badge { border-color: #555; }
 
-/* PULL-TO-REFRESH INDICATOR */
-.pull-indicator {
-  text-align: center; padding: 4px 0 2px;
-  font-size: 12px; color: rgba(255,255,255,.7);
-  font-weight: 600; display: none;
-  transition: opacity .2s;
-  min-height: 24px;
-}
-.pull-indicator.visible { display: block; }
-.pull-indicator i {
-  width: 16px; height: 16px; vertical-align: middle;
-  transition: transform .3s ease;
-}
-.pull-indicator .pull-text { vertical-align: middle; margin-left: 4px; }
-.pull-indicator.pull-ready i { transform: rotate(180deg); }
-
 /* PAGINATION */
 .pagination {
   display: flex; align-items: center; justify-content: center; gap: 8px;

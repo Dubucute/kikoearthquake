@@ -501,9 +501,6 @@ class JaviAlertApp {
         });
       }
 
-      // Pull-to-refresh (mobile)
-      this._setupPullToRefresh();
-
       // Set default Javi icon to the app icon
       const kidGif = document.getElementById('kidGif');
       if (kidGif) {
@@ -2429,97 +2426,6 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
         window.speechSynthesis.cancel();
         window.speechSynthesis.speak(utterance);
       } catch (_) { /* speech not supported */ }
-    }
-
-    // ─── PULL-TO-REFRSH ────────────────────────────────────────
-    _setupPullToRefresh() {
-      const indicator = document.getElementById('pullIndicator');
-      const pullText = document.getElementById('pullText');
-      if (!indicator) return;
-
-      let startY = 0;
-      let pulling = false;
-      let indicatorShown = false;
-      let suppressClick = false;
-      const THRESHOLD = 80; // px to trigger refresh
-      const SHOW_AFTER = 10; // px of pull before indicator appears
-
-      // Find the list card top position to know the boundary
-      const getListCardTop = () => {
-        const listCard = document.querySelector('.list-card');
-        return listCard ? listCard.getBoundingClientRect().top : 300;
-      };
-
-      const onTouchStart = (e) => {
-        // Only activate if at the very top of the page
-        if (window.scrollY > 2) return;
-        // Only activate if touch is above the list card (in the header/character area)
-        const touchY = e.touches[0].clientY;
-        if (touchY >= getListCardTop()) return;
-        startY = touchY;
-        pulling = true;
-        indicatorShown = false;
-        suppressClick = false;
-      };
-
-      const onTouchMove = (e) => {
-        if (!pulling) return;
-        const deltaY = e.touches[0].clientY - startY;
-        if (deltaY <= 0) {
-          if (indicatorShown) {
-            indicator.classList.remove('visible', 'pull-ready');
-            indicatorShown = false;
-          }
-          pulling = false;
-          return;
-        }
-        // Only show indicator after a minimum pull distance
-        if (!indicatorShown && deltaY >= SHOW_AFTER) {
-          indicatorShown = true;
-          indicator.classList.add('visible');
-          indicator.classList.remove('pull-ready');
-          pullText.textContent = 'Pull to refresh';
-        }
-        if (indicatorShown) {
-          if (deltaY >= THRESHOLD) {
-            indicator.classList.add('pull-ready');
-            pullText.textContent = 'Release to refresh';
-          } else {
-            indicator.classList.remove('pull-ready');
-            pullText.textContent = 'Pull to refresh';
-          }
-        }
-      };
-
-      const onTouchEnd = (e) => {
-        if (!pulling) return;
-        pulling = false;
-        const deltaY = e.changedTouches[0].clientY - startY;
-        if (indicatorShown) {
-          indicator.classList.remove('visible', 'pull-ready');
-          indicatorShown = false;
-        }
-        if (deltaY >= THRESHOLD) {
-          suppressClick = true;
-          pullText.textContent = 'Refreshing…';
-          this.loadData();
-          // Suppress any click that might follow this touch gesture
-          setTimeout(() => { suppressClick = false; }, 500);
-        }
-      };
-
-      // Suppress click events after a pull-to-refresh gesture
-      document.addEventListener('click', (e) => {
-        if (suppressClick) {
-          e.stopPropagation();
-          e.preventDefault();
-          suppressClick = false;
-        }
-      }, true);
-
-      document.addEventListener('touchstart', onTouchStart, { passive: true });
-      document.addEventListener('touchmove', onTouchMove, { passive: true });
-      document.addEventListener('touchend', onTouchEnd, { passive: true });
     }
 
     // ─── MAGNITUDE FILTER ─────────────────────────────────────

@@ -92,7 +92,11 @@ export const SAFETY_TIPS_TL = [
 ];
 
 // ─── CHANGELOG ───────────────────────────────────────────────
-export const CHANGELOG = [ { ver: 'v1.143', date: '2026-07-06', items: [
+export const CHANGELOG = [ { ver: 'v1.144', date: '2026-07-06', items: [
+    'Fix: Removed pull-to-refresh — now using the manual refresh button instead',
+    'Updated: Service worker cache bumped to v1.144'
+  ]},
+  { ver: 'v1.143', date: '2026-07-06', items: [
     'Fix: Today shake counter now resets at local midnight instead of using a rolling 24-hour window',
     'Updated: Service worker cache bumped to v1.143'
   ]},
