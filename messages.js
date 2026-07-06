@@ -92,7 +92,14 @@ export const SAFETY_TIPS_TL = [
 ];
 
 // ─── CHANGELOG ───────────────────────────────────────────────
-export const CHANGELOG = [ { ver: 'v1.141', date: '2026-07-06', items: [
+export const CHANGELOG = [ { ver: 'v1.142', date: '2026-07-06', items: [
+    'New: Push notifications now filter by distance — you\'ll only get alerts for earthquakes near your location',
+    'New: Subscriber location (lat/lon) stored at subscription time for distance-based filtering',
+    'New: Server-side filtering in cron and push-send endpoints using haversine distance calculation',
+    'Fix: Subscribers far from the quake no longer receive irrelevant push notifications',
+    'Updated: Service worker cache bumped to v1.142'
+  ]},
+  { ver: 'v1.141', date: '2026-07-06', items: [
     'Fix: Notification format changed to "Mag 3.2 — Place · 10km deep" (cleaner, includes depth)',
     'Fix: Removed redundant browser notification from _alertNewQuakes — cron push already handles it',
     'Fix: Added _fromCronPush flag so _triggerServerPush skips when refresh came from cron push',

@@ -49,9 +49,23 @@ export default async function handler(req, res) {
     const database = await getDb();
     const subs = database.collection('pushSubscriptions');
     const newSub = req.body;
+    const { lat, lon } = req.body; // user's location for distance-based filtering
+    const subData = {
+      endpoint: newSub.endpoint,
+      keys: newSub.keys,
+      lat: lat || null,
+      lon: lon || null,
+      createdAt: new Date()
+    };
     const exists = await subs.findOne({ endpoint: newSub.endpoint });
     if (!exists) {
-      await subs.insertOne({ ...newSub, createdAt: new Date() });
+      await subs.insertOne(subData);
+    } else {
+      // Update location in case user moved
+      await subs.updateOne(
+        { endpoint: newSub.endpoint },
+        { $set: { lat: lat || null, lon: lon || null } }
+      );
     }
     const count = await subs.countDocuments();
     setCorsHeaders(res, req.headers.origin);

@@ -10,6 +10,24 @@ import https from 'https';
 import http from 'http';
 import { getDb } from './_db.js';
 
+// Simple haversine distance (same as api-utils.js)
+function getDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a = Math.sin(dLat / 2) ** 2 +
+            Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+// Should this mag & distance combination get a push notification?
+function shouldNotifyQuake(mag, distKm) {
+  if (mag >= 5.0) return true;
+  if (mag >= 4.0 && distKm <= 300) return true;
+  if (mag >= 3.0 && distKm <= 200) return true;
+  return false;
+}
+
 const vapidPublicKey = process.env.VAPID_PUBLIC_KEY;
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
 
@@ -198,7 +216,7 @@ export default async function handler(req, res) {
     const toNotify = significantQuakes.slice(0, 5);
     const biggest = toNotify.reduce((a, b) => b.mag > a.mag ? b : a);
 
-    // 3. Send push to all subscribers
+    // 3. Filter subscribers by distance to quake
     const subs = database.collection('pushSubscriptions');
     const allSubs = await subs.find({}).toArray();
     if (!allSubs.length) {
@@ -211,10 +229,29 @@ export default async function handler(req, res) {
       return res.json({ ok: true, message: 'No subscribers', sent: 0 });
     }
 
+    // Only notify subscribers within range of the biggest quake.
+    // Subscribers without location data always get notified (legacy fallback).
+    const quakeLat = biggest.lat;
+    const quakeLon = biggest.lon;
+    const notifiedSubs = allSubs.filter(s => {
+      if (!s.lat || !s.lon) return true; // no location = always notify
+      const dist = getDistance(s.lat, s.lon, quakeLat, quakeLon);
+      return shouldNotifyQuake(biggest.mag, dist);
+    });
+
+    if (!notifiedSubs.length) {
+      await tracker.updateOne(
+        { _id: 'lastQuakeId' },
+        { $set: { quakeId: quakes[0].id, lastTime: quakes[0].time } },
+        { upsert: true }
+      );
+      return res.json({ ok: true, message: 'No nearby subscribers to notify', sent: 0 });
+    }
+
     const alertType = classifyQuake(biggest);
     const title = 'New earthquake detected';
     const depthInfo = biggest.depth > 0 ? ' · ' + biggest.depth + 'km deep' : '';
-    const body = 'Mag ' + biggest.mag.toFixed(1) + ' — ' + biggest.place + depthInfo;
+    const body = 'Magnitude ' + biggest.mag.toFixed(1) + ' in ' + biggest.place + depthInfo;
 
     const payload = JSON.stringify({
       title: title,
@@ -225,11 +262,11 @@ export default async function handler(req, res) {
     });
 
     const results = await Promise.allSettled(
-      allSubs.map(s => webpush.sendNotification(s, payload))
+      notifiedSubs.map(s => webpush.sendNotification(s, payload))
     );
 
     // Clean up invalid subscriptions
-    const invalidEndpoints = allSubs
+    const invalidEndpoints = notifiedSubs
       .filter((_, i) => results[i].status === 'rejected')
       .map(s => s.endpoint);
     if (invalidEndpoints.length > 0) {

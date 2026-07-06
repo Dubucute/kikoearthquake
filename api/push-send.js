@@ -1,6 +1,24 @@
 import webpush from 'web-push';
 import { getDb } from './_db.js';
 
+// Simple haversine distance (same as api-utils.js)
+function getDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a = Math.sin(dLat / 2) ** 2 +
+            Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+// Should this mag & distance combination get a push notification?
+function shouldNotifyQuake(mag, distKm) {
+  if (mag >= 5.0) return true;
+  if (mag >= 4.0 && distKm <= 300) return true;
+  if (mag >= 3.0 && distKm <= 200) return true;
+  return false;
+}
+
 const vapidPublicKey = process.env.VAPID_PUBLIC_KEY;
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
 
@@ -62,6 +80,27 @@ export default async function handler(req, res) {
       setCorsHeaders(res, req.headers.origin);
       return res.json({ sent: 0, total: 0 });
     }
+
+    // Filter subscribers by distance to quake
+    const quakeLat = req.body.lat;
+    const quakeLon = req.body.lon;
+    const mag = (() => {
+      const match = (req.body.body || '').match(/Magnitude ([\d.]+)/);
+      return match ? parseFloat(match[1]) : 0;
+    })();
+    const targetSubs = (quakeLat && quakeLon && mag)
+      ? allSubs.filter(s => {
+          if (!s.lat || !s.lon) return true; // no location = always notify (legacy)
+          const dist = getDistance(s.lat, s.lon, quakeLat, quakeLon);
+          return shouldNotifyQuake(mag, dist);
+        })
+      : allSubs; // fallback: send to everyone if no location data
+
+    if (!targetSubs.length) {
+      setCorsHeaders(res, req.headers.origin);
+      return res.json({ sent: 0, total: allSubs.length, filtered: true });
+    }
+
     const payload = JSON.stringify({
       title: req.body.title || 'JaviAlert',
       body: req.body.body || 'May bagong earthquake update!',
@@ -73,9 +112,9 @@ export default async function handler(req, res) {
       alertType: req.body.alertType || null
     });
     const results = await Promise.allSettled(
-      allSubs.map(s => webpush.sendNotification(s, payload))
+      targetSubs.map(s => webpush.sendNotification(s, payload))
     );
-    const invalidEndpoints = allSubs
+    const invalidEndpoints = targetSubs
       .filter((_, i) => results[i].status === 'rejected')
       .map(s => s.endpoint);
     if (invalidEndpoints.length > 0) {

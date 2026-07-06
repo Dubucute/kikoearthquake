@@ -1772,7 +1772,11 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
         await fetch('/api/push-subscribe', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(subscription.toJSON())
+          body: JSON.stringify({
+            ...subscription.toJSON(),
+            lat: this.userLat,
+            lon: this.userLon
+          })
         });
         this._pushReady = true;
         this._pushDisabled = false;
@@ -1799,7 +1803,7 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
       try {
         const title = 'New earthquake detected';
         const depthInfo = newest.depth > 0 ? ' · ' + newest.depth + 'km deep' : '';
-        const body = 'Mag ' + newest.mag.toFixed(1) + ' — ' + newest.place + depthInfo;
+        const body = 'Magnitude ' + newest.mag.toFixed(1) + ' in ' + newest.place + depthInfo;
         await fetch('/api/push-send', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1808,7 +1812,9 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
             body: body,
             url: '/',
             tag: 'quake-' + Date.now(),
-            alertType: alertType
+            alertType: alertType,
+            lat: newest.lat,
+            lon: newest.lon
           })
         });
       } catch (_) { /* ignore */ }
