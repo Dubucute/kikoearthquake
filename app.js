@@ -20,6 +20,7 @@ class JaviAlertApp {
       this.isDarkMode = localStorage.getItem('javiDarkMode') === 'true';
       this.soundEnabled = localStorage.getItem('javiSoundEnabled') !== 'false';
       this.notifSound = localStorage.getItem('javiNotifSound') || 'alarm';
+      this.safetyTipsShown = localStorage.getItem('javiSafetyTipsShown') !== 'false';
       this.moodHistory = this._loadMoodHistory();
       this.magFilter = 0;
       this._pushReady = false;
@@ -1223,6 +1224,10 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
       const card = document.getElementById('safetyCard');
       const body = document.getElementById('safetyBody');
       if (!card || !body) return;
+      if (!this.safetyTipsShown) {
+        card.classList.add('hidden');
+        return;
+      }
       card.classList.remove('hidden');
       try { lucide.createIcons(); } catch (_) { /* ignore */ }
 
@@ -3093,6 +3098,23 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
         this._updateSettingsUI();
       });
 
+      // Safety Tips toggle
+      document.getElementById('settingsSafetyTipsToggle').addEventListener('click', () => {
+        this.safetyTipsShown = !this.safetyTipsShown;
+        localStorage.setItem('javiSafetyTipsShown', this.safetyTipsShown);
+        if (this.safetyTipsShown) {
+          this.showSafetyTip();
+        } else {
+          const card = document.getElementById('safetyCard');
+          if (card) card.classList.add('hidden');
+          if (this._tipInterval) {
+            clearInterval(this._tipInterval);
+            this._tipInterval = null;
+          }
+        }
+        this._updateSettingsUI();
+      });
+
       // Notification sound dropdown (Alarm / Voice / Silent)
       (() => {
         const self = this;
@@ -3460,6 +3482,10 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
       // Dark mode toggle
       const dt = document.getElementById('settingsDarkToggle');
       if (dt) dt.classList.toggle('active', this.isDarkMode);
+
+      // Safety Tips toggle
+      const stt = document.getElementById('settingsSafetyTipsToggle');
+      if (stt) stt.classList.toggle('active', this.safetyTipsShown);
 
       // Notification sound dropdown text
       const nst = document.getElementById('notifSoundSelectText');

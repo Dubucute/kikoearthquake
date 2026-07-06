@@ -92,7 +92,11 @@ export const SAFETY_TIPS_TL = [
 ];
 
 // ─── CHANGELOG ───────────────────────────────────────────────
-export const CHANGELOG = [ { ver: 'v1.118', date: '2026-07-06', items: [
+export const CHANGELOG = [ { ver: 'v1.119', date: '2026-07-06', items: [
+    'New: Toggle to show/hide Safety Tips card on the home screen',
+    'Updated: Service worker cache bumped to v1.119'
+  ]},
+  { ver: 'v1.118', date: '2026-07-06', items: [
     'Fix: Replaced Alarm/Voice/Silent button group with custom dropdown — no more overlap or squish',
     'Updated: Service worker cache bumped to v1.118'
   ]},
