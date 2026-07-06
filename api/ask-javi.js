@@ -7,7 +7,7 @@ const PROVIDERS = [
     baseUrl: 'https://integrate.api.nvidia.com/v1',
     apiKeyEnv: 'NVIDIA_API_KEY',
     maxTokens: 1024,
-    models: ['meta/llama-3.1-8b-instruct', 'mistralai/mixtral-8x7b-instruct-v0.1'],
+    models: ['mistralai/mixtral-8x7b-instruct-v0.1', 'meta/llama-3.1-8b-instruct'],
   },
   {
     name: 'groq',

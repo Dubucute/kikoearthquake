@@ -92,7 +92,11 @@ export const SAFETY_TIPS_TL = [
 ];
 
 // ─── CHANGELOG ───────────────────────────────────────────────
-export const CHANGELOG = [ { ver: 'v1.121', date: '2026-07-06', items: [
+export const CHANGELOG = [ { ver: 'v1.122', date: '2026-07-06', items: [
+    'Change: Mixtral 8x7B (NVIDIA) now first model tried in provider chain — smartest model prioritized',
+    'Updated: Service worker cache bumped to v1.122'
+  ]},
+  { ver: 'v1.121', date: '2026-07-06', items: [
     'Fix: Javi playful words changed from English to Bisaya (hala, mao ba, bitaw, sige, nya, aguy, sus, hala oy, aw)',
     'Fix: Reinforced Cebuano language rules in AI system prompt for better Bisaya responses',
     'Updated: Service worker cache bumped to v1.121'
