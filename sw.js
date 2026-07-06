@@ -1,4 +1,4 @@
-const CACHE = 'quake-buddy-v1.127';
+const CACHE = 'quake-buddy-v1.128';
 const ASSETS = [
   '/', '/index.html', '/manifest.json',
   '/style.css', '/style.css?v=2', '/app.js',

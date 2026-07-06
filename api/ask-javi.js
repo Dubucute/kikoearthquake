@@ -53,9 +53,10 @@ function buildSystemPrompt(quakeContext, lang) {
   let systemContent = SYSTEM_PROMPT;
   if (lang && lang !== 'en') {
     const langName = { tl: 'Tagalog', ceb: 'Cebuano' }[lang] || lang;
-    systemContent += '\n\nIMPORTANT: The user\'s language is ' + langName + '. This is NOT optional — you MUST reply entirely in ' + langName + '.';
     if (lang === 'ceb') {
-      systemContent += ' Use natural Bisaya words and expressions like: unsa, mao, bitaw, sige, nya, kay, dili, wala, naa, ako, imo, siya, kami, kita, kini, kana, adlaw, gabii, unsaon. Use playful Bisaya words like "hala", "mao ba", "bitaw", "sige", "nya", "aguy", "sus", "hala oy", "aw" sometimes. Never use Tagalog or English words.';
+      systemContent += '\n\nIMPORTANT: The user\'s language is Cebuano/Bisaya. Reply in natural Cebuano — you can mix English or Tagalog words naturally if it fits, just keep most of your reply in Cebuano. Use words like: unsa, mao, bitaw, sige, nya, kay, dili, wala, naa, ako, imo, siya, kami, kita, kini, kana, adlaw, gabii, unsaon. Use playful Bisaya words like "hala", "mao ba", "bitaw", "sige", "nya", "aguy", "sus", "hala oy", "aw" sometimes.';
+    } else {
+      systemContent += '\n\nIMPORTANT: The user\'s language is ' + langName + '. Reply entirely in ' + langName + ' — do not mix in other languages.';
     }
   }
   if (quakeContext) {
@@ -123,11 +124,10 @@ async function callOpenAICompatible(provider, messages, quakeContext, lang) {
 
 // ─── System prompt ────────────────────────────────────────────
 const SYSTEM_PROMPT =
-  'LANGUAGE RULE — This is the most important rule. You MUST match the user\'s language EXACTLY:\n' +
-  '  - If they write in Cebuano (Bisaya): reply in Cebuano.\n' +
-  '  - If they write in Tagalog: reply in Tagalog.\n' +
-  '  - If they write in English: reply in English.\n' +
-  '  - NEVER switch languages. NEVER reply in English if the user wrote in Cebuano.\n' +
+  'LANGUAGE RULE — Match the user\'s language:\n' +
+  '  - If they write in pure Tagalog (no Cebuano words): reply in pure Tagalog.\n' +
+  '  - If they write in pure English: reply in pure English.\n' +
+  '  - If they write in Cebuano (even mixed with English or Tagalog): reply in natural Cebuano — you can mix English or Tagalog words naturally, don\'t force pure Cebuano.\n' +
   '  - If unsure, match the language of the user\'s LAST message.\n\n' +
   'You are Javi, a friendly and helpful assistant. ' +
   'Keep responses natural, clear, and to the point. ' +

@@ -92,7 +92,12 @@ export const SAFETY_TIPS_TL = [
 ];
 
 // ─── CHANGELOG ───────────────────────────────────────────────
-export const CHANGELOG = [ { ver: 'v1.127', date: '2026-07-06', items: [
+export const CHANGELOG = [ { ver: 'v1.128', date: '2026-07-06', items: [
+    'Fix: Cebuano replies no longer forced to pure Bisaya — can naturally mix English/Tagalog words',
+    'Fix: Pure Tagalog and pure English stay pure (no mixing)',
+    'Updated: Service worker cache bumped to v1.128'
+  ]},
+  { ver: 'v1.127', date: '2026-07-06', items: [
     'Fix: Javi no longer mentions AI providers (NVIDIA, Groq, OpenRouter etc.) — just Javi',
     'New: Javi can say who made the site (J Marlo Pu-od aka Dubu) but only when asked',
     'Updated: Service worker cache bumped to v1.127'
