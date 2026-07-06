@@ -92,7 +92,11 @@ export const SAFETY_TIPS_TL = [
 ];
 
 // ─── CHANGELOG ───────────────────────────────────────────────
-export const CHANGELOG = [ { ver: 'v1.115', date: '2026-07-06', items: [
+export const CHANGELOG = [ { ver: 'v1.116', date: '2026-07-06', items: [
+    'Fix: Alarm / Voice / Silent picker text no longer wraps (white-space: nowrap)',
+    'Updated: Service worker cache bumped to v1.116'
+  ]},
+  { ver: 'v1.115', date: '2026-07-06', items: [
     'Fix: Alarm / Voice / Silent picker text alignment in settings',
     'Updated: Service worker cache bumped to v1.115'
   ]},
