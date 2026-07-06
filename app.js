@@ -843,6 +843,21 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
         items.forEach((el) => el.classList.remove('active'));
         items[idx].classList.add('active');
       });
+
+      // ─── Focus: clear input so user can type right away ─────
+      input.addEventListener('focus', () => {
+        input.value = '';
+      });
+
+      // ─── Blur: if nothing was selected, restore current address ─
+      input.addEventListener('blur', () => {
+        // Small delay so a dropdown click can fire first
+        setTimeout(() => {
+          if (dropdown.classList.contains('hidden')) {
+            input.value = this.userPlace || '';
+          }
+        }, 200);
+      });
     }
 
     // ─── SORT DROPDOWN ─────────────────────────────────────────
