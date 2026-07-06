@@ -2954,11 +2954,60 @@ body.dark-mode .chat-head-notif-body {
    ═══════════════════════════════════════════════════════════════ */
 @media (min-width: 768px) {
   .app {
-    max-width: 480px;
-    padding: 24px 16px 40px;
+    max-width: 860px;
+    padding: 24px 24px 40px;
   }
 
-  /* Subtle hover effects instead of only :active */
+  /* Two-column grid — left column narrower (char card), right wider (data) */
+  .app-grid {
+    display: grid;
+    grid-template-columns: 2fr 3fr;
+    gap: 12px;
+    align-items: start;
+  }
+
+  /* Left column */
+  .app-grid > .char-card { grid-column: 1; }
+  .app-grid > .action-bar { grid-column: 1; }
+  .app-grid > .safety-card { grid-column: 1; }
+
+  /* Right column */
+  .app-grid > .stats-row { grid-column: 2; }
+  .app-grid > .mood-history { grid-column: 2; }
+  .app-grid > .map-card { grid-column: 2; }
+  .app-grid > .mag-filter { grid-column: 2; }
+  .app-grid > .list-card { grid-column: 2; }
+
+  /* Char card: limit width so it's not too big */
+  .char-card { max-width: 320px; }
+
+  /* Stats row as 2x2 */
+  .stats-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin: 0;
+  }
+  .stat { padding: 14px 10px; }
+  .stat-num { font-size: 30px; }
+
+  /* Map */
+  .map-card { margin-bottom: 0; }
+  .map-container { height: 260px; }
+
+  /* Two-column quake items inside list */
+  #quakeList {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+  #quakeList > .quake-item:nth-child(even) { background: transparent; }
+  #quakeList > .quake-item:nth-child(4n+3),
+  #quakeList > .quake-item:nth-child(4n+4) { background: rgba(255,245,245,.3); }
+  .quake-list-labels { display: none; }
+  .quake-item { padding: 10px 14px; }
+  .mag-badge { width: 44px; height: 44px; font-size: 13px; border-radius: 12px; }
+
+  /* Hover effects for desktop */
   .quake-item:hover { background: #ffeaa7; }
   .quake-item:nth-child(even):hover { background: #ffeaa7; }
   .action-bar-btn:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0px #2d3436; }
@@ -2968,23 +3017,46 @@ body.dark-mode .chat-head-notif-body {
   .mag-filter-btn:hover { background: rgba(45,52,54,.1); }
   .topbar-btn:hover { background: rgba(255,255,255,.6); }
 
-  /* Map slightly taller */
-  .map-container { height: 320px; }
-
-  /* Bigger modals */
-  .modal-card { max-width: 460px; }
-  .chat-modal-card { max-width: 460px; }
-
-  /* Chat head hover effect */
-  .chat-head-icon-wrap:hover { transform: scale(1.05); }
+  /* Wider modals */
+  .modal-card { max-width: 500px; }
+  .chat-modal-card { max-width: 480px; }
 }
 
 /* ═══════════════════════════════════════════════════════════════
    LARGE DESKTOP — screens wider than 1200px
    ═══════════════════════════════════════════════════════════════ */
 @media (min-width: 1200px) {
-  .app { max-width: 520px; }
-  .map-container { height: 360px; }
-  .modal-card { max-width: 500px; }
-  .chat-modal-card { max-width: 500px; }
+  .app { max-width: 1100px; }
+
+  /* Three equal columns */
+  .app-grid { grid-template-columns: 1fr 1fr 1fr; }
+
+  /* Col 1 */
+  .app-grid > .char-card { grid-column: 1; }
+  .app-grid > .action-bar { grid-column: 1; }
+  .app-grid > .safety-card { grid-column: 1; }
+
+  /* Col 2 */
+  .app-grid > .stats-row { grid-column: 2; }
+  .app-grid > .mood-history { grid-column: 2; }
+  .app-grid > .mag-filter { grid-column: 2; }
+
+  /* Col 3 */
+  .app-grid > .map-card { grid-column: 3; }
+  .app-grid > .list-card { grid-column: 3; }
+
+  .char-card { max-width: 300px; }
+
+  /* Map taller */
+  .map-container { height: 300px; }
+
+  /* Three-column quake items */
+  #quakeList {
+    grid-template-columns: 1fr;
+  }
+  #quakeList > .quake-item:nth-child(even) { background: transparent; }
+  #quakeList > .quake-item:nth-child(odd) { background: transparent; }
+  #quakeList > .quake-item:nth-child(even) { background: rgba(255,245,245,.3); }
+
+  .modal-card { max-width: 560px; }
 }
