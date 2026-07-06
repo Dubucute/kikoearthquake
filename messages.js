@@ -92,7 +92,12 @@ export const SAFETY_TIPS_TL = [
 ];
 
 // ─── CHANGELOG ───────────────────────────────────────────────
-export const CHANGELOG = [ { ver: 'v1.133', date: '2026-07-06', items: [
+export const CHANGELOG = [ { ver: 'v1.134', date: '2026-07-06', items: [
+    'New: Desktop layout — wider container, multi-column quake list, bigger cards on large screens',
+    'New: Responsive media queries at 768px and 1200px breakpoints',
+    'Updated: Service worker cache bumped to v1.134'
+  ]},
+  { ver: 'v1.133', date: '2026-07-06', items: [
     'Fix: Clicking address bar now clears the input so you can type right away',
     'Fix: If no autocomplete item is selected, the current address is restored automatically',
     'Updated: Service worker cache bumped to v1.133'

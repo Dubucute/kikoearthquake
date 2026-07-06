@@ -2909,6 +2909,7 @@ body.dark-mode .chat-bubble-typing .chat-bubble-inner::after {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+  line-clamp: 2;
   word-break: break-word;
 }
 
@@ -2947,3 +2948,109 @@ body.dark-mode .chat-head-notif-body {
 }
 
 /* Hide chat head on small screens when action bar might overlap? Keep it always visible. */
+
+/* ═══════════════════════════════════════════════════════════════
+   DESKTOP LAYOUT — screens wider than 768px
+   ═══════════════════════════════════════════════════════════════ */
+@media (min-width: 768px) {
+  .app {
+    max-width: 960px;
+    padding: 24px 24px 40px;
+  }
+
+  /* Bigger app name */
+  .app-name { font-size: 28px; }
+  .app-name i { width: 26px; height: 26px; }
+  .app-name .app-icon { width: 40px; height: 40px; }
+
+  /* Stats row bigger — 2 columns on desktop */
+  .stats-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .stat { padding: 18px 14px; }
+  .stat-num { font-size: 40px; }
+
+  /* Location bar wider */
+  .loc-bar { padding: 10px 20px; }
+  .loc-input { font-size: 14px; }
+  .loc-btn { font-size: 13px; padding: 7px 16px; }
+
+  /* Two-column quake list */
+  .quake-list-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+  .quake-list-grid .quake-item:nth-child(even) { background: transparent; }
+  .quake-list-grid .quake-item:nth-child(4n+3),
+  .quake-list-grid .quake-item:nth-child(4n+4) { background: rgba(255,245,245,.3); }
+  .quake-list-labels { display: none; }
+
+  /* Bigger quake items */
+  .quake-item { padding: 14px 18px; }
+  .q-place { font-size: 15px; }
+  .q-meta { font-size: 13px; }
+  .mag-badge { width: 52px; height: 52px; font-size: 16px; border-radius: 16px; }
+
+  /* Map taller */
+  .map-container { height: 380px; }
+
+  /* Wider modals */
+  .modal-card { max-width: 520px; }
+  .detail-modal-card { max-width: 520px; }
+  .chat-modal-card { max-width: 500px; }
+  .settings-modal-card { max-width: 420px; }
+  .analysis-modal-card { max-width: 500px; }
+  .update-logs-modal-card { max-width: 500px; }
+  .quiz-modal-card { max-width: 560px; }
+
+  /* Action bar bigger */
+  .action-bar { gap: 10px; margin-bottom: 16px; }
+  .action-bar-btn { padding: 14px 16px; font-size: 14px; }
+  .action-bar-btn i { width: 18px; height: 18px; }
+
+  /* Safety card bigger */
+  .safety-card { padding: 16px 20px; }
+  .safety-body { font-size: 14px; }
+
+  /* Pagination bigger */
+  .page-btn { padding: 10px 18px; font-size: 13px; }
+
+  /* Magnitude filter bigger */
+  .mag-filter { gap: 8px; }
+  .mag-filter-btn { padding: 10px 12px; font-size: 14px; }
+
+  /* Chat head: bigger */
+  .chat-head-icon-wrap { width: 64px; height: 64px; }
+
+  /* Now playing more spacious */
+  .np-main-row { padding: 6px 14px 8px; font-size: 13px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   LARGE DESKTOP — screens wider than 1200px
+   ═══════════════════════════════════════════════════════════════ */
+@media (min-width: 1200px) {
+  .app { max-width: 1100px; }
+
+  .stats-row {
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 8px;
+  }
+  .stat { padding: 16px 12px; }
+  .stat-num { font-size: 36px; }
+
+  /* Three-column quake list */
+  .quake-list-grid {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+  .quake-list-grid .quake-item:nth-child(even) { background: transparent; }
+  .quake-list-grid .quake-item:nth-child(6n+4),
+  .quake-list-grid .quake-item:nth-child(6n+5),
+  .quake-list-grid .quake-item:nth-child(6n+6) { background: rgba(255,245,245,.3); }
+  .quake-list-labels { display: none; }
+
+  .map-container { height: 450px; }
+}
