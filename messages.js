@@ -92,11 +92,14 @@ export const SAFETY_TIPS_TL = [
 ];
 
 // ─── CHANGELOG ───────────────────────────────────────────────
-export const CHANGELOG = [ { ver: 'v1.111', date: '2026-07-06', items: [
-    'Fix: Cron push notifications now match actual nearest/newest significant quake',
-    'Fix: Removed misleading multi-quake count in push title',
-    'Fix: App now refreshes quake list when notification sound triggers',
-    'Updated: Service worker cache bumped to v1.111'
+export const CHANGELOG = [ { ver: 'v1.112', date: '2026-07-06', items: [
+    'New: Cohere provider added (command-r-plus-08-2024) as fallback AI',
+    'Updated: Groq models to openai/gpt-oss-20b (primary), llama-3.1-8b-instant (fallback)',
+    'Updated: NVIDIA models to meta/llama-3.1-8b-instruct (faster)',
+    'Updated: HuggingFace models — GLM-5.2:novita as primary',
+    'Optimized: Per-provider maxTokens — NVIDIA 1024, Groq 2048, Cohere 1024, HF 1024',
+    'Removed: Gemini AI provider (unreliable)',
+    'Updated: Service worker cache bumped to v1.112'
   ]},
   { ver: 'v1.110', date: '2026-07-06', items: [
     'Fix: NDRRMC alarm not playing — reverted AudioContext (buffer wasn\'t ready in time)',

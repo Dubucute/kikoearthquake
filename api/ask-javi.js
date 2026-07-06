@@ -6,24 +6,28 @@ const PROVIDERS = [
     name: 'nvidia',
     baseUrl: 'https://integrate.api.nvidia.com/v1',
     apiKeyEnv: 'NVIDIA_API_KEY',
+    maxTokens: 1024,
     models: ['meta/llama-3.1-8b-instruct', 'mistralai/mixtral-8x7b-instruct-v0.1'],
   },
   {
     name: 'groq',
     baseUrl: 'https://api.groq.com/openai/v1',
     apiKeyEnv: 'GROQ_API_KEY',
+    maxTokens: 2048,
     models: ['openai/gpt-oss-20b', 'llama-3.1-8b-instant'],
   },
   {
     name: 'cohere',
     baseUrl: 'https://api.cohere.com/v2',
     apiKeyEnv: 'COHERE_API_KEY',
+    maxTokens: 1024,
     models: ['command-r-plus-08-2024', 'command-r-08-2024'],
   },
   {
     name: 'huggingface',
     baseUrl: 'https://router.huggingface.co/v1',
     apiKeyEnv: 'HF_TOKEN',
+    maxTokens: 1024,
     models: ['zai-org/GLM-5.2:novita', 'moonshotai/Kimi-K2-Instruct-0905', 'Qwen/Qwen2.5-7B-Instruct', 'mistralai/Mistral-7B-Instruct-v0.3'],
   },
 ];
@@ -79,7 +83,7 @@ async function callOpenAICompatible(provider, messages, quakeContext) {
         body: JSON.stringify({
           model,
           messages: chatMessages,
-          max_tokens: 8192,
+          max_tokens: provider.maxTokens || 1024,
           temperature: 0.7,
           top_p: 0.95,
         }),
