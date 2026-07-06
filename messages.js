@@ -92,7 +92,19 @@ export const SAFETY_TIPS_TL = [
 ];
 
 // ─── CHANGELOG ───────────────────────────────────────────────
-export const CHANGELOG = [ { ver: 'v1.119', date: '2026-07-06', items: [
+export const CHANGELOG = [ { ver: 'v1.121', date: '2026-07-06', items: [
+    'Fix: Javi playful words changed from English to Bisaya (hala, mao ba, bitaw, sige, nya, aguy, sus, hala oy, aw)',
+    'Fix: Reinforced Cebuano language rules in AI system prompt for better Bisaya responses',
+    'Updated: Service worker cache bumped to v1.121'
+  ]},
+  { ver: 'v1.120', date: '2026-07-06', items: [
+    'Fix: Cebuano quick reply buttons now show Cebuano text (not English)',
+    'Fix: Language detection now runs on every chat message, not just first',
+    'Fix: Improved Cebuano vs Tagalog word detection — removed overlapping words',
+    'Fix: AI now told explicitly what language the user is writing in',
+    'Updated: Service worker cache bumped to v1.120'
+  ]},
+  { ver: 'v1.119', date: '2026-07-06', items: [
     'New: Toggle to show/hide Safety Tips card on the home screen',
     'Updated: Service worker cache bumped to v1.119'
   ]},

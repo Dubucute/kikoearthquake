@@ -170,18 +170,18 @@ class JaviAlertApp {
     /** Detect language from text: 'tl', 'ceb', or 'en' */
     _detectLanguage(text) {
       const t = text.toLowerCase();
-      // Cebuano markers
+      // Cebuano markers — unique Cebuano words that DON'T appear in Tagalog
       const cebuanoWords = ['unsa', 'kinsa', 'asa', 'kanus', 'ngano', 'tagpila', 'buntag', 'gabii',
-        'adlaw', 'salamat', 'palihug', 'gwapa', 'gwapo', 'maayo', 'ako', 'imong', 'wala', 'dili',
-        'kini', 'kana', 'didto', 'dinhi', 'nimo', 'ako', 'siya', 'kami', 'sila', 'ang', 'og', 'ug',
-        'hala', 'mao', 'nya', 'bitaw', 'sige', 'lagi', 'nga', 'mga', 'kaayo'];
+        'adlaw', 'salamat', 'palihug', 'gwapa', 'gwapo', 'maayo', 'kini', 'kana', 'didto', 'dinhi',
+        'siya', 'kami', 'og', 'ug', 'hala', 'mao', 'nya', 'bitaw', 'sige', 'lagi', 'kaayo',
+        'unya', 'bali', 'imo', 'niya', 'namo', 'nila', 'kita', 'kamo', 'dili', 'wala'];
       const matchesCeb = cebuanoWords.filter(w => t.includes(w)).length;
 
-      // Tagalog markers
-      const tagalogWords = ['po', 'opo', 'ako', 'ikaw', 'sila', 'sino', 'ano', 'bakit', 'paano',
-        'saan', 'kailan', 'magkano', 'meron', 'wala', 'mayroon', 'kong', 'mong', 'kanila',
-        'atin', 'amin', 'natin', 'ko', 'mo', 'niya', 'namin', 'ninyo', 'sana', 'kasi', 'nga',
-        'mga', 'ay', 'ang', 'ng', 'sa', 'at', 'ayon', 'daw', 'raw', 'na', 'kung', 'pero', 'kaya'];
+      // Tagalog markers — unique Tagalog words that DON'T appear in Cebuano
+      const tagalogWords = ['po', 'opo', 'sino', 'ano', 'bakit', 'paano', 'saan', 'kailan',
+        'magkano', 'meron', 'mayroon', 'atin', 'amin', 'natin', 'sana', 'kasi', 'kaya', 'pero',
+        'daw', 'raw', 'kung', 'ito', 'iyan', 'doon', 'dito', 'ganyan', 'ganoon', 'lang', 'din',
+        'nyo', 'namin', 'ninyo', 'aming', 'aming', 'inyo', 'kanila', 'kanya'];
       const matchesTl = tagalogWords.filter(w => t.includes(w)).length;
 
       if (matchesCeb > matchesTl && matchesCeb >= 2) return 'ceb';
@@ -202,13 +202,13 @@ class JaviAlertApp {
       if (lang === 'ceb') {
         return [
           { text: 'Unsa ang linog?', msg: 'Unsa ang linog? Ipaliwang sa ako.' },
-          { text: 'Safety tips', msg: 'Unsa ang akong buhaton kung maglinog?' },
-          { text: 'Handa ba ko?', msg: 'Giunsa pagkahibalo kung handa ko sa linog?' },
+          { text: 'Mga safety tips', msg: 'Unsa ang akong buhaton kung maglinog?' },
+          { text: 'Andam ba ko?', msg: 'Giunsa pagkahibalo kung handa ko sa linog?' },
         ];
       } else if (lang === 'tl') {
         return [
           { text: 'Ano ang lindol?', msg: 'Ano ang lindol? Ipaliwanag mo sa akin.' },
-          { text: 'Safety tips', msg: 'Ano ang dapat kong gawin kapag may lindol?' },
+          { text: 'Mga safety tips', msg: 'Ano ang dapat kong gawin kapag may lindol?' },
           { text: 'Handa ba ako?', msg: 'Paano malalaman kung handa ako sa lindol?' },
         ];
       }
@@ -3926,21 +3926,12 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
       // Clear input
       input.value = '';
 
-      // Auto-detect language on first user message and switch app language
-      if (this.chatMessages.filter(m => m.role === 'user').length === 0) {
-        const detected = this._detectLanguage(text);
-        const currentLang = this._quizLang();
-        if (detected !== currentLang) {
-          try {
-            localStorage.setItem('javiLang', detected);
-            // Update the language dropdown UI if it exists
-            const langBtn = document.getElementById('langDropdownBtn');
-            if (langBtn) {
-              const labels = { tl: 'Tagalog', en: 'English', ceb: 'Cebuano' };
-              langBtn.textContent = labels[detected] || 'English';
-            }
-          } catch (_) { /* ignore */ }
-        }
+      // Auto-detect language on every message and save it
+      const detected = this._detectLanguage(text);
+      if (detected !== 'en') {
+        try {
+          localStorage.setItem('javiLang', detected);
+        } catch (_) { /* ignore */ }
       }
 
       // Add user message
@@ -3964,8 +3955,8 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
         // Build earthquake context from latest data
         const quakeContext = this._buildQuakeContext();
 
-        // Call AI API with quake context
-        const response = await this._callHuggingFace(this.chatMessages, quakeContext);
+        // Call AI API with quake context + detected language
+        const response = await this._callHuggingFace(this.chatMessages, quakeContext, detected);
 
         // Remove typing
         if (typing) typing.classList.add('hidden');
@@ -4051,12 +4042,12 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
       return lines.join('\n');
     }
 
-    async _callHuggingFace(messages, quakeContext) {
-      // Call our own API route — the HF API key stays server-side
+    async _callHuggingFace(messages, quakeContext, detectedLang) {
+      // Call our own API route — the API keys stay server-side
       const res = await fetch('/api/ask-javi', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages, quakeContext })
+        body: JSON.stringify({ messages, quakeContext, lang: detectedLang || 'en' })
       });
 
       if (!res.ok) {

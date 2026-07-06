@@ -49,8 +49,15 @@ function setCorsHeaders(res, origin) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 }
 
-function buildSystemPrompt(quakeContext) {
+function buildSystemPrompt(quakeContext, lang) {
   let systemContent = SYSTEM_PROMPT;
+  if (lang && lang !== 'en') {
+    const langName = { tl: 'Tagalog', ceb: 'Cebuano' }[lang] || lang;
+    systemContent += '\n\nIMPORTANT: The user\'s language is ' + langName + '. This is NOT optional — you MUST reply entirely in ' + langName + '.';
+    if (lang === 'ceb') {
+      systemContent += ' Use Cebuano (Bisaya) words like: unsa, mao, bitaw, sige, nya, kay, dili, wala, naa, ako, imo, siya, kami, kita, kini, kana, adlaw, gabii, unsaon. Never use Tagalog or English words.';
+    }
+  }
   if (quakeContext) {
     systemContent += '\n\nHere is the current earthquake data for the user:\n' + quakeContext;
   }
@@ -59,13 +66,13 @@ function buildSystemPrompt(quakeContext) {
 
 
 /** Try an OpenAI-compatible provider (NVIDIA, Groq, Hugging Face) */
-async function callOpenAICompatible(provider, messages, quakeContext) {
+async function callOpenAICompatible(provider, messages, quakeContext, lang) {
   const apiKey = process.env[provider.apiKeyEnv];
   if (!apiKey) {
     throw new Error(`${provider.apiKeyEnv} is not configured`);
   }
 
-  const systemContent = buildSystemPrompt(quakeContext);
+  const systemContent = buildSystemPrompt(quakeContext, lang);
   const chatMessages = [
     { role: 'system', content: systemContent },
     ...messages.slice(-8),
@@ -116,15 +123,18 @@ async function callOpenAICompatible(provider, messages, quakeContext) {
 
 // ─── System prompt ────────────────────────────────────────────
 const SYSTEM_PROMPT =
-  'CRITICAL: You MUST reply in the EXACT SAME LANGUAGE the user wrote in. ' +
-  'If the user writes in English, reply in English. If Tagalog, reply in Tagalog. ' +
-  'If Cebuano, reply in Cebuano. Never switch languages.\n\n' +
+  'LANGUAGE RULE — This is the most important rule. You MUST match the user\'s language EXACTLY:\n' +
+  '  - If they write in Cebuano (Bisaya): reply in Cebuano. Use words like "unsa", "mao", "bitaw", "sige", "nya", "kay", "sa", "og", "ang", "mga", "dili", "wala", "naa", "ako", "imo", "siya", "kami", "kita", "kini", "kana".\n' +
+  '  - If they write in Tagalog: reply in Tagalog.\n' +
+  '  - If they write in English: reply in English.\n' +
+  '  - NEVER switch languages. NEVER reply in English if the user wrote in Cebuano.\n' +
+  '  - If unsure, match the language of the user\'s LAST message.\n\n' +
   'You are Javi, a playful and smart little kid who loves to chat and help! ' +
   'Adapt to whatever the user asks — if it\'s about assignments, help with ' +
   'homework like a smart classmate. If it\'s about life, chat like a cute kid. ' +
   'If it\'s about earthquakes, share what you know simply. ' +
   'Talk like a child — simple words, cute, playful, a bit messy. ' +
-  'Use playful words like "hmm", "woah", "hehe", "ohh" sometimes. ' +
+  'Use playful Bisaya words like "hala", "mao ba", "bitaw", "sige", "nya", "aguy", "sus", "hala oy", "aw" sometimes. ' +
   'Be sweet, hyper, and fun. ' +
   'Use emojis sparingly — one at most per message, and only when it really fits. ' +
   'When earthquake context data is provided below, you can use it but explain simply. ' +
@@ -155,7 +165,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid JSON in request body' });
     }
 
-    const { messages, quakeContext } = parsedBody || {};
+    const { messages, quakeContext, lang } = parsedBody || {};
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({ error: 'messages array is required' });
     }
@@ -170,7 +180,7 @@ export default async function handler(req, res) {
       const nvidia = PROVIDERS.find(p => p.name === 'nvidia');
       if (process.env[nvidia.apiKeyEnv]) {
         try {
-          reply = await callOpenAICompatible(nvidia, messages, quakeContext);
+          reply = await callOpenAICompatible(nvidia, messages, quakeContext, lang);
           console.log('✅ NVIDIA replied');
         } catch (e) {
           errors.push(e.message);
@@ -184,7 +194,7 @@ export default async function handler(req, res) {
       const groq = PROVIDERS.find(p => p.name === 'groq');
       if (process.env[groq.apiKeyEnv]) {
         try {
-          reply = await callOpenAICompatible(groq, messages, quakeContext);
+          reply = await callOpenAICompatible(groq, messages, quakeContext, lang);
           console.log('✅ Groq replied');
         } catch (e) {
           errors.push(e.message);
@@ -198,7 +208,7 @@ export default async function handler(req, res) {
       const or = PROVIDERS.find(p => p.name === 'openrouter');
       if (process.env[or.apiKeyEnv]) {
         try {
-          reply = await callOpenAICompatible(or, messages, quakeContext);
+          reply = await callOpenAICompatible(or, messages, quakeContext, lang);
           console.log('✅ OpenRouter replied');
         } catch (e) {
           errors.push(e.message);
@@ -212,7 +222,7 @@ export default async function handler(req, res) {
       const hf = PROVIDERS.find(p => p.name === 'huggingface');
       if (process.env[hf.apiKeyEnv]) {
         try {
-          reply = await callOpenAICompatible(hf, messages, quakeContext);
+          reply = await callOpenAICompatible(hf, messages, quakeContext, lang);
           console.log('✅ Hugging Face replied');
         } catch (e) {
           errors.push(e.message);
