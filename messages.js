@@ -92,7 +92,12 @@ export const SAFETY_TIPS_TL = [
 ];
 
 // ─── CHANGELOG ───────────────────────────────────────────────
-export const CHANGELOG = [ { ver: 'v1.131', date: '2026-07-06', items: [
+export const CHANGELOG = [ { ver: 'v1.132', date: '2026-07-06', items: [
+    'Fix: Custom address from search dropdown now saves properly with cachedAt: Infinity',
+    'Fix: GPS no longer overrides manually searched address on next page load',
+    'Updated: Service worker cache bumped to v1.132'
+  ]},
+  { ver: 'v1.131', date: '2026-07-06', items: [
     'Fix: PHIVOLCS HTML parsing now handles multiple date patterns (auto-style99 span, plain link, or direct td text)',
     'Fix: cron-check.js PHIVOLCS parsing also updated with same robust pattern',
     'Change: Javi AI context now includes ALL mag 3+ quakes (not just latest/nearest/strongest)',

@@ -581,6 +581,13 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
         this.userPlace = stored.place || '';
         if (this.userPlace) document.getElementById('locInput').value = this.userPlace;
 
+        // Custom address (cachedAt: Infinity) — load it but keep "Use my location" available
+        if (stored.cachedAt === Infinity) {
+          // Show the GPS button so user can switch back anytime
+          if ('geolocation' in navigator) this._showLocationPrompt();
+          return;
+        }
+
         const isFresh = Date.now() - (stored.cachedAt || 0) < LOCATION_TTL_MS;
         if (isFresh) return;
         // stale: fall through and try to silently refresh in the background
@@ -802,7 +809,7 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
         input.value = this.userPlace;
         dropdown.classList.add('hidden');
         localStorage.setItem('javiUserLocation', JSON.stringify({
-          lat: this.userLat, lon: this.userLon, place: this.userPlace
+          lat: this.userLat, lon: this.userLon, place: this.userPlace, cachedAt: Infinity
         }));
         this.loadData();
       });
