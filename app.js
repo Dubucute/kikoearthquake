@@ -4043,11 +4043,20 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
         (q.depth !== null ? ', depth ' + q.depth + ' km' : '') +
         ' - ' + timeSince(q.time);
 
+      // List all significant quakes (mag >= 3) so Javi knows about major ones
+      const significant = quakes.filter(q => q.mag >= 3).sort((a, b) => b.time - a.time);
+      const quakeList = significant.length
+        ? significant.map((q, i) => (i + 1) + '. ' + fmt(q)).join('\n')
+        : 'None';
+
       let lines = [
         'Latest earthquake: ' + fmt(latest),
         'Nearest earthquake: ' + fmt(nearest),
         'Strongest earthquake: ' + fmt(strongest),
         'Total earthquakes detected: ' + quakes.length,
+        '',
+        'Significant quakes (mag 3+):',
+        quakeList,
       ];
       return lines.join('\n');
     }

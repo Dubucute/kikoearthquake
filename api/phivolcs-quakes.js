@@ -87,12 +87,40 @@ function parsePhivolcsTable(html) {
     // Skip header rows (contain <th>) and rows without quake data
     if (!row.includes('auto-style99') || row.includes('<th')) continue;
 
-    // Extract date link
-    const linkMatch = row.match(/<a[^>]+href="([^"]*)"[^>]*>[\s\S]*?<span[^>]*class="auto-style99"[^>]*>([^<]*)<\/span>/i);
-    if (!linkMatch) continue;
+    // Extract date link — try multiple patterns
+    let href = '';
+    let dateStr = '';
 
-    const href = linkMatch[1].trim();
-    const dateStr = linkMatch[2].trim();
+    // Pattern 1: <a href="..."><span class="auto-style99">DATE</span></a>
+    const linkMatch1 = row.match(/<a[^>]+href="([^"]*)"[^>]*>[\s\S]*?<span[^>]*class="auto-style99"[^>]*>([^<]*)<\/span>/i);
+    if (linkMatch1) {
+      href = linkMatch1[1].trim();
+      dateStr = linkMatch1[2].trim();
+    } else {
+      // Pattern 2: just extract the first <a> tag's href and text directly
+      const linkMatch2 = row.match(/<a[^>]+href="([^"]*)"[^>]*>([^<]*)<\/a>/i);
+      if (linkMatch2) {
+        href = linkMatch2[1].trim();
+        dateStr = linkMatch2[2].trim();
+      } else {
+        // Pattern 3: extract from first td cell as fallback
+        const tdMatches = row.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/gi);
+        const cells = [];
+        for (const td of tdMatches) {
+          const text = stripHtml(td[1]);
+          if (text) cells.push(text);
+        }
+        // Try to find a date-like string in the first cell
+        if (cells.length > 0 && /^\d+\s+\w+\s+\d+/.test(cells[0])) {
+          dateStr = cells[0];
+          // Also try to find href in the first cell
+          const hrefMatch = row.match(/<a[^>]+href="([^"]*)"[^>]*>/i);
+          if (hrefMatch) href = hrefMatch[1].trim();
+        }
+      }
+    }
+
+    if (!href || !dateStr) continue;
 
     // Extract all <td> cells
     const tdMatches = row.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/gi);

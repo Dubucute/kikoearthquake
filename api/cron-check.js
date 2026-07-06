@@ -64,10 +64,33 @@ function parsePhivolcsTable(html) {
   for (const rowMatch of rowMatches) {
     const row = rowMatch[1];
     if (!row.includes('auto-style99') || row.includes('<th')) continue;
-    const linkMatch = row.match(/<a[^>]+href="([^"]*)"[^>]*>[\s\S]*?<span[^>]*class="auto-style99"[^>]*>([^<]*)<\/span>/i);
-    if (!linkMatch) continue;
-    const href = linkMatch[1].trim();
-    const dateStr = linkMatch[2].trim();
+    // Extract date link — try multiple patterns
+    let href = '';
+    let dateStr = '';
+    const linkMatch1 = row.match(/<a[^>]+href="([^"]*)"[^>]*>[\s\S]*?<span[^>]*class="auto-style99"[^>]*>([^<]*)<\/span>/i);
+    if (linkMatch1) {
+      href = linkMatch1[1].trim();
+      dateStr = linkMatch1[2].trim();
+    } else {
+      const linkMatch2 = row.match(/<a[^>]+href="([^"]*)"[^>]*>([^<]*)<\/a>/i);
+      if (linkMatch2) {
+        href = linkMatch2[1].trim();
+        dateStr = linkMatch2[2].trim();
+      } else {
+        const tdCells = row.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/gi);
+        const firstCells = [];
+        for (const td of tdCells) {
+          const txt = stripHtml(td[1]);
+          if (txt) firstCells.push(txt);
+        }
+        if (firstCells.length > 0 && /^\d+\s+\w+\s+\d+/.test(firstCells[0])) {
+          dateStr = firstCells[0];
+          const hrefMatch = row.match(/<a[^>]+href="([^"]*)"[^>]*>/i);
+          if (hrefMatch) href = hrefMatch[1].trim();
+        }
+      }
+    }
+    if (!href || !dateStr) continue;
     const tdMatches = row.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/gi);
     const cells = [];
     for (const td of tdMatches) cells.push(td[1]);
