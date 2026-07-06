@@ -92,7 +92,13 @@ export const SAFETY_TIPS_TL = [
 ];
 
 // ─── CHANGELOG ───────────────────────────────────────────────
-export const CHANGELOG = [ { ver: 'v1.130', date: '2026-07-06', items: [
+export const CHANGELOG = [ { ver: 'v1.131', date: '2026-07-06', items: [
+    'Fix: PHIVOLCS HTML parsing now handles multiple date patterns (auto-style99 span, plain link, or direct td text)',
+    'Fix: cron-check.js PHIVOLCS parsing also updated with same robust pattern',
+    'Change: Javi AI context now includes ALL mag 3+ quakes (not just latest/nearest/strongest)',
+    'Updated: Service worker cache bumped to v1.131'
+  ]},
+  { ver: 'v1.130', date: '2026-07-06', items: [
     'Fix: Cron push notifications only for mag 3+ (no more 2.x alerts)',
     'Change: Notification title always "New earthquake detected" (no count, no emojis)',
     'Change: Notification body format cleaned — no emojis, clean text like "3.2 mag 14km away - Place"',
