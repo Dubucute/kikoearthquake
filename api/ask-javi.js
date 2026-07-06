@@ -1,4 +1,4 @@
-// Updated provider chain: NVIDIA, Groq, Hugging Face only. Gemini removed.
+// Provider chain: NVIDIA → Groq → OpenRouter → HuggingFace (optimized for RP/translation)
 
 // ─── Provider definitions ────────────────────────────────────
 const PROVIDERS = [
@@ -14,21 +14,21 @@ const PROVIDERS = [
     baseUrl: 'https://api.groq.com/openai/v1',
     apiKeyEnv: 'GROQ_API_KEY',
     maxTokens: 2048,
-    models: ['openai/gpt-oss-20b', 'llama-3.1-8b-instant'],
+    models: ['llama-3.1-8b-instant'],
   },
   {
-    name: 'cohere',
-    baseUrl: 'https://api.cohere.com/v2',
-    apiKeyEnv: 'COHERE_API_KEY',
-    maxTokens: 1024,
-    models: ['command-r-plus-08-2024', 'command-r-08-2024'],
+    name: 'openrouter',
+    baseUrl: 'https://openrouter.ai/api/v1',
+    apiKeyEnv: 'OPENROUTER_API_KEY',
+    maxTokens: 2048,
+    models: ['meta-llama/llama-3.1-8b-instruct', 'mistralai/mistral-7b-instruct', 'google/gemma-2-9b-it', 'microsoft/phi-3-mini-4k-instruct'],
   },
   {
     name: 'huggingface',
     baseUrl: 'https://router.huggingface.co/v1',
     apiKeyEnv: 'HF_TOKEN',
     maxTokens: 1024,
-    models: ['zai-org/GLM-5.2:novita', 'moonshotai/Kimi-K2-Instruct-0905', 'Qwen/Qwen2.5-7B-Instruct', 'mistralai/Mistral-7B-Instruct-v0.3'],
+    models: ['Qwen/Qwen2.5-7B-Instruct', 'mistralai/Mistral-7B-Instruct-v0.3'],
   },
 ];
 
@@ -112,7 +112,7 @@ async function callOpenAICompatible(provider, messages, quakeContext) {
   throw new Error(`All models failed for ${provider.name}. Last: ${lastError}`);
 }
 
-// Gemini removed — using NVIDIA → Groq → Hugging Face only.
+// Provider chain: NVIDIA → Groq → OpenRouter → HuggingFace
 
 // ─── System prompt ────────────────────────────────────────────
 const SYSTEM_PROMPT =
@@ -193,16 +193,16 @@ export default async function handler(req, res) {
       }
     }
 
-    // 3. Cohere
+    // 3. OpenRouter (great free RP models)
     if (!reply) {
-      const cohere = PROVIDERS.find(p => p.name === 'cohere');
-      if (process.env[cohere.apiKeyEnv]) {
+      const or = PROVIDERS.find(p => p.name === 'openrouter');
+      if (process.env[or.apiKeyEnv]) {
         try {
-          reply = await callOpenAICompatible(cohere, messages, quakeContext);
-          console.log('✅ Cohere replied');
+          reply = await callOpenAICompatible(or, messages, quakeContext);
+          console.log('✅ OpenRouter replied');
         } catch (e) {
           errors.push(e.message);
-          console.warn('Cohere failed:', e.message);
+          console.warn('OpenRouter failed:', e.message);
         }
       }
     }

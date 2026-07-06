@@ -92,7 +92,15 @@ export const SAFETY_TIPS_TL = [
 ];
 
 // ─── CHANGELOG ───────────────────────────────────────────────
-export const CHANGELOG = [ { ver: 'v1.112', date: '2026-07-06', items: [
+export const CHANGELOG = [ { ver: 'v1.113', date: '2026-07-06', items: [
+    'New: OpenRouter provider added (meta-llama/llama-3.1-8b-instruct, mistralai/mistral-7b-instruct)',
+    'New: Added google/gemma-2-9b-it and microsoft/phi-3-mini-4k-instruct to OpenRouter',
+    'Removed: Cohere provider (bad RP, not OpenAI-compatible)',
+    'Removed: Groq gpt-oss-20b (rarely available), HF GLM-5.2 & Kimi-K2 (slow/unreliable)',
+    'Optimized: Models trimmed to RP & translation only',
+    'Updated: Service worker cache bumped to v1.113'
+  ]},
+  { ver: 'v1.112', date: '2026-07-06', items: [
     'New: Cohere provider added (command-r-plus-08-2024) as fallback AI',
     'Updated: Groq models to openai/gpt-oss-20b (primary), llama-3.1-8b-instant (fallback)',
     'Updated: NVIDIA models to meta/llama-3.1-8b-instruct (faster)',
