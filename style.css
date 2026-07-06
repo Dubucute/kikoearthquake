@@ -2093,8 +2093,8 @@ body.dark-mode .notif-sound-picker {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 10px;
-  font-size: 11px;
+  padding: 6px 12px;
+  font-size: 13px;
   font-weight: 700;
   border: none;
   border-radius: 18px;
@@ -2105,8 +2105,8 @@ body.dark-mode .notif-sound-picker {
   user-select: none;
 }
 .notif-sound-option i {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
 }
 .notif-sound-option.active {
   background: #00b894;
