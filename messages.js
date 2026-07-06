@@ -92,7 +92,12 @@ export const SAFETY_TIPS_TL = [
 ];
 
 // ─── CHANGELOG ───────────────────────────────────────────────
-export const CHANGELOG = [ { ver: 'v1.116', date: '2026-07-06', items: [
+export const CHANGELOG = [ { ver: 'v1.117', date: '2026-07-06', items: [
+    'Fix: Sound picker label squished on small screens — label now resists shrink',
+    'Fix: Sound picker buttons smaller on mobile (under 400px)',
+    'Updated: Service worker cache bumped to v1.117'
+  ]},
+  { ver: 'v1.116', date: '2026-07-06', items: [
     'Fix: Alarm / Voice / Silent picker text no longer wraps (white-space: nowrap)',
     'Updated: Service worker cache bumped to v1.116'
   ]},

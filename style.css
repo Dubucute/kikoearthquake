@@ -1927,6 +1927,7 @@ body.dark-mode .s12 { animation-delay: 0.8s; }
   font-size: 15px;
   font-weight: 600;
   color: var(--text);
+  flex-shrink: 0;
 }
 .settings-row-label i { width: 18px; height: 18px; }
 /* Custom language dropdown */
@@ -2085,7 +2086,6 @@ body.dark-mode .track-option.active {
   background: #f0f0f0;
   border-radius: 20px;
   padding: 3px;
-  flex-shrink: 0;
 }
 body.dark-mode .notif-sound-picker {
   background: #333;
@@ -2094,8 +2094,8 @@ body.dark-mode .notif-sound-picker {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 6px 12px;
-  font-size: 13px;
+  padding: 5px 10px;
+  font-size: 12px;
   font-weight: 700;
   border: none;
   border-radius: 18px;
@@ -2357,6 +2357,18 @@ body.dark-mode .update-log-entry {
 }
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* Small screens: shrink sound picker buttons */
+@media (max-width: 400px) {
+  .notif-sound-option {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+  .notif-sound-option i {
+    width: 14px;
+    height: 14px;
+  }
 }
 .loading-text {
   font-size: 14px;
