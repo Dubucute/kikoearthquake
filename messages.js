@@ -92,7 +92,10 @@ export const SAFETY_TIPS_TL = [
 ];
 
 // ─── CHANGELOG ───────────────────────────────────────────────
-export const CHANGELOG = [ { ver: 'v1.124', date: '2026-07-06', items: [
+export const CHANGELOG = [ { ver: 'v1.125', date: '2026-07-06', items: [
+    'Updated: Service worker cache bumped to v1.125'
+  ]},
+  { ver: 'v1.124', date: '2026-07-06', items: [
     'Change: OpenRouter is now the first AI provider (was NVIDIA) — massive 30B–120B models',
     'New: OpenRouter models — poolside/laguna-m.1:free, nemotron-3-super-120b:free, gpt-oss-120b:free, nemotron-3-nano-30b-reasoning:free',
     'Change: maxTokens increased to 4096 for richer replies',
