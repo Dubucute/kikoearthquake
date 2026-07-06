@@ -486,6 +486,9 @@ class JaviAlertApp {
               this._speakGenericAlert(e.data.alertType);
             }
             this.loadData();
+          } else if (e.data && e.data.action === 'newCronData') {
+            // Cron found new quakes — refresh data immediately
+            this.loadData();
           }
         });
       }
@@ -1453,10 +1456,8 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
         const notifPerm = ('Notification' in window) ? Notification.permission : 'not-supported';
         console.log('[🔔 NOTIFY] Notification.permission:', notifPerm);
         if ('Notification' in window && Notification.permission === 'granted') {
-          const count = newQuakes.length;
-          const intLabel = PEIS_LABELS[newest.intensity] || '';
-          const title = count === 1 ? 'New earthquake detected!' : count + ' new earthquakes detected!';
-          const body = newest.mag.toFixed(1) + ' mag — ' + intLabel + ' at ' + newest.place + ' (' + newest.dist + ' km away)';
+          const title = 'New earthquake detected';
+          const body = newest.mag.toFixed(1) + ' mag ' + newest.dist + 'km away - ' + newest.place;
           console.log('[🔔 NOTIFY] Sending browser notification:', title, body);
           try {
             new Notification(title, { body, icon: 'icons/javi-icon.png' });
@@ -1760,16 +1761,13 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
         : newest.mag >= CONFIG.WARNING_THRESHOLD ? 'warning'
         : null;
       try {
-        const title = count === 1 ? 'New earthquake detected!'
-          : count + ' new earthquakes!';
-        const body = '📍 ' + newest.mag.toFixed(1) + ' mag\n' +
-          '\uD83D\uDCCD ' + newest.place + '\n' +
-          '\u23F1 ' + newest.dist + ' km away';
+        const title = 'New earthquake detected';
+        const body = newest.mag.toFixed(1) + ' mag ' + newest.dist + 'km away - ' + newest.place;
         await fetch('/api/push-send', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            title: '\uD83C\uDF0D ' + title,
+            title: title,
             body: body,
             url: '/',
             tag: 'quake-' + Date.now(),
@@ -3335,34 +3333,46 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
         if (e.target === e.currentTarget) e.currentTarget.classList.add('hidden');
       });
 
-      // Test notification button (debug)
+      // Test notification button (debug) — local only, does NOT send to all users
       document.getElementById('testNotifBtn').addEventListener('click', async () => {
-        // Try browser notification
+        // Play sound based on user's notifSound preference
+        if (this.notifSound === 'alarm') {
+          playAlertSound('warning', this.soundEnabled, this.volumeLevel);
+        } else if (this.notifSound === 'voice') {
+          try {
+            if (window.speechSynthesis) {
+              const utterance = new SpeechSynthesisUtterance('This is a test notification from Javi Alert!');
+              utterance.lang = 'en-US';
+              utterance.rate = 0.9;
+              utterance.pitch = 1.1;
+              utterance.volume = this.volumeLevel;
+              window.speechSynthesis.cancel();
+              window.speechSynthesis.speak(utterance);
+            }
+          } catch (_) { /* speech not supported */ }
+        }
+        // Show local browser notification
         if ('Notification' in window && Notification.permission === 'granted') {
           try {
             new Notification('JaviAlert Test', {
-              body: 'This is a test notification from JaviAlert!',
+              body: 'This is a test notification! Only you can see this.',
               icon: 'icons/javi-icon.png'
             });
           } catch (_) { /* ignore */ }
         }
-        // Try push notification via server
+        // Also try via Service Worker (local only)
         try {
-          await fetch('/api/push-send', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              title: '🔔 JaviAlert Test',
-              body: 'This is a test push notification!',
-              url: '/',
-              tag: 'test-' + Date.now()
-            })
+          const reg = await navigator.serviceWorker.ready;
+          reg.showNotification('JaviAlert Test', {
+            body: 'This is a test notification! Only you can see this.',
+            icon: 'icons/javi-icon.png',
+            tag: 'test-' + Date.now()
           });
         } catch (_) { /* ignore */ }
         // Show in-app toast
         this._showNotifToast('safe', {
           mag: 0, dist: 0,
-          place: 'Test notification sent! Check your device.'
+          place: 'Test notification sent! (local only, ' + this.notifSound + ' sound)'
         });
       });
     }
@@ -4281,8 +4291,8 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
           console.log('[🔔] Notification permission not granted. Current:', Notification.permission);
           return;
         }
-        new Notification('🧪 Test Notification', {
-          body: '4.2 mag — Intensity IV at Davao (120 km away)',
+        new Notification('JaviAlert Test', {
+          body: '4.2 mag 14km away - Davao (Test notification)',
           icon: 'icons/javi-icon.png'
         });
         console.log('[🔔] Test notification sent!');

@@ -1,4 +1,4 @@
-const CACHE = 'quake-buddy-v1.129';
+const CACHE = 'quake-buddy-v1.130';
 const ASSETS = [
   '/', '/index.html', '/manifest.json',
   '/style.css', '/style.css?v=2', '/app.js',
@@ -80,8 +80,17 @@ self.addEventListener('push', e => {
     notifOptions.vibrate = [200, 100, 200];
     notifOptions.requireInteraction = true;
   }
+
+  // Broadcast to all open windows to refresh data immediately
   e.waitUntil(
-    self.registration.showNotification(data.title, notifOptions)
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
+      for (const client of clientList) {
+        if (client.url.startsWith(self.location.origin)) {
+          client.postMessage({ action: 'newCronData' });
+        }
+      }
+      return self.registration.showNotification(data.title, notifOptions);
+    })
   );
 });
 

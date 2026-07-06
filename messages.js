@@ -92,7 +92,14 @@ export const SAFETY_TIPS_TL = [
 ];
 
 // ─── CHANGELOG ───────────────────────────────────────────────
-export const CHANGELOG = [ { ver: 'v1.129', date: '2026-07-06', items: [
+export const CHANGELOG = [ { ver: 'v1.130', date: '2026-07-06', items: [
+    'Fix: Cron push notifications only for mag 3+ (no more 2.x alerts)',
+    'Change: Notification title always "New earthquake detected" (no count, no emojis)',
+    'Change: Notification body format cleaned — no emojis, clean text like "3.2 mag 14km away - Place"',
+    'Fix: Test notification button uses notifSound preference (alarm/voice/silent)',
+    'Updated: Service worker cache bumped to v1.130'
+  ]},
+  { ver: 'v1.129', date: '2026-07-06', items: [
     'Change: Major provider overhaul — Google (Gemini 2.5 Flash) is now first provider',
     'New: Added Cerebras (Qwen 3 32B, Llama 4 Scout), Cloudflare (Llama 3.1, Mistral) providers',
     'New: maxTokens bumped to 8192 for top 3 providers, 4096 for rest',

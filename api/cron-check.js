@@ -160,8 +160,19 @@ export default async function handler(req, res) {
       return res.json({ ok: true, message: 'New quakes found but too old to notify', sent: 0 });
     }
 
+    // Only notify for magnitude 3+ (warning/danger level)
+    const significantQuakes = freshQuakes.filter(q => q.mag >= 3);
+    if (!significantQuakes.length) {
+      await tracker.updateOne(
+        { _id: 'lastQuakeId' },
+        { $set: { quakeId: quakes[0].id, lastTime: quakes[0].time } },
+        { upsert: true }
+      );
+      return res.json({ ok: true, message: 'New quakes found but all below mag 3', sent: 0 });
+    }
+
     // Limit to prevent notification spam — max 5 per cron run
-    const toNotify = freshQuakes.slice(0, 5);
+    const toNotify = significantQuakes.slice(0, 5);
     const biggest = toNotify.reduce((a, b) => b.mag > a.mag ? b : a);
 
     // 3. Send push to all subscribers
@@ -177,14 +188,12 @@ export default async function handler(req, res) {
       return res.json({ ok: true, message: 'No subscribers', sent: 0 });
     }
 
-    const count = toNotify.length;
     const alertType = classifyQuake(biggest);
-    const title = count === 1 ? 'New earthquake detected!' : count + ' new earthquakes detected!';
-    const body = '📍 ' + biggest.mag.toFixed(1) + ' mag\n' +
-      '\uD83D\uDCCD ' + biggest.place;
+    const title = 'New earthquake detected';
+    const body = biggest.mag.toFixed(1) + ' mag ' + biggest.place;
 
     const payload = JSON.stringify({
-      title: '🌏 ' + title,
+      title: title,
       body,
       url: '/',
       tag: 'quake-cron-' + Date.now(),
