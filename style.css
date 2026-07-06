@@ -2079,44 +2079,7 @@ body.dark-mode .track-option.active {
   border-color: #00a381;
   color: white;
 }
-/* Notification sound picker (Alarm / Voice / Silent) */
-.notif-sound-picker {
-  display: flex;
-  gap: 4px;
-  background: #f0f0f0;
-  border-radius: 20px;
-  padding: 3px;
-}
-body.dark-mode .notif-sound-picker {
-  background: #333;
-}
-.notif-sound-option {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 5px 10px;
-  font-size: 12px;
-  font-weight: 700;
-  border: none;
-  border-radius: 18px;
-  cursor: pointer;
-  transition: background .2s, color .2s;
-  white-space: nowrap;
-  color: var(--text-muted);
-  background: transparent;
-  user-select: none;
-}
-.notif-sound-option i {
-  width: 16px;
-  height: 16px;
-}
-.notif-sound-option.active {
-  background: #00b894;
-  color: white;
-}
-.notif-sound-option:active {
-  transform: scale(.94);
-}
+
 /* Volume slider */
 .settings-row-vol {
   flex-direction: column;
@@ -2359,17 +2322,7 @@ body.dark-mode .update-log-entry {
   to { transform: rotate(360deg); }
 }
 
-/* Small screens: shrink sound picker buttons */
-@media (max-width: 400px) {
-  .notif-sound-option {
-    padding: 4px 8px;
-    font-size: 11px;
-  }
-  .notif-sound-option i {
-    width: 14px;
-    height: 14px;
-  }
-}
+
 .loading-text {
   font-size: 14px;
   color: #636e72;

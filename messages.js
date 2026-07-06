@@ -92,7 +92,11 @@ export const SAFETY_TIPS_TL = [
 ];
 
 // ─── CHANGELOG ───────────────────────────────────────────────
-export const CHANGELOG = [ { ver: 'v1.117', date: '2026-07-06', items: [
+export const CHANGELOG = [ { ver: 'v1.118', date: '2026-07-06', items: [
+    'Fix: Replaced Alarm/Voice/Silent button group with custom dropdown — no more overlap or squish',
+    'Updated: Service worker cache bumped to v1.118'
+  ]},
+  { ver: 'v1.117', date: '2026-07-06', items: [
     'Fix: Sound picker label squished on small screens — label now resists shrink',
     'Fix: Sound picker buttons smaller on mobile (under 400px)',
     'Updated: Service worker cache bumped to v1.117'

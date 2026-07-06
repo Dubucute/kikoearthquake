@@ -421,19 +421,16 @@
             <i data-lucide="bell" aria-hidden="true"></i>
             <span data-i18n="alertSound">Alert Sound</span>
           </div>
-          <div class="notif-sound-picker" id="notifSoundPicker">
-            <button class="notif-sound-option active" data-sound="alarm">
-              <i data-lucide="volume-2" aria-hidden="true"></i>
-              <span>Alarm</span>
+          <div class="custom-select" id="notifSoundSelect">
+            <button class="custom-select-trigger" id="notifSoundSelectTrigger" aria-label="Select alert sound">
+              <span id="notifSoundSelectText">Alarm</span>
+              <i data-lucide="chevron-down" width="16" height="16" aria-hidden="true"></i>
             </button>
-            <button class="notif-sound-option" data-sound="voice">
-              <i data-lucide="mic" aria-hidden="true"></i>
-              <span>Voice</span>
-            </button>
-            <button class="notif-sound-option" data-sound="silent">
-              <i data-lucide="bell-off" aria-hidden="true"></i>
-              <span>Silent</span>
-            </button>
+            <div class="custom-select-options hidden" id="notifSoundSelectOptions">
+              <button class="custom-select-option" data-sound="alarm">Alarm</button>
+              <button class="custom-select-option" data-sound="voice">Voice</button>
+              <button class="custom-select-option" data-sound="silent">Silent</button>
+            </div>
           </div>
         </div>
         <!-- Push notifications -->

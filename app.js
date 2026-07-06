@@ -3093,12 +3093,35 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
         this._updateSettingsUI();
       });
 
-      // Notification sound picker (Alarm / Voice / Silent)
-      document.querySelectorAll('.notif-sound-option').forEach(btn => {
-        btn.addEventListener('click', () => {
-          this._setNotifSound(btn.dataset.sound);
-        });
-      });
+      // Notification sound dropdown (Alarm / Voice / Silent)
+      (() => {
+        const self = this;
+        const trigger = document.getElementById('notifSoundSelectTrigger');
+        const optionsEl = document.getElementById('notifSoundSelectOptions');
+        const textEl = document.getElementById('notifSoundSelectText');
+        const labels = { alarm: 'Alarm', voice: 'Voice', silent: 'Silent' };
+        if (trigger && optionsEl) {
+          if (textEl) textEl.textContent = labels[self.notifSound] || 'Alarm';
+          optionsEl.classList.add('hidden');
+          trigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            optionsEl.classList.toggle('hidden');
+          });
+          optionsEl.querySelectorAll('.custom-select-option').forEach(btn => {
+            btn.addEventListener('click', () => {
+              const sound = btn.dataset.sound || 'alarm';
+              self._setNotifSound(sound);
+              if (textEl) textEl.textContent = labels[sound] || 'Alarm';
+              optionsEl.classList.add('hidden');
+            });
+          });
+          document.addEventListener('click', (e) => {
+            if (!e.target.closest('#notifSoundSelect')) {
+              optionsEl.classList.add('hidden');
+            }
+          });
+        }
+      })();
 
       // Ambient toggle
       document.getElementById('settingsAmbientToggle').addEventListener('click', () => {
@@ -3438,10 +3461,12 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
       const dt = document.getElementById('settingsDarkToggle');
       if (dt) dt.classList.toggle('active', this.isDarkMode);
 
-      // Notification sound picker (Alarm / Voice / Silent)
-      document.querySelectorAll('.notif-sound-option').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.sound === this.notifSound);
-      });
+      // Notification sound dropdown text
+      const nst = document.getElementById('notifSoundSelectText');
+      if (nst) {
+        const labels = { alarm: 'Alarm', voice: 'Voice', silent: 'Silent' };
+        nst.textContent = labels[this.notifSound] || 'Alarm';
+      }
 
       // Ambient toggle
       const at = document.getElementById('settingsAmbientToggle');
