@@ -1005,10 +1005,12 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
 
       // Sort by distance (nearest first)
       const quakesByDist = quakes.sort((a, b) => a.dist - b.dist);
+      const localMidnight = new Date();
+      localMidnight.setHours(0, 0, 0, 0);
 
       return {
         quakes: quakesByDist,
-        todayCount: quakes.filter((q) => (Date.now() - q.time.getTime()) < CONFIG.TODAY_WINDOW_MS).length,
+        todayCount: quakes.filter((q) => q.time >= localMidnight).length,
         latestTime: quakes.length ? quakes.reduce((a, b) => a.time > b.time ? a : b).time : null,
         nearestDist: quakes.length ? quakesByDist[0].dist : null
       };
