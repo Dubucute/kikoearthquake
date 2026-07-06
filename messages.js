@@ -92,17 +92,27 @@ export const SAFETY_TIPS_TL = [
 ];
 
 // ─── CHANGELOG ───────────────────────────────────────────────
-export const CHANGELOG = [ { ver: 'v1.135', date: '2026-07-06', items: [
-    'New: Desktop-friendly layout — phone-width form retained, hover effects added, slightly bigger modals',
-    'New: Responsive at 768px and 1200px with subtle visual polish instead of stretched layout',
+export const CHANGELOG = [ { ver: 'v1.136', date: '2026-07-06', items: [
+    'New: Desktop 2-column grid layout at 768px+ — char card + action bar on left, stats + map + list on right',
+    'New: Desktop 3-column grid layout at 1200px+ for extra-wide screens',
+    'Fix: Removed empty side space on desktop — content fills the width naturally',
+    'Updated: Service worker cache bumped to v1.136'
+  ]},
+  { ver: 'v1.135', date: '2026-07-06', items: [
+    'New: Desktop hover effects on buttons, quake items, and interactive elements',
+    'Fix: Desktop layout now uses compact phone-width form instead of stretched wide layout',
     'Updated: Service worker cache bumped to v1.135'
   ]},
   { ver: 'v1.134', date: '2026-07-06', items: [
+    'New: Desktop layout — wider container, bigger cards/modals, multi-column quake list',
+    'New: Responsive media queries at 768px and 1200px breakpoints',
+    'Updated: Service worker cache bumped to v1.134'
+  ]},
+  { ver: 'v1.133', date: '2026-07-06', items: [
     'Fix: Clicking address bar now clears the input so you can type right away',
     'Fix: If no autocomplete item is selected, the current address is restored automatically',
     'Updated: Service worker cache bumped to v1.133'
   ]},
-  { ver: 'v1.132', date: '2026-07-06', items: [
     'Fix: Custom address from search dropdown now saves properly with cachedAt: Infinity',
     'Fix: GPS no longer overrides manually searched address on next page load',
     'Updated: Service worker cache bumped to v1.132'
