@@ -92,7 +92,12 @@ export const SAFETY_TIPS_TL = [
 ];
 
 // ─── CHANGELOG ───────────────────────────────────────────────
-export const CHANGELOG = [ { ver: 'v1.126', date: '2026-07-06', items: [
+export const CHANGELOG = [ { ver: 'v1.127', date: '2026-07-06', items: [
+    'Fix: Javi no longer mentions AI providers (NVIDIA, Groq, OpenRouter etc.) — just Javi',
+    'New: Javi can say who made the site (J Marlo Pu-od aka Dubu) but only when asked',
+    'Updated: Service worker cache bumped to v1.127'
+  ]},
+  { ver: 'v1.126', date: '2026-07-06', items: [
     'Fix: Javi personality toned down — no more forced corny/playful replies, now natural and to the point',
     'Updated: Service worker cache bumped to v1.126'
   ]},
