@@ -92,7 +92,12 @@ export const SAFETY_TIPS_TL = [
 ];
 
 // ─── CHANGELOG ───────────────────────────────────────────────
-export const CHANGELOG = [ { ver: 'v1.138', date: '2026-07-06', items: [
+export const CHANGELOG = [ { ver: 'v1.139', date: '2026-07-06', items: [
+    'Fix: Push notification now plays alert sound even when app is closed',
+    'Fix: Clicking a push notification opens the app and plays the correct alert sound automatically',
+    'Updated: Service worker cache bumped to v1.139'
+  ]},
+  { ver: 'v1.138', date: '2026-07-06', items: [
     'Fix: Removed grid layout — single column centered layout for desktop (600px/680px)',
     'Fix: All content now flows naturally without disconnected pieces or extra gaps',
     'Updated: Service worker cache bumped to v1.138'
@@ -105,6 +110,11 @@ export const CHANGELOG = [ { ver: 'v1.138', date: '2026-07-06', items: [
     'New: Desktop hover effects on buttons, quake items, and interactive elements',
     'Fix: Desktop layout now uses compact phone-width form instead of stretched wide layout',
     'Updated: Service worker cache bumped to v1.136'
+  ]},
+  { ver: 'v1.135', date: '2026-07-06', items: [
+    'New: Desktop layout — wider container, bigger cards/modals, multi-column quake list',
+    'New: Responsive media queries at 768px and 1200px breakpoints',
+    'Updated: Service worker cache bumped to v1.135'
   ]},
   { ver: 'v1.134', date: '2026-07-06', items: [
     'New: Desktop layout — wider container, bigger cards/modals, multi-column quake list',

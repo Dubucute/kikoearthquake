@@ -1,4 +1,4 @@
-const CACHE = 'quake-buddy-v1.138';
+const CACHE = 'quake-buddy-v1.139';
 const ASSETS = [
   '/', '/index.html', '/manifest.json',
   '/style.css', '/style.css?v=2', '/app.js',
@@ -114,8 +114,9 @@ self.addEventListener('notificationclick', e => {
           return;
         }
       }
-      // No existing window — open a new one
-      return clients.openWindow(fullUrl);
+      // No existing window — open a new one and pass alertType for sound
+      const openUrl = alertType ? fullUrl + '?alertType=' + alertType : fullUrl;
+      return clients.openWindow(openUrl);
     })
   );
 });

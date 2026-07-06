@@ -530,6 +530,19 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
       clearTimeout(safetyTimer);
       this._dismissLoading();
 
+      // Check if opened from a notification click with alertType
+      const params = new URLSearchParams(location.search);
+      const alertFromNotif = params.get('alertType');
+      if (alertFromNotif) {
+        // Clean URL so refresh doesn't replay
+        history.replaceState(null, '', location.pathname);
+        if (this.notifSound === 'alarm') {
+          playAlertSound(alertFromNotif, this.soundEnabled, this.volumeLevel);
+        } else if (this.notifSound === 'voice') {
+          this._speakGenericAlert(alertFromNotif);
+        }
+      }
+
       // Unlock AudioContext on first user interaction (browsers block autoplay)
       this._unlockAudioOnce();
 
