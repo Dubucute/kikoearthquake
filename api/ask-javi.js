@@ -1,34 +1,92 @@
-// Provider chain: OpenRouter → NVIDIA → Groq → HuggingFace (large models for text/translation)
+// Provider chain: Google → OpenRouter → Cerebras → Groq → NVIDIA → HuggingFace → Cloudflare
 
 // ─── Provider definitions ────────────────────────────────────
 const PROVIDERS = [
+  // ⭐⭐⭐⭐⭐ Best overall
+  {
+    name: 'google',
+    baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+    apiKeyEnv: 'GOOGLE_AI_STUDIO_API_KEY',
+    maxTokens: 8192,
+    models: [
+      'gemini-2.5-flash',
+      'gemini-2.5-flash-lite',
+    ],
+  },
+
+  // ⭐⭐⭐⭐⭐ Largest free model selection
   {
     name: 'openrouter',
     baseUrl: 'https://openrouter.ai/api/v1',
     apiKeyEnv: 'OPENROUTER_API_KEY',
-    maxTokens: 4096,
-    models: ['poolside/laguna-m.1:free', 'nvidia/nemotron-3-super-120b-a12b:free', 'openai/gpt-oss-120b:free', 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free'],
+    maxTokens: 8192,
+    models: [
+      'openai/gpt-oss-120b:free',
+      'qwen/qwen3-235b-a22b:free',
+      'nousresearch/hermes-3-llama-3.1-70b:free',
+      'deepseek/deepseek-chat-v3:free',
+      'nvidia/nemotron-3-super-120b-a12b:free',
+    ],
   },
+
+  // ⭐⭐⭐⭐☆
   {
-    name: 'nvidia',
-    baseUrl: 'https://integrate.api.nvidia.com/v1',
-    apiKeyEnv: 'NVIDIA_API_KEY',
-    maxTokens: 1024,
-    models: ['mistralai/mixtral-8x7b-instruct-v0.1', 'meta/llama-3.1-8b-instruct'],
+    name: 'cerebras',
+    baseUrl: 'https://api.cerebras.ai/v1',
+    apiKeyEnv: 'CEREBRAS_API_KEY',
+    maxTokens: 8192,
+    models: [
+      'qwen-3-32b',
+      'llama-4-scout-17b-16e-instruct',
+    ],
   },
+
+  // ⭐⭐⭐⭐☆
   {
     name: 'groq',
     baseUrl: 'https://api.groq.com/openai/v1',
     apiKeyEnv: 'GROQ_API_KEY',
-    maxTokens: 2048,
-    models: ['llama-3.1-8b-instant'],
+    maxTokens: 4096,
+    models: [
+      'llama-3.3-70b-versatile',
+      'llama-3.1-8b-instant',
+    ],
   },
+
+  // ⭐⭐⭐⭐
+  {
+    name: 'nvidia',
+    baseUrl: 'https://integrate.api.nvidia.com/v1',
+    apiKeyEnv: 'NVIDIA_API_KEY',
+    maxTokens: 4096,
+    models: [
+      'mistralai/mixtral-8x7b-instruct-v0.1',
+      'meta/llama-3.1-8b-instruct',
+    ],
+  },
+
+  // ⭐⭐⭐
   {
     name: 'huggingface',
     baseUrl: 'https://router.huggingface.co/v1',
     apiKeyEnv: 'HF_TOKEN',
-    maxTokens: 1024,
-    models: ['Qwen/Qwen2.5-7B-Instruct', 'mistralai/Mistral-7B-Instruct-v0.3'],
+    maxTokens: 4096,
+    models: [
+      'Qwen/Qwen2.5-7B-Instruct',
+      'mistralai/Mistral-7B-Instruct-v0.3',
+    ],
+  },
+
+  // ⭐⭐⭐
+  {
+    name: 'cloudflare',
+    baseUrl: 'https://api.cloudflare.com/client/v4/accounts/606f5cb52423b33e8183d1720585d8b1/ai/run/',
+    apiKeyEnv: 'CLOUDFLARE_API_TOKEN',
+    maxTokens: 4096,
+    models: [
+      '@cf/meta/llama-3.1-8b-instruct',
+      '@cf/mistral/mistral-7b-instruct-v0.2',
+    ],
   },
 ];
 
@@ -120,7 +178,62 @@ async function callOpenAICompatible(provider, messages, quakeContext, lang) {
   throw new Error(`All models failed for ${provider.name}. Last: ${lastError}`);
 }
 
-// Provider chain: OpenRouter → NVIDIA → Groq → HuggingFace
+/** Call Cloudflare Workers AI (different URL format — model in path) */
+async function callCloudflare(provider, messages, quakeContext, lang) {
+  const apiKey = process.env[provider.apiKeyEnv];
+  if (!apiKey) {
+    throw new Error(`${provider.apiKeyEnv} is not configured`);
+  }
+
+  const systemContent = buildSystemPrompt(quakeContext, lang);
+  const chatMessages = [
+    { role: 'system', content: systemContent },
+    ...messages.slice(-8),
+  ];
+
+  let lastError = null;
+  for (const model of provider.models) {
+    try {
+      const url = `${provider.baseUrl}${model}`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: chatMessages,
+          max_tokens: provider.maxTokens || 1024,
+          temperature: 0.7,
+          top_p: 0.95,
+        }),
+      });
+
+      if (!res.ok) {
+        const errText = await res.text().catch(() => '');
+        lastError = `${provider.name}/${model} returned ${res.status}: ${errText.slice(0, 200)}`;
+        console.warn(lastError);
+        continue;
+      }
+
+      const data = await res.json();
+      // Cloudflare returns { result: { response: "..." } } for text generation
+      const candidate = data?.result?.response?.trim() || data?.choices?.[0]?.message?.content?.trim();
+
+      if (candidate) {
+        return candidate;
+      }
+      lastError = `${provider.name}/${model} returned empty response`;
+      console.warn(lastError);
+    } catch (err) {
+      lastError = `${provider.name}/${model} threw: ${err.message}`;
+      console.warn(lastError);
+    }
+  }
+  throw new Error(`All models failed for ${provider.name}. Last: ${lastError}`);
+}
+
+// Provider chain: Google → OpenRouter → Cerebras → Groq → NVIDIA → HuggingFace → Cloudflare
 
 // ─── System prompt ────────────────────────────────────────────
 const SYSTEM_PROMPT =
@@ -173,7 +286,21 @@ export default async function handler(req, res) {
     let reply = null;
     const errors = [];
 
-    // 1. OpenRouter (largest models: 30B–120B, best for text/translation)
+    // 1. Google — Gemini 2.5 Flash (fast, smart, great for Cebuano)
+    if (!reply) {
+      const google = PROVIDERS.find(p => p.name === 'google');
+      if (process.env[google.apiKeyEnv]) {
+        try {
+          reply = await callOpenAICompatible(google, messages, quakeContext, lang);
+          console.log('✅ Google replied');
+        } catch (e) {
+          errors.push(e.message);
+          console.warn('Google failed:', e.message);
+        }
+      }
+    }
+
+    // 2. OpenRouter — massive models (70B–235B)
     if (!reply) {
       const or = PROVIDERS.find(p => p.name === 'openrouter');
       if (process.env[or.apiKeyEnv]) {
@@ -187,21 +314,21 @@ export default async function handler(req, res) {
       }
     }
 
-    // 2. NVIDIA (fallback)
+    // 3. Cerebras — fast inference
     if (!reply) {
-      const nvidia = PROVIDERS.find(p => p.name === 'nvidia');
-      if (process.env[nvidia.apiKeyEnv]) {
+      const cerebras = PROVIDERS.find(p => p.name === 'cerebras');
+      if (process.env[cerebras.apiKeyEnv]) {
         try {
-          reply = await callOpenAICompatible(nvidia, messages, quakeContext, lang);
-          console.log('✅ NVIDIA replied');
+          reply = await callOpenAICompatible(cerebras, messages, quakeContext, lang);
+          console.log('✅ Cerebras replied');
         } catch (e) {
           errors.push(e.message);
-          console.warn('NVIDIA failed:', e.message);
+          console.warn('Cerebras failed:', e.message);
         }
       }
     }
 
-    // 3. Groq (fallback)
+    // 4. Groq — fast, 70B versatile
     if (!reply) {
       const groq = PROVIDERS.find(p => p.name === 'groq');
       if (process.env[groq.apiKeyEnv]) {
@@ -215,7 +342,21 @@ export default async function handler(req, res) {
       }
     }
 
-    // 4. Hugging Face (final fallback)
+    // 5. NVIDIA — fallback
+    if (!reply) {
+      const nvidia = PROVIDERS.find(p => p.name === 'nvidia');
+      if (process.env[nvidia.apiKeyEnv]) {
+        try {
+          reply = await callOpenAICompatible(nvidia, messages, quakeContext, lang);
+          console.log('✅ NVIDIA replied');
+        } catch (e) {
+          errors.push(e.message);
+          console.warn('NVIDIA failed:', e.message);
+        }
+      }
+    }
+
+    // 6. Hugging Face — fallback
     if (!reply) {
       const hf = PROVIDERS.find(p => p.name === 'huggingface');
       if (process.env[hf.apiKeyEnv]) {
@@ -225,6 +366,20 @@ export default async function handler(req, res) {
         } catch (e) {
           errors.push(e.message);
           console.warn('Hugging Face failed:', e.message);
+        }
+      }
+    }
+
+    // 7. Cloudflare — final fallback (special URL format)
+    if (!reply) {
+      const cf = PROVIDERS.find(p => p.name === 'cloudflare');
+      if (process.env[cf.apiKeyEnv]) {
+        try {
+          reply = await callCloudflare(cf, messages, quakeContext, lang);
+          console.log('✅ Cloudflare replied');
+        } catch (e) {
+          errors.push(e.message);
+          console.warn('Cloudflare failed:', e.message);
         }
       }
     }

@@ -92,7 +92,17 @@ export const SAFETY_TIPS_TL = [
 ];
 
 // ─── CHANGELOG ───────────────────────────────────────────────
-export const CHANGELOG = [ { ver: 'v1.128', date: '2026-07-06', items: [
+export const CHANGELOG = [ { ver: 'v1.129', date: '2026-07-06', items: [
+    'Change: Major provider overhaul — Google (Gemini 2.5 Flash) is now first provider',
+    'New: Added Cerebras (Qwen 3 32B, Llama 4 Scout), Cloudflare (Llama 3.1, Mistral) providers',
+    'New: maxTokens bumped to 8192 for top 3 providers, 4096 for rest',
+    'Change: OpenRouter models updated (gpt-oss-120b, qwen3-235b, hermes-3-70b, deepseek-v3, nemotron-3-120b)',
+    'Change: Groq upgraded to Llama 3.3 70B Versatile',
+    'Change: Cloudflare account ID configured with custom callCloudflare function',
+    'Change: Google API key env name fixed to GOOGLE_AI_STUDIO_API_KEY',
+    'Updated: Service worker cache bumped to v1.129'
+  ]},
+  { ver: 'v1.128', date: '2026-07-06', items: [
     'Fix: Cebuano replies no longer forced to pure Bisaya — can naturally mix English/Tagalog words',
     'Fix: Pure Tagalog and pure English stay pure (no mixing)',
     'Updated: Service worker cache bumped to v1.128'
