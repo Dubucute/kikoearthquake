@@ -113,6 +113,7 @@ export const CHANGELOG = [ { ver: 'v1.136', date: '2026-07-06', items: [
     'Fix: If no autocomplete item is selected, the current address is restored automatically',
     'Updated: Service worker cache bumped to v1.133'
   ]},
+  { ver: 'v1.132', date: '2026-07-06', items: [
     'Fix: Custom address from search dropdown now saves properly with cachedAt: Infinity',
     'Fix: GPS no longer overrides manually searched address on next page load',
     'Updated: Service worker cache bumped to v1.132'
