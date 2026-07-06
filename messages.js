@@ -92,7 +92,19 @@ export const SAFETY_TIPS_TL = [
 ];
 
 // ─── CHANGELOG ───────────────────────────────────────────────
-export const CHANGELOG = [ { ver: 'v1.139', date: '2026-07-06', items: [
+export const CHANGELOG = [ { ver: 'v1.141', date: '2026-07-06', items: [
+    'Fix: Notification format changed to "Mag 3.2 — Place · 10km deep" (cleaner, includes depth)',
+    'Fix: Removed redundant browser notification from _alertNewQuakes — cron push already handles it',
+    'Fix: Added _fromCronPush flag so _triggerServerPush skips when refresh came from cron push',
+    'Fix: No more triple notifications — only in-app toast + single push notification per new quake',
+    'Updated: Service worker cache bumped to v1.141'
+  ]},
+  { ver: 'v1.140', date: '2026-07-06', items: [
+    'Fix: Prevent double sound/voice when push notification is tapped while app is already open',
+    'Fix: Added 10s cooldown (_lastAlertTime) to prevent alert sound playing twice',
+    'Updated: Service worker cache bumped to v1.140'
+  ]},
+  { ver: 'v1.139', date: '2026-07-06', items: [
     'Fix: Push notification now plays alert sound even when app is closed',
     'Fix: Clicking a push notification opens the app and plays the correct alert sound automatically',
     'Updated: Service worker cache bumped to v1.139'

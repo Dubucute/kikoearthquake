@@ -52,6 +52,7 @@ class JaviAlertApp {
       this._pendingClose = false;
       this._scrollPos = 0;
       this._lastCheckedTimer = null;
+      this._fromCronPush = false;
 
       // Bind
       this.init = this.init.bind(this);
@@ -479,6 +480,11 @@ class JaviAlertApp {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.addEventListener('message', (e) => {
           if (e.data && e.data.action === 'playAlertSound') {
+            // Skip if we just alerted (within last 10s) — prevents double-play
+            // when app is open and user taps the push notification
+            if (this._lastAlertTime && Date.now() - this._lastAlertTime < 10000) {
+              return;
+            }
             if (this.notifSound === 'alarm') {
               playAlertSound(e.data.alertType, this.soundEnabled, this.volumeLevel);
             } else if (this.notifSound === 'voice') {
@@ -488,6 +494,8 @@ class JaviAlertApp {
             this.loadData();
           } else if (e.data && e.data.action === 'newCronData') {
             // Cron found new quakes — refresh data immediately
+            // Flag prevents _triggerServerPush from double-sending since cron already pushed
+            this._fromCronPush = true;
             this.loadData();
           }
         });
@@ -536,6 +544,7 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
       if (alertFromNotif) {
         // Clean URL so refresh doesn't replay
         history.replaceState(null, '', location.pathname);
+        this._lastAlertTime = Date.now();
         if (this.notifSound === 'alarm') {
           playAlertSound(alertFromNotif, this.soundEnabled, this.volumeLevel);
         } else if (this.notifSound === 'voice') {
@@ -1345,6 +1354,8 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
         if (newQuakes.length > 0) {
           this._alertNewQuakes(newQuakes);
         }
+        // Reset cron flag so next manual refresh triggers server push
+        this._fromCronPush = false;
       } catch (err) {
         // If fetch fails but we already showed cached data, don't show error
         if (cached && cached.features) {
@@ -1377,6 +1388,8 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
           }
         }
       }
+      // Reset cron flag even on error
+      this._fromCronPush = false;
     }
 
     // ─── CLIENT-SIDE DATA CACHE ──────────────────────────────
@@ -1471,6 +1484,7 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
 
       // Play notification sound based on user preference
       if (alertType === 'warning' || alertType === 'danger') {
+        this._lastAlertTime = Date.now();
         if (this.notifSound === 'alarm') {
           playAlertSound(alertType, this.soundEnabled, this.volumeLevel);
         } else if (this.notifSound === 'voice') {
@@ -1486,27 +1500,14 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
 
       console.log('[🔔 NOTIFY] alertType:', alertType, '| hasAlarm:', hasAlarm);
 
-      // Show browser notification ONLY for mag 3+ (warning/danger)
-      if (alertType === 'warning' || alertType === 'danger') {
-        const notifPerm = ('Notification' in window) ? Notification.permission : 'not-supported';
-        console.log('[🔔 NOTIFY] Notification.permission:', notifPerm);
-        if ('Notification' in window && Notification.permission === 'granted') {
-          const title = 'New earthquake detected';
-          const body = newest.mag.toFixed(1) + ' mag ' + newest.dist + 'km away - ' + newest.place;
-          console.log('[🔔 NOTIFY] Sending browser notification:', title, body);
-          try {
-            new Notification(title, { body, icon: 'icons/javi-icon.png' });
-          } catch (_) { console.log('[🔔 NOTIFY] Browser notification FAILED'); }
-        } else {
-          console.log('[🔔 NOTIFY] Browser notifications NOT granted — skipping');
-        }
+      // Show in-app notification toast for ALL new quakes
+      this._showNotifToast(alertType, newest);
 
-        // Trigger server-side push for background delivery (mag 3+ only)
+      // Push to server for background notification (mag 3+ only)
+      // Skipped if this refresh was triggered by cron's push (to avoid double notification)
+      if ((alertType === 'warning' || alertType === 'danger') && !this._fromCronPush) {
         this._triggerServerPush(newest, newQuakes.length);
       }
-
-      // Always show in-app toast for ALL new quakes
-      this._showNotifToast(alertType, newest);
 
       // Trigger map ripple effect
       this._triggerQuakeRipple();
@@ -1797,7 +1798,8 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
         : null;
       try {
         const title = 'New earthquake detected';
-        const body = newest.mag.toFixed(1) + ' mag ' + newest.dist + 'km away - ' + newest.place;
+        const depthInfo = newest.depth > 0 ? ' · ' + newest.depth + 'km deep' : '';
+        const body = 'Mag ' + newest.mag.toFixed(1) + ' — ' + newest.place + depthInfo;
         await fetch('/api/push-send', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

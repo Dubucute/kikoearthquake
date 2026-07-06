@@ -213,7 +213,8 @@ export default async function handler(req, res) {
 
     const alertType = classifyQuake(biggest);
     const title = 'New earthquake detected';
-    const body = biggest.mag.toFixed(1) + ' mag ' + biggest.place;
+    const depthInfo = biggest.depth > 0 ? ' · ' + biggest.depth + 'km deep' : '';
+    const body = 'Mag ' + biggest.mag.toFixed(1) + ' — ' + biggest.place + depthInfo;
 
     const payload = JSON.stringify({
       title: title,
