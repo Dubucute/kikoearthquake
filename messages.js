@@ -92,7 +92,11 @@ export const SAFETY_TIPS_TL = [
 ];
 
 // ─── CHANGELOG ───────────────────────────────────────────────
-export const CHANGELOG = [ { ver: 'v1.125', date: '2026-07-06', items: [
+export const CHANGELOG = [ { ver: 'v1.126', date: '2026-07-06', items: [
+    'Fix: Javi personality toned down — no more forced corny/playful replies, now natural and to the point',
+    'Updated: Service worker cache bumped to v1.126'
+  ]},
+  { ver: 'v1.125', date: '2026-07-06', items: [
     'Updated: Service worker cache bumped to v1.125'
   ]},
   { ver: 'v1.124', date: '2026-07-06', items: [
