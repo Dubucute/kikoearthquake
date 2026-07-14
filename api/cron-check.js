@@ -145,7 +145,12 @@ export default async function handler(req, res) {
   // (query param makes it easy for cron services that can't set custom headers)
   const authHeader = req.headers.authorization;
   const cronSecret = process.env.CRON_SECRET;
-  const queryToken = req.query?.token;
+  // Parse query token from URL (more reliable than req.query on Vercel)
+  let queryToken = '';
+  try {
+    const parsedUrl = new URL(req.url, 'https://javi-alert.vercel.app');
+    queryToken = parsedUrl.searchParams.get('token') || '';
+  } catch (_) { /* ignore */ }
   const authorized = !cronSecret ||
     authHeader === `Bearer ${cronSecret}` ||
     queryToken === cronSecret;
