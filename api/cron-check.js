@@ -81,7 +81,7 @@ function parsePhivolcsTable(html) {
   const rowMatches = html.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi);
   for (const rowMatch of rowMatches) {
     const row = rowMatch[1];
-    if (!row.includes('auto-style99') || row.includes('<th')) continue;
+    if (row.includes('<th')) continue;
     // Extract date link — try multiple patterns
     let href = '';
     let dateStr = '';
@@ -285,7 +285,7 @@ export default async function handler(req, res) {
       sent: results.filter(r => r.status === 'fulfilled').length,
       failed: invalidEndpoints.length,
       total: allSubs.length,
-      newQuakes: count,
+      newQuakes: freshQuakes.length,
       biggest: { mag: biggest.mag, place: biggest.place },
     });
   } catch (err) {

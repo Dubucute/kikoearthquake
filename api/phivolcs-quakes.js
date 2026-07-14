@@ -84,8 +84,8 @@ function parsePhivolcsTable(html) {
   for (const rowMatch of rowMatches) {
     const row = rowMatch[1];
 
-    // Skip header rows (contain <th>) and rows without quake data
-    if (!row.includes('auto-style99') || row.includes('<th')) continue;
+    // Skip header rows (contain <th>)
+    if (row.includes('<th')) continue;
 
     // Extract date link — try multiple patterns
     let href = '';
