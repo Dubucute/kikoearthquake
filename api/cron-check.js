@@ -141,10 +141,15 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Verify cron secret (prevents public abuse)
+  // Verify cron secret — accepts Authorization header OR ?token= query param
+  // (query param makes it easy for cron services that can't set custom headers)
   const authHeader = req.headers.authorization;
   const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+  const queryToken = req.query?.token;
+  const authorized = !cronSecret ||
+    authHeader === `Bearer ${cronSecret}` ||
+    queryToken === cronSecret;
+  if (!authorized) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
