@@ -3923,17 +3923,31 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
         // Note: we DON'T push a placeholder yet — typing indicator shows while waiting
         const response = await this._callHuggingFace(this.chatMessages, quakeContext, detected, (token, full) => {
           if (!hasReceivedToken) {
-            // First token arrived — push the assistant message and render it now
+            // First token arrived — create the bot bubble directly in the DOM
             hasReceivedToken = true;
+
+            // Push the assistant message to the array
             this.chatMessages.push({ role: 'assistant', content: '' });
-            this._renderChatMessages();
+
+            // Create the bot bubble element directly (no full re-render)
+            const container = document.getElementById('chatMessages');
+            const div = document.createElement('div');
+            div.className = 'chat-bubble chat-bubble-bot';
+            div.innerHTML = '<div class="chat-avatar-wrap"><img class="chat-avatar" src="icons/javi-avatar.png" alt="Javi"></div><div class="chat-bubble-inner"></div>';
+
+            // Insert before the typing indicator
+            const typingEl = document.getElementById('chatTyping');
+            if (typingEl) {
+              container.insertBefore(div, typingEl);
+            } else {
+              container.appendChild(div);
+            }
 
             // Hide typing indicator
             if (typing) typing.classList.add('hidden');
 
-            // Get reference to the new bot bubble for live updates
-            const allBubbles = document.querySelectorAll('#chatMessages .chat-bubble-bot');
-            streamEl = allBubbles.length > 0 ? allBubbles[allBubbles.length - 1].querySelector('.chat-bubble-inner') : null;
+            // Save reference for live updates
+            streamEl = div.querySelector('.chat-bubble-inner');
           }
           // Update the bubble live with accumulated tokens
           if (streamEl) {
