@@ -3916,28 +3916,26 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
         // Build earthquake context from latest data
         const quakeContext = this._buildQuakeContext();
 
-        // Push a placeholder bot message for streaming (empty for now)
-        this.chatMessages.push({ role: 'assistant', content: '' });
-        this._renderChatMessages();
-
-        // Get a reference to the last bot bubble for live updates
-        const allBubbles = document.querySelectorAll('#chatMessages .chat-bubble-bot');
-        let streamEl = allBubbles.length > 0 ? allBubbles[allBubbles.length - 1].querySelector('.chat-bubble-inner') : null;
-
-        // Scroll to show the empty bubble
-        if (msgs) msgs.scrollTop = msgs.scrollHeight;
-
+        let streamEl = null;
         let hasReceivedToken = false;
 
         // Call AI API with streaming — tokens arrive in real-time
-        const messagesWithoutPlaceholder = this.chatMessages.slice(0, -1);
-        const response = await this._callHuggingFace(messagesWithoutPlaceholder, quakeContext, detected, (token, full) => {
-          // First token arrived — hide typing indicator now
+        // Note: we DON'T push a placeholder yet — typing indicator shows while waiting
+        const response = await this._callHuggingFace(this.chatMessages, quakeContext, detected, (token, full) => {
           if (!hasReceivedToken) {
+            // First token arrived — push the assistant message and render it now
             hasReceivedToken = true;
+            this.chatMessages.push({ role: 'assistant', content: '' });
+            this._renderChatMessages();
+
+            // Hide typing indicator
             if (typing) typing.classList.add('hidden');
+
+            // Get reference to the new bot bubble for live updates
+            const allBubbles = document.querySelectorAll('#chatMessages .chat-bubble-bot');
+            streamEl = allBubbles.length > 0 ? allBubbles[allBubbles.length - 1].querySelector('.chat-bubble-inner') : null;
           }
-          // Update the placeholder bubble live
+          // Update the bubble live with accumulated tokens
           if (streamEl) {
             streamEl.innerHTML = this._formatBotMessage(full);
           }
@@ -3945,18 +3943,19 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
           if (msgs) msgs.scrollTop = msgs.scrollHeight;
         });
 
-        // Finalize with the complete response
-        this.chatMessages[this.chatMessages.length - 1].content = response;
-        if (streamEl) {
-          streamEl.innerHTML = this._formatBotMessage(response);
+        // Finalize with the complete response (if bubble was created)
+        if (hasReceivedToken) {
+          this.chatMessages[this.chatMessages.length - 1].content = response;
+          if (streamEl) {
+            streamEl.innerHTML = this._formatBotMessage(response);
+          }
+          // Save to memory
+          this._saveChatMemory(text, response);
+          this._saveChatHistory();
+        } else {
+          // Stream ended without any tokens — safety net
+          if (typing) typing.classList.add('hidden');
         }
-
-        // Hide typing if still visible (empty response safety net)
-        if (!hasReceivedToken && typing) typing.classList.add('hidden');
-
-        // Save to memory
-        this._saveChatMemory(text, response);
-        this._saveChatHistory();
 
         // If chat was closed while waiting, show notification on chat head
         const chatModal = document.getElementById('chatModal');
@@ -3976,14 +3975,9 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
         console.error('Chat error:', err);
         if (typing) typing.classList.add('hidden');
 
-        // Fallback: update the placeholder instead of pushing a new message
+        // Fallback: push a fallback message (no placeholder to replace anymore)
         const fallback = this._fallbackResponse();
-        const lastMsg = this.chatMessages[this.chatMessages.length - 1];
-        if (lastMsg && lastMsg.role === 'assistant' && lastMsg.content === '') {
-          lastMsg.content = fallback;
-        } else {
-          this.chatMessages.push({ role: 'assistant', content: fallback });
-        }
+        this.chatMessages.push({ role: 'assistant', content: fallback });
         this._renderChatMessages(true);
         this._saveChatMemory(text, fallback);
         this._saveChatHistory();
@@ -4102,10 +4096,13 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
             '<div class="chat-avatar-wrap"><img class="chat-avatar" src="icons/javi-avatar.png" alt="Javi"></div>' +
             '<div class="chat-bubble-inner">👋 Hi! I\'m Javi, your earthquake safety buddy. Ask me anything about earthquakes, safety tips, or preparedness!</div>' +
           '</div>' +
-          '<div class="chat-typing hidden" id="chatTyping">' +
-            '<div class="chat-typing-dot"></div>' +
-            '<div class="chat-typing-dot"></div>' +
-            '<div class="chat-typing-dot"></div>' +
+          '<div class="chat-bubble chat-bubble-bot chat-typing hidden" id="chatTyping">' +
+            '<div class="chat-avatar-wrap"><img class="chat-avatar" src="icons/javi-avatar.png" alt="Javi"></div>' +
+            '<div class="chat-typing-dots">' +
+              '<div class="chat-typing-dot"></div>' +
+              '<div class="chat-typing-dot"></div>' +
+              '<div class="chat-typing-dot"></div>' +
+            '</div>' +
           '</div>';
         return;
       }
@@ -4168,9 +4165,14 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
       // Add typing indicator at the bottom
       if (!typingEl) {
         const typingDiv = document.createElement('div');
-        typingDiv.className = 'chat-typing hidden';
+        typingDiv.className = 'chat-bubble chat-bubble-bot chat-typing hidden';
         typingDiv.id = 'chatTyping';
-        typingDiv.innerHTML = '<div class="chat-typing-dot"></div><div class="chat-typing-dot"></div><div class="chat-typing-dot"></div>';
+        typingDiv.innerHTML = '<div class="chat-avatar-wrap"><img class="chat-avatar" src="icons/javi-avatar.png" alt="Javi"></div>' +
+          '<div class="chat-typing-dots">' +
+            '<div class="chat-typing-dot"></div>' +
+            '<div class="chat-typing-dot"></div>' +
+            '<div class="chat-typing-dot"></div>' +
+          '</div>';
         container.appendChild(typingDiv);
       } else {
         container.appendChild(typingEl);
