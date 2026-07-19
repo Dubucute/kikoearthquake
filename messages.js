@@ -92,7 +92,17 @@ export const SAFETY_TIPS_TL = [
 ];
 
 // ─── CHANGELOG ───────────────────────────────────────────────
-export const CHANGELOG = [ { ver: 'v1.144', date: '2026-07-06', items: [
+export const CHANGELOG = [ { ver: 'v1.146', date: '2026-07-20', items: [
+    'Fix: Typing indicator now stays visible until first streaming token arrives',
+    'Updated: Service worker cache bumped to v1.146'
+  ]},
+  { ver: 'v1.145', date: '2026-07-20', items: [
+    'New: Streaming SSE responses — Javi\'s replies now appear word-by-word as generated',
+    'Change: Stripped AI providers to only Google Gemini and NVIDIA NIM (faster + free)',
+    'Change: NVIDIA NIM now uses openai/gpt-oss-20b, meta/llama-3.1-8b-instruct, nvidia/nemotron-3-nano-omni-30b-a3b-reasoning',
+    'Updated: Service worker cache bumped to v1.145'
+  ]},
+  { ver: 'v1.144', date: '2026-07-06', items: [
     'Fix: Removed pull-to-refresh — now using the manual refresh button instead',
     'Updated: Service worker cache bumped to v1.144'
   ]},

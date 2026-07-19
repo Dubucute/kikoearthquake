@@ -3916,10 +3916,7 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
         // Build earthquake context from latest data
         const quakeContext = this._buildQuakeContext();
 
-        // Hide typing indicator — streaming will show tokens in real-time
-        if (typing) typing.classList.add('hidden');
-
-        // Push a placeholder bot message for streaming
+        // Push a placeholder bot message for streaming (empty for now)
         this.chatMessages.push({ role: 'assistant', content: '' });
         this._renderChatMessages();
 
@@ -3930,9 +3927,16 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
         // Scroll to show the empty bubble
         if (msgs) msgs.scrollTop = msgs.scrollHeight;
 
+        let hasReceivedToken = false;
+
         // Call AI API with streaming — tokens arrive in real-time
         const messagesWithoutPlaceholder = this.chatMessages.slice(0, -1);
         const response = await this._callHuggingFace(messagesWithoutPlaceholder, quakeContext, detected, (token, full) => {
+          // First token arrived — hide typing indicator now
+          if (!hasReceivedToken) {
+            hasReceivedToken = true;
+            if (typing) typing.classList.add('hidden');
+          }
           // Update the placeholder bubble live
           if (streamEl) {
             streamEl.innerHTML = this._formatBotMessage(full);
@@ -3946,6 +3950,9 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
         if (streamEl) {
           streamEl.innerHTML = this._formatBotMessage(response);
         }
+
+        // Hide typing if still visible (empty response safety net)
+        if (!hasReceivedToken && typing) typing.classList.add('hidden');
 
         // Save to memory
         this._saveChatMemory(text, response);
