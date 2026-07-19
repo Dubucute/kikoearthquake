@@ -3916,15 +3916,36 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
         // Build earthquake context from latest data
         const quakeContext = this._buildQuakeContext();
 
-        // Call AI API with quake context + detected language
-        const response = await this._callHuggingFace(this.chatMessages, quakeContext, detected);
-
-        // Remove typing
+        // Hide typing indicator — streaming will show tokens in real-time
         if (typing) typing.classList.add('hidden');
 
-        // Add assistant response
-        this.chatMessages.push({ role: 'assistant', content: response });
-        this._renderChatMessages(true);
+        // Push a placeholder bot message for streaming
+        this.chatMessages.push({ role: 'assistant', content: '' });
+        this._renderChatMessages();
+
+        // Get a reference to the last bot bubble for live updates
+        const allBubbles = document.querySelectorAll('#chatMessages .chat-bubble-bot');
+        let streamEl = allBubbles.length > 0 ? allBubbles[allBubbles.length - 1].querySelector('.chat-bubble-inner') : null;
+
+        // Scroll to show the empty bubble
+        if (msgs) msgs.scrollTop = msgs.scrollHeight;
+
+        // Call AI API with streaming — tokens arrive in real-time
+        const messagesWithoutPlaceholder = this.chatMessages.slice(0, -1);
+        const response = await this._callHuggingFace(messagesWithoutPlaceholder, quakeContext, detected, (token, full) => {
+          // Update the placeholder bubble live
+          if (streamEl) {
+            streamEl.innerHTML = this._formatBotMessage(full);
+          }
+          // Auto-scroll as content grows
+          if (msgs) msgs.scrollTop = msgs.scrollHeight;
+        });
+
+        // Finalize with the complete response
+        this.chatMessages[this.chatMessages.length - 1].content = response;
+        if (streamEl) {
+          streamEl.innerHTML = this._formatBotMessage(response);
+        }
 
         // Save to memory
         this._saveChatMemory(text, response);
@@ -3948,9 +3969,14 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
         console.error('Chat error:', err);
         if (typing) typing.classList.add('hidden');
 
-        // Fallback: use built-in response instead of error message
+        // Fallback: update the placeholder instead of pushing a new message
         const fallback = this._fallbackResponse();
-        this.chatMessages.push({ role: 'assistant', content: fallback });
+        const lastMsg = this.chatMessages[this.chatMessages.length - 1];
+        if (lastMsg && lastMsg.role === 'assistant' && lastMsg.content === '') {
+          lastMsg.content = fallback;
+        } else {
+          this.chatMessages.push({ role: 'assistant', content: fallback });
+        }
         this._renderChatMessages(true);
         this._saveChatMemory(text, fallback);
         this._saveChatHistory();
@@ -4012,7 +4038,7 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
       return lines.join('\n');
     }
 
-    async _callHuggingFace(messages, quakeContext, detectedLang) {
+    async _callHuggingFace(messages, quakeContext, detectedLang, onToken) {
       // Call our own API route — the API keys stay server-side
       const res = await fetch('/api/ask-javi', {
         method: 'POST',
@@ -4025,13 +4051,37 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
         throw new Error(errData.error || 'API returned ' + res.status);
       }
 
-      const data = await res.json();
+      // Read SSE stream
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let fullResponse = '';
 
-      if (data && data.response) {
-        return data.response;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6).trim();
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.done) return fullResponse; // stream complete
+              const token = parsed.token || '';
+              if (token) {
+                fullResponse += token;
+                if (onToken) onToken(token, fullResponse);
+              }
+            } catch (_) { /* skip parse errors */ }
+          }
+        }
       }
 
-      throw new Error('Unexpected API response format');
+      return fullResponse;
     }
 
     _renderChatMessages(animateLastBot) {

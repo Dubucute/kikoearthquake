@@ -1,8 +1,8 @@
-// Provider chain: Google → OpenRouter → Cerebras → Groq → NVIDIA → HuggingFace → Cloudflare
+// Provider chain: Google → NVIDIA NIM
 
 // ─── Provider definitions ────────────────────────────────────
 const PROVIDERS = [
-  // ⭐⭐⭐⭐⭐ Best overall
+  // ⭐⭐⭐⭐⭐ Gemini — fast, smart, great multilingual
   {
     name: 'google',
     baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
@@ -14,78 +14,16 @@ const PROVIDERS = [
     ],
   },
 
-  // ⭐⭐⭐⭐⭐ Largest free model selection
-  {
-    name: 'openrouter',
-    baseUrl: 'https://openrouter.ai/api/v1',
-    apiKeyEnv: 'OPENROUTER_API_KEY',
-    maxTokens: 8192,
-    models: [
-      'openai/gpt-oss-120b:free',
-      'qwen/qwen3-235b-a22b:free',
-      'nousresearch/hermes-3-llama-3.1-70b:free',
-      'deepseek/deepseek-chat-v3:free',
-      'nvidia/nemotron-3-super-120b-a12b:free',
-    ],
-  },
-
-  // ⭐⭐⭐⭐☆
-  {
-    name: 'cerebras',
-    baseUrl: 'https://api.cerebras.ai/v1',
-    apiKeyEnv: 'CEREBRAS_API_KEY',
-    maxTokens: 8192,
-    models: [
-      'qwen-3-32b',
-      'llama-4-scout-17b-16e-instruct',
-    ],
-  },
-
-  // ⭐⭐⭐⭐☆
-  {
-    name: 'groq',
-    baseUrl: 'https://api.groq.com/openai/v1',
-    apiKeyEnv: 'GROQ_API_KEY',
-    maxTokens: 4096,
-    models: [
-      'llama-3.3-70b-versatile',
-      'llama-3.1-8b-instant',
-    ],
-  },
-
-  // ⭐⭐⭐⭐
+  // ⭐⭐⭐⭐⭐ NVIDIA NIM — fastest models
   {
     name: 'nvidia',
     baseUrl: 'https://integrate.api.nvidia.com/v1',
     apiKeyEnv: 'NVIDIA_API_KEY',
-    maxTokens: 4096,
+    maxTokens: 8192,
     models: [
-      'mistralai/mixtral-8x7b-instruct-v0.1',
+      'openai/gpt-oss-20b',
       'meta/llama-3.1-8b-instruct',
-    ],
-  },
-
-  // ⭐⭐⭐
-  {
-    name: 'huggingface',
-    baseUrl: 'https://router.huggingface.co/v1',
-    apiKeyEnv: 'HF_TOKEN',
-    maxTokens: 4096,
-    models: [
-      'Qwen/Qwen2.5-7B-Instruct',
-      'mistralai/Mistral-7B-Instruct-v0.3',
-    ],
-  },
-
-  // ⭐⭐⭐
-  {
-    name: 'cloudflare',
-    baseUrl: 'https://api.cloudflare.com/client/v4/accounts/606f5cb52423b33e8183d1720585d8b1/ai/run/',
-    apiKeyEnv: 'CLOUDFLARE_API_TOKEN',
-    maxTokens: 4096,
-    models: [
-      '@cf/meta/llama-3.1-8b-instruct',
-      '@cf/mistral/mistral-7b-instruct-v0.2',
+      'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning',
     ],
   },
 ];
@@ -124,12 +62,15 @@ function buildSystemPrompt(quakeContext, lang) {
 }
 
 
-/** Try an OpenAI-compatible provider (NVIDIA, Groq, Hugging Face) */
-async function callOpenAICompatible(provider, messages, quakeContext, lang) {
+/** Write an SSE event to the response */
+function writeSSE(res, data) {
+  res.write(`data: ${JSON.stringify(data)}\n\n`);
+}
+
+/** Try to stream from an OpenAI-compatible provider */
+async function tryStreamProvider(provider, messages, quakeContext, lang, sseRes) {
   const apiKey = process.env[provider.apiKeyEnv];
-  if (!apiKey) {
-    throw new Error(`${provider.apiKeyEnv} is not configured`);
-  }
+  if (!apiKey) return false;
 
   const systemContent = buildSystemPrompt(quakeContext, lang);
   const chatMessages = [
@@ -137,10 +78,9 @@ async function callOpenAICompatible(provider, messages, quakeContext, lang) {
     ...messages.slice(-8),
   ];
 
-  let lastError = null;
   for (const model of provider.models) {
     try {
-      const res = await fetch(`${provider.baseUrl}/chat/completions`, {
+      const fetchRes = await fetch(`${provider.baseUrl}/chat/completions`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${apiKey}`,
@@ -152,38 +92,52 @@ async function callOpenAICompatible(provider, messages, quakeContext, lang) {
           max_tokens: provider.maxTokens || 1024,
           temperature: 0.7,
           top_p: 0.95,
+          stream: true,
         }),
       });
 
-      if (!res.ok) {
-        const errText = await res.text().catch(() => '');
-        lastError = `${provider.name}/${model} returned ${res.status}: ${errText.slice(0, 200)}`;
-        console.warn(lastError);
+      if (!fetchRes.ok) {
+        const errText = await fetchRes.text().catch(() => '');
+        console.warn(`${provider.name}/${model} returned ${fetchRes.status}: ${errText.slice(0, 200)}`);
         continue;
       }
 
-      const data = await res.json();
-      const candidate = data.choices?.[0]?.message?.content?.trim();
+      const reader = fetchRes.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
 
-      if (candidate) {
-        return candidate;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6).trim();
+            if (data === '[DONE]') return true;
+            try {
+              const parsed = JSON.parse(data);
+              const content = parsed.choices?.[0]?.delta?.content || '';
+              if (content) writeSSE(sseRes, { token: content });
+            } catch (_) { /* skip parse errors */ }
+          }
+        }
       }
-      lastError = `${provider.name}/${model} returned empty response`;
-      console.warn(lastError);
+      return true; // stream ended
     } catch (err) {
-      lastError = `${provider.name}/${model} threw: ${err.message}`;
-      console.warn(lastError);
+      console.warn(`${provider.name}/${model} threw: ${err.message}`);
     }
   }
-  throw new Error(`All models failed for ${provider.name}. Last: ${lastError}`);
+  return false; // all models failed
 }
 
-/** Call Cloudflare Workers AI (different URL format — model in path) */
-async function callCloudflare(provider, messages, quakeContext, lang) {
+/** Try to stream from Cloudflare (different URL format) */
+async function tryStreamCloudflare(provider, messages, quakeContext, lang, sseRes) {
   const apiKey = process.env[provider.apiKeyEnv];
-  if (!apiKey) {
-    throw new Error(`${provider.apiKeyEnv} is not configured`);
-  }
+  if (!apiKey) return false;
 
   const systemContent = buildSystemPrompt(quakeContext, lang);
   const chatMessages = [
@@ -191,11 +145,10 @@ async function callCloudflare(provider, messages, quakeContext, lang) {
     ...messages.slice(-8),
   ];
 
-  let lastError = null;
   for (const model of provider.models) {
     try {
       const url = `${provider.baseUrl}${model}`;
-      const res = await fetch(url, {
+      const fetchRes = await fetch(url, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${apiKey}`,
@@ -206,31 +159,46 @@ async function callCloudflare(provider, messages, quakeContext, lang) {
           max_tokens: provider.maxTokens || 1024,
           temperature: 0.7,
           top_p: 0.95,
+          stream: true,
         }),
       });
 
-      if (!res.ok) {
-        const errText = await res.text().catch(() => '');
-        lastError = `${provider.name}/${model} returned ${res.status}: ${errText.slice(0, 200)}`;
-        console.warn(lastError);
+      if (!fetchRes.ok) {
+        const errText = await fetchRes.text().catch(() => '');
+        console.warn(`${provider.name}/${model} returned ${fetchRes.status}: ${errText.slice(0, 200)}`);
         continue;
       }
 
-      const data = await res.json();
-      // Cloudflare returns { result: { response: "..." } } for text generation
-      const candidate = data?.result?.response?.trim() || data?.choices?.[0]?.message?.content?.trim();
+      const reader = fetchRes.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
 
-      if (candidate) {
-        return candidate;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6).trim();
+            if (data === '[DONE]') return true;
+            try {
+              const parsed = JSON.parse(data);
+              const content = parsed?.result?.response || parsed?.choices?.[0]?.delta?.content || '';
+              if (content) writeSSE(sseRes, { token: content });
+            } catch (_) { /* skip parse errors */ }
+          }
+        }
       }
-      lastError = `${provider.name}/${model} returned empty response`;
-      console.warn(lastError);
+      return true;
     } catch (err) {
-      lastError = `${provider.name}/${model} threw: ${err.message}`;
-      console.warn(lastError);
+      console.warn(`${provider.name}/${model} threw: ${err.message}`);
     }
   }
-  throw new Error(`All models failed for ${provider.name}. Last: ${lastError}`);
+  return false;
 }
 
 // Provider chain: Google → OpenRouter → Cerebras → Groq → NVIDIA → HuggingFace → Cloudflare
@@ -281,120 +249,49 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'messages array is required' });
     }
 
-    // ─── Provider chain ─────────────────────────────────────
-    // Try each provider in order. The first successful reply wins.
-    let reply = null;
-    const errors = [];
+    // ─── SSE streaming response ────────────────────────────
+    // Set SSE headers
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no'); // disable nginx buffering
 
-    // 1. Google — Gemini 2.5 Flash (fast, smart, great for Cebuano)
-    if (!reply) {
-      const google = PROVIDERS.find(p => p.name === 'google');
-      if (process.env[google.apiKeyEnv]) {
-        try {
-          reply = await callOpenAICompatible(google, messages, quakeContext, lang);
-          console.log('✅ Google replied');
-        } catch (e) {
-          errors.push(e.message);
-          console.warn('Google failed:', e.message);
+    // Write initial connection event
+    writeSSE(res, { connected: true });
+
+    // Try each provider in order. The first successful stream wins.
+    let streamed = false;
+    const providers = ['google', 'nvidia'];
+
+    for (const name of providers) {
+      if (streamed) break;
+      const provider = PROVIDERS.find(p => p.name === name);
+      if (!provider || !process.env[provider.apiKeyEnv]) continue;
+
+      try {
+        console.log(`🔄 Trying ${name}...`);
+        if (name === 'cloudflare') {
+          streamed = await tryStreamCloudflare(provider, messages, quakeContext, lang, res);
+        } else {
+          streamed = await tryStreamProvider(provider, messages, quakeContext, lang, res);
         }
+        if (streamed) console.log(`✅ ${name} streamed successfully`);
+      } catch (e) {
+        console.warn(`${name} failed: ${e.message}`);
       }
     }
 
-    // 2. OpenRouter — massive models (70B–235B)
-    if (!reply) {
-      const or = PROVIDERS.find(p => p.name === 'openrouter');
-      if (process.env[or.apiKeyEnv]) {
-        try {
-          reply = await callOpenAICompatible(or, messages, quakeContext, lang);
-          console.log('✅ OpenRouter replied');
-        } catch (e) {
-          errors.push(e.message);
-          console.warn('OpenRouter failed:', e.message);
-        }
-      }
-    }
-
-    // 3. Cerebras — fast inference
-    if (!reply) {
-      const cerebras = PROVIDERS.find(p => p.name === 'cerebras');
-      if (process.env[cerebras.apiKeyEnv]) {
-        try {
-          reply = await callOpenAICompatible(cerebras, messages, quakeContext, lang);
-          console.log('✅ Cerebras replied');
-        } catch (e) {
-          errors.push(e.message);
-          console.warn('Cerebras failed:', e.message);
-        }
-      }
-    }
-
-    // 4. Groq — fast, 70B versatile
-    if (!reply) {
-      const groq = PROVIDERS.find(p => p.name === 'groq');
-      if (process.env[groq.apiKeyEnv]) {
-        try {
-          reply = await callOpenAICompatible(groq, messages, quakeContext, lang);
-          console.log('✅ Groq replied');
-        } catch (e) {
-          errors.push(e.message);
-          console.warn('Groq failed:', e.message);
-        }
-      }
-    }
-
-    // 5. NVIDIA — fallback
-    if (!reply) {
-      const nvidia = PROVIDERS.find(p => p.name === 'nvidia');
-      if (process.env[nvidia.apiKeyEnv]) {
-        try {
-          reply = await callOpenAICompatible(nvidia, messages, quakeContext, lang);
-          console.log('✅ NVIDIA replied');
-        } catch (e) {
-          errors.push(e.message);
-          console.warn('NVIDIA failed:', e.message);
-        }
-      }
-    }
-
-    // 6. Hugging Face — fallback
-    if (!reply) {
-      const hf = PROVIDERS.find(p => p.name === 'huggingface');
-      if (process.env[hf.apiKeyEnv]) {
-        try {
-          reply = await callOpenAICompatible(hf, messages, quakeContext, lang);
-          console.log('✅ Hugging Face replied');
-        } catch (e) {
-          errors.push(e.message);
-          console.warn('Hugging Face failed:', e.message);
-        }
-      }
-    }
-
-    // 7. Cloudflare — final fallback (special URL format)
-    if (!reply) {
-      const cf = PROVIDERS.find(p => p.name === 'cloudflare');
-      if (process.env[cf.apiKeyEnv]) {
-        try {
-          reply = await callCloudflare(cf, messages, quakeContext, lang);
-          console.log('✅ Cloudflare replied');
-        } catch (e) {
-          errors.push(e.message);
-          console.warn('Cloudflare failed:', e.message);
-        }
-      }
-    }
-
-    if (!reply) {
-      console.error('All providers failed:', errors.join(' | '));
+    if (!streamed) {
       const hasAnyKey = PROVIDERS.some(p => process.env[p.apiKeyEnv]);
-      return res.status(200).json({
-        response: hasAnyKey
-          ? 'Hmm, all AI services are busy right now. Can you try again in a moment? 🙏'
-          : 'Hmm, I need an AI provider to be configured first! Ask the dev to set one up.',
-      });
+      const fallback = hasAnyKey
+        ? 'Hmm, all AI services are busy right now. Can you try again in a moment? 🙏'
+        : 'Hmm, I need an AI provider to be configured first! Ask the dev to set one up.';
+      writeSSE(res, { token: fallback });
     }
 
-    res.status(200).json({ response: reply });
+    // Signal completion
+    writeSSE(res, { done: true });
+    res.end();
   } catch (err) {
     console.error('ask-javi handler error:', err.message, err.stack);
     res.status(500).json({ error: 'Internal server error', detail: err.message });
