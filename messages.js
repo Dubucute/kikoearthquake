@@ -92,10 +92,29 @@ export const SAFETY_TIPS_TL = [
 ];
 
 // ─── CHANGELOG ───────────────────────────────────────────────
-export const CHANGELOG = [ { ver: 'v1.146', date: '2026-07-20', items: [
-    'Fix: Typing indicator now stays visible until first streaming token arrives',
-    'Updated: Service worker cache bumped to v1.146'
+export const CHANGELOG = [ { ver: 'v1.150', date: '2026-07-20', items: [
+    'New: Split app.js into 6 module files (modules/chat.js, map.js, quiz.js, analysis.js, share.js, settings.js)',
+    'Fix: Chat history now clears when older than 24 hours',
+    'Fix: Removed ~2500 lines of dead code from app.js',
+    'Updated: Service worker cache bumped to v1.150'
   ]},
+  { ver: 'v1.149', date: '2026-07-20', items: [
+    'New: Modern cartoon redesign — cartoon-style borders, shadows, rounded speech bubble',
+    'New: Furry Javi character concept with cartoon char-card and pill status indicator',
+    'New: Animated clouds (8 cloud layers, gentle drift animation) and sun/moon sky elements',
+    'New: Decorative sparkle effects on character card and Javi tap',
+    'New: Breathing animation on character (iosBreathe)',
+    'Updated: Service worker cache bumped to v1.149'
+  ]},
+  { ver: 'v1.148', date: '2026-07-20', items: [
+    'Change: Restored pull-to-refresh on iOS (Safari chrome) — removed overscroll-behavior:contain',
+    'Updated: Service worker cache bumped to v1.148'
+  ]},
+  { ver: 'v1.147', date: '2026-07-20', items: [
+    'Fix: Typing indicator now stays visible until first streaming token arrives',
+    'Updated: Service worker cache bumped to v1.147'
+  ]},
+  { ver: 'v1.146', date: '2026-07-20', items: [
   { ver: 'v1.145', date: '2026-07-20', items: [
     'New: Streaming SSE responses — Javi\'s replies now appear word-by-word as generated',
     'Change: Stripped AI providers to only Google Gemini and NVIDIA NIM (faster + free)',
