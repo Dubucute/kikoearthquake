@@ -3,6 +3,14 @@ import { playAlertSound, startAmbientSound, stopAmbientSound, setAmbientVolume, 
 import { API, CONFIG, timeSince, getCompassDir, getDistance, parsePlaceName, magClass, getPHIVOLCSIntensity, intensityClass, shouldShowQuake, PEIS_LABELS, PEIS_SHORT } from './api-utils.js';
 import { QUIZ_QUESTIONS } from './quiz-questions.js';
 
+// ─── Module mixins (split from app.js for maintainability) ──
+import { chatMixin } from './modules/chat.js';
+import { mapMixin } from './modules/map.js';
+import { quizMixin } from './modules/quiz.js';
+import { analysisMixin } from './modules/analysis.js';
+import { shareMixin } from './modules/share.js';
+import { settingsMixin } from './modules/settings.js';
+
 class JaviAlertApp {
     constructor() {
       this.userLat = null;
@@ -145,14 +153,23 @@ class JaviAlertApp {
       } catch (_) { /* ignore */ }
     }
 
-    /** Load full chat history from localStorage */
+    /** Load full chat history from localStorage (clear if older than 24h) */
     _loadChatHistory() {
       try {
         const saved = localStorage.getItem('javiChatHistory');
+        const tsRaw = localStorage.getItem('javiChatHistoryTs');
+        if (saved && tsRaw) {
+          const ts = parseInt(tsRaw, 10);
+          if (ts && Date.now() - ts > 86400000) {
+            // Older than 24 hours — clear stale history
+            localStorage.removeItem('javiChatHistory');
+            localStorage.removeItem('javiChatHistoryTs');
+            return [];
+          }
+        }
         if (saved) {
           const msgs = JSON.parse(saved);
           if (Array.isArray(msgs) && msgs.length > 0) {
-            // Only restore if less than 24h old (check first message timestamp)
             return msgs;
           }
         }
@@ -165,6 +182,7 @@ class JaviAlertApp {
       try {
         const toSave = this.chatMessages.slice(-30);
         localStorage.setItem('javiChatHistory', JSON.stringify(toSave));
+        localStorage.setItem('javiChatHistoryTs', String(Date.now()));
       } catch (_) { /* ignore */ }
     }
 
@@ -4283,6 +4301,11 @@ this.refreshTimer = setInterval(() => this.loadData(), 300000);
       return html;
     }
   }
+
+  // ─── Apply module mixins to class prototype ──────────────
+  Object.assign(JaviAlertApp.prototype,
+    chatMixin, mapMixin, quizMixin, analysisMixin, shareMixin, settingsMixin
+  );
 
   // ─── START ───────────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', () => {
