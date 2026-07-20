@@ -1,4 +1,5 @@
-﻿import { JAVI_MESSAGES, JAVI_REACTIONS, SAFETY_TIPS, EMERGENCY_CONTACTS, CHANGELOG } from './messages.js';
+﻿import { JAVI_MESSAGES, JAVI_REACTIONS, SAFETY_TIPS, EMERGENCY_CONTACTS } from './messages.js';
+import { CHANGELOG } from './changelog.js';
 import { playAlertSound, startAmbientSound, stopAmbientSound, setAmbientVolume, setAmbientTrack, setOnTrackChange, getPlaybackMode, setPlaybackMode, nextTrack, toggleAmbient, isAmbientPlaying, preloadAlertAudio, setOnProgress } from './audio.js';
 import { API, CONFIG, timeSince, getCompassDir, getDistance, parsePlaceName, magClass, getPHIVOLCSIntensity, intensityClass, shouldShowQuake, PEIS_LABELS, PEIS_SHORT } from './api-utils.js';
 import { QUIZ_QUESTIONS } from './quiz-questions.js';

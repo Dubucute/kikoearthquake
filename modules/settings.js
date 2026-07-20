@@ -3,7 +3,8 @@
  * Mixed into JaviAlertApp.prototype at startup.
  */
 import { startAmbientSound, stopAmbientSound, setAmbientVolume, setAmbientTrack, preloadAlertAudio, playAlertSound } from '../audio.js';
-import { CHANGELOG, SAFETY_TIPS, JAVI_MESSAGES } from '../messages.js';
+import { CHANGELOG } from '../changelog.js';
+import { SAFETY_TIPS, JAVI_MESSAGES } from '../messages.js';
 import { CONFIG, PEIS_LABELS } from '../api-utils.js';
 
 export const settingsMixin = {
